@@ -237,7 +237,7 @@ public:
   explicit SvSignal(SignalConfig& config);
   ~SvSignal();
   
-  int id() { return p_config.id; }
+  int id() const { return p_config.id; }
   
   void configure(const SignalConfig& config) { p_config = config; }
   const SignalConfig* config() const         { return &p_config; }
@@ -262,7 +262,7 @@ public:
     return p_config.id == other->config()->id;
   }
 
-  qreal previousValue() const { return p_previous_value; }
+  QVariant previousValue() const { return p_previous_value; }
 
   bool setLostValue()
   {
@@ -292,5 +292,14 @@ public slots:
   
   
 };
+
+
+inline uint qHash(const SvSignal &key, uint seed)
+{
+  Q_UNUSED(seed);
+
+  uint hash = key.id();
+    return hash; // qHash(key.name(), seed) ^ key.dateOfBirth().day();
+}
 
 #endif // SV_SIGNAL_H

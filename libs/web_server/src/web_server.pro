@@ -9,7 +9,7 @@ QT       -= gui
 
 CONFIG += plugin c++11
 
-TARGET = web_server
+TARGET = /home/user/widen/lib/web_server
 TEMPLATE = lib
 
 DEFINES += WEBSERVER_LIBRARY

@@ -7,7 +7,7 @@
 
 #include "../../svlib/sv_abstract_logger.h"
 
-#define DBUS_SERVER_NAME "niirpi.proj.nmea"
+#define DBUS_SERVER_NAME "niirpi.proj.widen"
 #define DBUS_SENDER_NAME "device_%1"
 
 namespace sv {

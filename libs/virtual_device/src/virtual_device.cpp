@@ -13,36 +13,36 @@ VirtualDevice::~VirtualDevice()
   deleteLater();
 }
 
-bool VirtualDevice::configure(const ad::DeviceInfo& info)
+bool VirtualDevice::configure(const ad::DeviceConfig &cfg)
 {
-  p_info = info;
+  p_config = cfg;
   try {
 
     /* парсим - проверяем, что парметры устройства заданы верно */
-    DeviceParams::fromJson(p_info.dev_params);
+    DeviceParams::fromJson(p_config.dev_params);
 
     /* парсим - проверяем, что парметры для указанного интерфейса заданы верно */
-    switch (ifcesMap.value(p_info.ifc_name.toUpper(), AvailableIfces::Undefined)) {
+    switch (ifcesMap.value(p_config.ifc_name.toUpper(), AvailableIfces::Undefined)) {
 
       case AvailableIfces::RS485:
       case AvailableIfces::RS:
 
-        SerialParams::fromJsonString(p_info.ifc_params);
+        SerialParams::fromJsonString(p_config.ifc_params);
 
         break;
 
       case AvailableIfces::UDP:
 
-        UdpParams::fromJsonString(p_info.ifc_params);
+        UdpParams::fromJsonString(p_config.ifc_params);
 
         break;
 
       case AvailableIfces::VIRTUAL:
-        VirtualParams::fromJsonString(p_info.ifc_params);
+        VirtualParams::fromJsonString(p_config.ifc_params);
         break;
 
       default:
-        p_exception.raise(QString("Неизвестный тип интерфейса: %1").arg(p_info.ifc_name));
+        p_exception.raise(QString("Неизвестный тип интерфейса: %1").arg(p_config.ifc_name));
         break;
     }
 
@@ -66,11 +66,11 @@ bool VirtualDevice::open()
   try {
 
     if(!is_configured)
-      p_exception.raise(QString("Для устройства '%1' не задана конфигурация").arg(p_info.name));
+      p_exception.raise(QString("Для устройства '%1' не задана конфигурация").arg(p_config.name));
 
     create_new_thread();
 
-    p_thread->conform(p_info.dev_params, p_info.ifc_params);
+    p_thread->conform(p_config.dev_params, p_config.ifc_params);
 
     connect(p_thread, &ad::SvAbstractDeviceThread::finished, this, &VirtualDevice::deleteThread);
     connect(this, &VirtualDevice::stopThread, p_thread, &ad::SvAbstractDeviceThread::stop);
@@ -96,7 +96,7 @@ void VirtualDevice::create_new_thread() throw(SvException)
 {
   try {
 
-    switch (ifcesMap.value(p_info.ifc_name.toUpper(), AvailableIfces::Undefined)) {
+    switch (ifcesMap.value(p_config.ifc_name.toUpper(), AvailableIfces::Undefined)) {
 
       case AvailableIfces::RS485:
       case AvailableIfces::RS:
@@ -116,7 +116,7 @@ void VirtualDevice::create_new_thread() throw(SvException)
         break;
 
     default:
-      p_exception.raise(QString("Неизвестный тип интерфейса: %1").arg(info()->ifc_name));
+      p_exception.raise(QString("Неизвестный тип интерфейса: %1").arg(p_config.ifc_name));
       break;
 
     }
@@ -374,12 +374,16 @@ void VirtualDeviceVirtualThread::conform(const QString& jsonDevParams, const QSt
 
 void VirtualDeviceVirtualThread::open() throw(SvException)
 {
-  *p_logger << sv::log::mtSuccess << QString("%1 открыт").arg(p_device->info()->name) << sv::log::endl;
+  *p_logger << sv::log::mtSuccess << QString("%1 открыт").arg(p_device->config()->name) << sv::log::endl;
 }
 
 quint64 VirtualDeviceVirtualThread::write(const QByteArray& data)
 {
-  *p_logger << sv::log::mtSuccess << QString("%1 записал данные").arg(p_device->info()->name) << sv::log::endl;
+  Q_UNUSED(data);
+
+  *p_logger << sv::log::mtSuccess << QString("%1 записал данные").arg(p_device->config()->name) << sv::log::endl;
+
+  return 1;
 }
 
 void VirtualDeviceVirtualThread::run()
@@ -389,9 +393,9 @@ void VirtualDeviceVirtualThread::run()
   while(p_is_active)
   {
     if(ifc_params.show_time)
-      *p_logger << 11 << sv::log::mtInfo << sv::log::TimeZZZ << ifc_params.testmsg << ifc_params.testval << sv::log::endl;
+      *p_logger << sv::log::mtInfo << sv::log::TimeZZZ << ifc_params.testmsg << ifc_params.testval << sv::log::endl;
     else
-      *p_logger << 12 << sv::log::mtInfo << ifc_params.testmsg << ifc_params.testval << sv::log::endl;
+      *p_logger << sv::log::mtInfo << ifc_params.testmsg << ifc_params.testval << sv::log::endl;
 
     msleep(ifc_params.period);
   }

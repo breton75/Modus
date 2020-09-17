@@ -18,28 +18,26 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-#include "../global/sv_abstract_device.h"
-#include "../global/sv_abstract_storage.h"
+#include "../../global/sv_abstract_device.h"
+#include "../../global/sv_abstract_storage.h"
+#include "../../global/sv_abstract_server.h"
 
-#include "../global/sql_defs.h"
-#include "../global/global_defs.h"
-#include "../global/sv_signal.h"
-#include "../global/sv_dbus.h"
-#include "../global/defs.h"
+#include "../../global/global_defs.h"
+#include "../../global/sv_signal.h"
+#include "../../global/sv_dbus.h"
 
-//#include "app_config.h"
-
-#include "../../svlib/sv_sqlite.h"
-#include "../../svlib/sv_exception.h"
-#include "../../svlib/sv_config.h"
+#include "../../../svlib/sv_sqlite.h"
+#include "../../../svlib/sv_exception.h"
+#include "../../../svlib/sv_config.h"
 
 //#include "sv_storage.h"
-#include "sv_webserver.h"
+//#include "sv_webserver.h"
 
 //SvPGDB* PG = nullptr;
 
-QMap<int, ad::SvAbstractDevice*> DEVICES;
+QMap<int, ad::SvAbstractDevice*>  DEVICES;
 QMap<int, as::SvAbstractStorage*> STORAGES;
+QMap<int, wd::SvAbstractServer*>  SERVERS;
 QMap<int, SvSignal*> SIGNALS;
 
 QMap<int, sv::SvAbstractLogger*> LOGGERS;
@@ -53,7 +51,7 @@ QDateTime start_time;
 //sv::SvConcoleLogger dbus;
 sv::SvDBus dbus;
 
-SvWebServer webserver;
+//SvWebServer webserver;
 
 const OptionStructList AppOptions = {
     {{OPTION_DEBUG},  "Режим отладки","", "", ""},
@@ -78,15 +76,18 @@ const OptionStructList AppOptions = {
 
 bool parse_params(const QStringList &args, AppConfig& cfg, const QString& file_name);
 
-bool initConfig(const AppConfig &cfg);
+bool initConfig(const AppConfig &appcfg);
 void close_db();
-bool readDevices(const AppConfig& cfg);
-bool readStorages(const AppConfig& cfg);
+bool readDevices(const AppConfig& appcfg);
+bool readStorages(const AppConfig& appcfg);
 bool readSignals();
+bool readServers(const AppConfig& appcfg);
+
 QJsonArray parse_signals() throw(SvException);
 
-ad::SvAbstractDevice* create_device(const ad::DeviceInfo &info) throw(SvException);
+ad::SvAbstractDevice*  create_device (const ad::DeviceConfig&  config) throw(SvException);
 as::SvAbstractStorage* create_storage(const as::StorageConfig& config) throw(SvException);
+wd::SvAbstractServer*  create_server (const wd::ServerConfig&  config) throw(SvException);
 
 //sv::SvAbstractLogger* create_logger(const sv::log::Options& options, const QString& sender);
 
@@ -208,7 +209,7 @@ bool parse_params(const QStringList& args, AppConfig &cfg, const QString& file_n
     /** читаем параметры конфигурации из файла .cfg **/
     SvConfigFileParser cfg_parser(AppOptions);
     if(!cfg_parser.parse(file_name))
-        exception.raise(cfg_parser.lastError());
+        throw SvException(cfg_parser.lastError());
 
     /** разбираем параметры командной строки **/
     SvCommandLineParser cmd_parser(AppOptions);
@@ -220,13 +221,13 @@ bool parse_params(const QStringList& args, AppConfig &cfg, const QString& file_n
     cmd_parser.addVersionOption();
 
     if (!cmd_parser.parse(args))
-      exception.raise(-1, QString("%1\n\n%2").arg(cmd_parser.errorText()).arg(cmd_parser.helpText()));
+      throw SvException(QString("%1\n\n%2").arg(cmd_parser.errorText()).arg(cmd_parser.helpText()));
 
     if (cmd_parser.isSetVersionOption())
-      exception.raise(-1, QString("Сервер сбора и обработки данных КСУТС v.%1").arg(APP_VERSION));
+      throw SvException(QString("Сервер сбора и обработки данных КСУТС v.%1").arg(APP_VERSION));
 
     if (cmd_parser.isSetHelpOption())
-      exception.raise(-1, cmd_parser.helpText());
+      throw SvException(cmd_parser.helpText());
 
 
 
@@ -242,19 +243,19 @@ bool parse_params(const QStringList& args, AppConfig &cfg, const QString& file_n
     cfg.db_host = cmd_parser.isSet(OPTION_DB_HOST) ? cmd_parser.value(OPTION_DB_HOST) :
                                                      cfg_parser.value(OPTION_DB_HOST);
     if ((cfg.db_host != "localhost") && QHostAddress(cfg.db_host).isNull())
-      exception.raise(-1, QString("Неверный адрес сервера баз данных: %1").arg(cfg.db_host));
+      throw SvException(QString("Неверный адрес сервера баз данных: %1").arg(cfg.db_host));
 
     // db_port
     val = cmd_parser.isSet(OPTION_DB_PORT) ? cmd_parser.value(OPTION_DB_PORT) :
                                              cfg_parser.value(OPTION_DB_PORT);
     cfg.db_port = val.toUInt(&ok);
-    if(!ok) exception.raise(-1, QString("Неверный порт: %1").arg(val));
+    if(!ok) throw SvException(QString("Неверный порт: %1").arg(val));
 
     // soeg_port
 //    val = cmd_parser.isSet(OPTION_SOEG_PORT) ? cmd_parser.value(OPTION_SOEG_PORT) :
 //                                               cfg_parser.value(OPTION_SOEG_PORT);
 //    cfg.soeg_port = val.toUInt(&ok);
-//    if(!ok) exception.raise(-1, QString("Неверный порт СОЭЖ: %1").arg(val));
+//    if(!ok) throw SvException(QString("Неверный порт СОЭЖ: %1").arg(val));
 
     // db_name
     cfg.db_name = cmd_parser.isSet(OPTION_DB_NAME) ? cmd_parser.value(OPTION_DB_NAME) :
@@ -278,7 +279,7 @@ bool parse_params(const QStringList& args, AppConfig &cfg, const QString& file_n
     val = cmd_parser.isSet(OPTION_DEVICE_INDEX) ? cmd_parser.value(OPTION_DEVICE_INDEX) : "-1";
 
     cfg.device_index = val.toInt(&ok);
-    if(!ok) exception.raise(-1, QString("Неверный индекс устройства: %1").arg(val));
+    if(!ok) throw SvException(QString("Неверный индекс устройства: %1").arg(val));
 
 
     // logging
@@ -290,7 +291,7 @@ bool parse_params(const QStringList& args, AppConfig &cfg, const QString& file_n
     val = cmd_parser.isSet(OPTION_LOG_LEVEL) ? cmd_parser.value(OPTION_LOG_LEVEL) :
                                                cfg_parser.value(OPTION_LOG_LEVEL);
     cfg.log_options.log_level = sv::log::stringToLevel(val, &ok);
-    if(!ok) exception.raise(-1, QString("Неверный уровень логирования: %1").arg(val));
+    if(!ok) throw SvException(QString("Неверный уровень логирования: %1").arg(val));
 
     // log_device
     val = cmd_parser.isSet(OPTION_LOG_DEVICE) ? cmd_parser.value(OPTION_LOG_DEVICE) :
@@ -300,7 +301,7 @@ bool parse_params(const QStringList& args, AppConfig &cfg, const QString& file_n
     for (int i = 0; i < vals.count(); ++i) {
 
         cfg.log_options.log_devices.append(sv::log::stringToDevice(vals.at(i), &ok));
-        if(!ok) exception.raise(-1, QString("Неверное устройство логирования: %1").arg(val));
+        if(!ok) throw SvException(QString("Неверное устройство логирования: %1").arg(val));
     }
 
 
@@ -321,14 +322,14 @@ bool parse_params(const QStringList& args, AppConfig &cfg, const QString& file_n
     val = cmd_parser.isSet(OPTION_LOG_ROTATION_AGE) ? cmd_parser.value(OPTION_LOG_ROTATION_AGE) :
                                                       cfg_parser.value(OPTION_LOG_ROTATION_AGE);
     cfg.log_options.log_rotation_age = sv::log::stringToSeconds(val, &ok);
-    if(!ok) exception.raise(-1, QString("Неверный формат времени: %1").arg(val));
+    if(!ok) throw SvException(QString("Неверный формат времени: %1").arg(val));
 
 
     // log_rotation_size
     val = cmd_parser.isSet(OPTION_LOG_ROTATION_SIZE) ? cmd_parser.value(OPTION_LOG_ROTATION_SIZE) :
                                                        cfg_parser.value(OPTION_LOG_ROTATION_SIZE);
     cfg.log_options.log_rotation_size = sv::log::stringToSize(val, &ok);
-    if(!ok) exception.raise(-1, QString("Неверный формат размера файла: %1").arg(val));
+    if(!ok) throw SvException(QString("Неверный формат размера файла: %1").arg(val));
 
     // шаблон имени отправителя по dbus
     cfg.log_options.log_sender_name_format = cmd_parser.isSet(OPTION_LOG_SENDER_NAME_FORMAT) ? cmd_parser.value(OPTION_LOG_SENDER_NAME_FORMAT) :
@@ -340,8 +341,8 @@ bool parse_params(const QStringList& args, AppConfig &cfg, const QString& file_n
   }
 
   catch(SvException &e) {
+
     dbus << llerr << me << mterr << QString("%1\n").arg(e.error) << sv::log::endl;
-//    dbus << llerr << QString("%1\n").arg(e.error) << clog::endl;
     return false;
   }
 }
@@ -538,13 +539,13 @@ int main(int argc, char *argv[])
     QFile f(cfg_file_name);
     if(!f.exists()) {
       if(!f.open(QIODevice::ReadWrite))
-        exception.raise(-1, QString("Файл %1 отсутствует и не удается создать его").arg(cfg_file_name));
+        throw SvException(QString("Файл %1 отсутствует и не удается создать его").arg(cfg_file_name));
 
       f.close();
     }
 
     if(!parse_params(a.arguments(), cfg, cfg_file_name))
-        exception.raise(-1, "Ошибка разбора командной строки");
+        throw SvException("Ошибка разбора командной строки", -1);
 
     dbus.setOptions(cfg.log_options);
 //    dbus.setSender("main");
@@ -579,37 +580,37 @@ int main(int argc, char *argv[])
   signal(SIGTERM, signal_handler);
 
   dbus << llinf << mtinf << me
-       << QString("Сервер КСУТС v.%1\n").arg(APP_VERSION)
+       << QString("Сервер Widen v.%1\n").arg(APP_VERSION)
        << sv::log::endl;
 
   int result = 0;
 
   try {
 
-    /** открываем БД, читаем конфигурацию **/
-    if(!initConfig(cfg)) exception.raise(-10);
+    /** читаем конфигурацию **/
+    if(!initConfig(cfg)) throw SvException(-10);
 
 //    /** читаем устройства, репозитории и сигналы. СИГНАЛЫ В ПОСЛЕДНЮЮ ОЧЕРЕДЬ! **/
-    if(!readDevices(cfg)) exception.raise(-20);
-    if(!readStorages(cfg)) exception.raise(-30);
+    if(!readDevices(cfg)) throw SvException(-20);
+    if(!readStorages(cfg)) throw SvException(-30);
 
-    if(!readSignals()) exception.raise(-40);
+    if(!readSignals()) throw SvException(-40);
 
 //    close_db();
 
     /** подключаемся к устройствам и к репозиториям и начинаем работу **/
-    if(!openDevices()) exception.raise(-50);
+    if(!openDevices()) throw SvException(-50);
 
 //    /** подключаемся к серверам баз данных - хранилищам **/
     initStorages();
 
-    web_logger = new sv::SvDBus(cfg.log_options);
-    bool w = webserver.init(web_logger);
+//    web_logger = new sv::SvDBus(cfg.log_options);
+//    bool w = webserver.init(web_logger);
 
-    if(w && cfg.debug)
-        qDebug() << QString("Web сервер запущен на %1!").arg(80);
-    else if(!w && cfg.debug)
-        qDebug() << "Ошибка запуска web сервера!";
+//    if(w && cfg.debug)
+//        qDebug() << QString("Web сервер запущен на %1!").arg(80);
+//    else if(!w && cfg.debug)
+//        qDebug() << "Ошибка запуска web сервера!";
 
   }
   
@@ -646,8 +647,8 @@ void signal_handler(int sig)
 
   qDebug() << "closing";
 
-  webserver.stop();
-  delete web_logger;
+//  webserver.stop();
+//  delete web_logger;
 
 //  qDebug() << "close_db()";
 //  close_db();
@@ -682,23 +683,23 @@ void signal_handler(int sig)
 
 //}
 
-bool initConfig(const AppConfig& cfg)
+bool initConfig(const AppConfig& appcfg)
 {
   
   try {
       
-    dbus << llinf << mtinf << me << QString("Читаем файл конфигурации %1: ").arg(cfg.config_file_name) << sv::log::endl;
+    dbus << llinf << mtinf << me << QString("Читаем файл конфигурации %1: ").arg(appcfg.config_file_name) << sv::log::endl;
 
-    QFile json_file(cfg.config_file_name);
+    QFile json_file(appcfg.config_file_name);
     if(!json_file.open(QIODevice::ReadWrite))
-      exception.raise(json_file.errorString());
+      throw SvException(json_file.errorString());
 
     /* загружаем json конфигурацию в QJSonDocument */
     QJsonParseError parse_error;
     QJsonDocument jdoc = QJsonDocument::fromJson(json_file.readAll(), &parse_error);
 
     if(parse_error.error != QJsonParseError::NoError)
-      exception.raise(parse_error.errorString());
+      throw SvException(parse_error.errorString());
 
     JSON = jdoc.object();
 
@@ -710,17 +711,17 @@ bool initConfig(const AppConfig& cfg)
 
 //    QSqlError serr = PG->connectToDB();
 //    if(serr.type() != QSqlError::NoError)
-//      exception.raise(serr.databaseText());
+//      throw SvException(serr.databaseText());
 
 
 //    // проверяем соответствие версии БД версии сервера
 //    QSqlQuery q(PG->db);
 //    serr = PG->execSQL(SQL_SELECT_DB_INFO, &q);
 //    if(serr.type() != QSqlError::NoError)
-//      exception.raise(serr.text());
+//      throw SvException(serr.text());
 
 //    if(!q.next())
-//      exception.raise(1, "Нет информации о версии.\n");
+//      throw SvException(1, "Нет информации о версии.\n");
 
 //    QString db_version = q.value("db_version").toString();
 
@@ -728,7 +729,7 @@ bool initConfig(const AppConfig& cfg)
       dbus << llinf << mtinf << me << QString("Версия %1").arg(JSON.value("version").toString()) << sv::log::endl;
     
 //    if(QString(ACTUAL_DB_VERSION) != db_version)
-//      exception.raise(1, QString("Версия БД не соответствует версии программы. Требуется версия БД %1\n")
+//      throw SvException(1, QString("Версия БД не соответствует версии программы. Требуется версия БД %1\n")
 //                      .arg(ACTUAL_DB_VERSION));
 
     dbus << llinf << mtinf << me << mtscc << "OK\n" << sv::log::endl;
@@ -744,7 +745,7 @@ bool initConfig(const AppConfig& cfg)
   }
 }
 
-bool readDevices(const AppConfig& cfg)
+bool readDevices(const AppConfig& appcfg)
 {
   dbus << llinf << mtinf << me << QString("Читаем данные устройств: ") << sv::log::endl;
 
@@ -753,46 +754,46 @@ bool readDevices(const AppConfig& cfg)
     int counter = 0;
 
     if(!JSON.contains("devices"))
-      exception.raise("Неверный файл конфигурации. Отсутствует раздел 'devices'.");
+      throw SvException("Неверный файл конфигурации. Отсутствует раздел 'devices'.");
 
     QJsonArray device_list = JSON.value("devices").toArray();
 
     for(QJsonValue v: device_list) {
        
       /** потрошим параметры устройства **/
-      ad::DeviceInfo info = ad::DeviceInfo::fromJsonObject(v.toObject());
+      ad::DeviceConfig devcfg = ad::DeviceConfig::fromJsonObject(v.toObject());
 
-      if(!info.enable)
+      if(!devcfg.enable)
         continue;
 
       dbus << lldbg << mtdbg << me
-           << QString("  %1: параметры прочитаны").arg(info.name) << sv::log::endl;
+           << QString("  %1: параметры прочитаны").arg(devcfg.name) << sv::log::endl;
 
-      if(DEVICES.contains(info.id))
-        exception.raise(QString("Устройство %1. Повторяющийся идентификатор %2!").arg(info.name).arg(info.id));
+      if(DEVICES.contains(devcfg.id))
+        throw SvException(QString("Устройство %1. Повторяющийся идентификатор %2!").arg(devcfg.name).arg(devcfg.id));
 
       /** создаем объект устройство **/
-      ad::SvAbstractDevice* newdev = create_device(info);
+      ad::SvAbstractDevice* newdev = create_device(devcfg);
 
       if(newdev) {
 
-        if(newdev->info()->enable)
+        if(newdev->config()->enable)
         {
-          DEVICES.insert(newdev->info()->id, newdev);
+          DEVICES.insert(newdev->config()->id, newdev);
 
-          if(cfg.log_options.logging)
+          if(appcfg.log_options.logging)
           {
-            LOGGERS.insert(newdev->info()->id, new sv::SvDBus(cfg.log_options));
+            LOGGERS.insert(newdev->config()->id, new sv::SvDBus(appcfg.log_options));
 
-            newdev->setLogger(LOGGERS.value(newdev->info()->id));
+            newdev->setLogger(LOGGERS.value(newdev->config()->id));
           }
 
           dbus << lldbg2 << mtdbg << me
                << QString("  %1 [Индекс %2]\n  Параметры: %3\n  Интерфейс: %4 %5").
-                  arg(newdev->info()->name).
-                  arg(newdev->info()->id).
-                  arg(newdev->info()->dev_params).
-                  arg(newdev->info()->ifc_name).arg(newdev->info()->ifc_params)
+                  arg(newdev->config()->name).
+                  arg(newdev->config()->id).
+                  arg(newdev->config()->dev_params).
+                  arg(newdev->config()->ifc_name).arg(newdev->config()->ifc_params)
                << sv::log::endl;
 
           counter++;
@@ -802,14 +803,14 @@ bool readDevices(const AppConfig& cfg)
 
       else {
 
-        exception.raise(QString("Не удалось добавить устройство %1 ")
-                        .arg(info.name));
+        throw SvException(QString("Не удалось добавить устройство %1 ")
+                        .arg(devcfg.name));
 
       }
     }
 
     if(counter == 0)
-      exception.raise("Устройства в конфигурации не найдены");
+      throw SvException("Устройства в конфигурации не найдены");
 
     dbus << llinf << me << mtscc
          << QString("OK [прочитано %1]\n").arg(counter) << sv::log::endl;
@@ -827,7 +828,7 @@ bool readDevices(const AppConfig& cfg)
   }
 }
 
-bool readStorages(const AppConfig& cfg)
+bool readStorages(const AppConfig& appcfg)
 {
   dbus << llinf << me << mtinf << QString("Читаем данные хранилищ:") << sv::log::endl;
   
@@ -836,8 +837,12 @@ bool readStorages(const AppConfig& cfg)
     int counter = 0;
 
     if(!JSON.contains("storages"))
+    {
 
-      dbus << llinf << me << mtinf << QString("  Отсутствует раздел 'storages'.");
+      dbus << llinf << me << mtinf << QString("  Раздел 'storages' отсутствует.");
+
+      return true;
+    }
 
     else
     {
@@ -848,11 +853,6 @@ bool readStorages(const AppConfig& cfg)
         /** поторошим параметры хранилища **/
         as::StorageConfig storage_cfg = as::StorageConfig::fromJsonObject(v.toObject());
 
-        if(STORAGES.contains(storage_cfg.id))
-          exception.raise(QString("Хранилище %1. Повторяющийся идентификатор %2!")
-                          .arg(storage_cfg.name).arg(storage_cfg.id));
-
-
         if(!storage_cfg.enable)
           continue;
 
@@ -860,7 +860,7 @@ bool readStorages(const AppConfig& cfg)
              << QString("  %1: параметры прочитаны").arg(storage_cfg.name) << sv::log::endl;
 
         if(STORAGES.contains(storage_cfg.id))
-          exception.raise(QString("Хранилище %1. Повторяющийся идентификатор %2!")
+          throw SvException(QString("Хранилище %1. Повторяющийся идентификатор %2!")
                           .arg(storage_cfg.name).arg(storage_cfg.id));
 
         /** создаем объект хранилища **/
@@ -870,9 +870,9 @@ bool readStorages(const AppConfig& cfg)
 
           STORAGES.insert(newstorage->config()->id, newstorage);
 
-          if(cfg.log_options.logging)
+          if(appcfg.log_options.logging)
           {
-            LOGGERS.insert(newstorage->config()->id, new sv::SvDBus(cfg.log_options));
+            LOGGERS.insert(newstorage->config()->id, new sv::SvDBus(appcfg.log_options));
 
             newstorage->setLogger(LOGGERS.value(newstorage->config()->id));
           }
@@ -887,7 +887,7 @@ bool readStorages(const AppConfig& cfg)
 
         else {
 
-          exception.raise(QString("Не удалось добавить хранилище %1 ")
+          throw SvException(QString("Не удалось добавить хранилище %1 ")
                           .arg(v.toVariant().toString()));
 
         }
@@ -917,7 +917,7 @@ bool readSignals()
     int counter = 0;
 
     if(!JSON.contains("signals"))
-      exception.raise("Неверный файл конфигурации. Отсутствует раздел 'signals'.");
+      throw SvException("Неверный файл конфигурации. Отсутствует раздел 'signals'.");
 
     /** парсим список сигналов. в списке сигналов могут содержаться ссылки на другие файлы. для удобства **/
     QJsonArray signal_list = parse_signals();
@@ -939,13 +939,13 @@ bool readSignals()
 
       dbus << lldbg2 << mtdbg << me << QString("  %1: параметры прочитаны").arg(signal_cfg.name) << sv::log::endl;
 
+      if(SIGNALS.contains(signal_cfg.id))
+        throw SvException(QString("Сигнал %1. Повторяющийся идентификатор %2!").arg(signal_cfg.name).arg(signal_cfg.id));
+
       /* создаем объект */
       SvSignal* newsig = new SvSignal(signal_cfg);
       
       if(newsig) {
-
-        if(SIGNALS.contains(newsig->id()))
-          exception.raise(QString("Сигнал %1. Повторяющийся идентификатор %2!").arg(newsig->config()->name).arg(newsig->id()));
 
         SIGNALS.insert(newsig->id(), newsig);
         
@@ -955,7 +955,7 @@ bool readSignals()
         if(newsig->id() > max_sig_id) max_sig_id = newsig->id();
 
         // добавляем сигнал на веб сервер
-        webserver.addSignal(newsig);
+//        webserver.addSignal(newsig);
 
         // раскидываем сигналы по устройствам
         if(DEVICES.contains(newsig->config()->device_id)) {
@@ -964,8 +964,8 @@ bool readSignals()
 
           device->addSignal(newsig);
 
-          if(max_dev < device->info()->name.length())
-            max_dev = device->info()->name.length();
+          if(max_dev < device->config()->name.length())
+            max_dev = device->config()->name.length();
 
 
           // раскидываем сигналы по хранилищам
@@ -977,8 +977,8 @@ bool readSignals()
 
               storage->addSignal(newsig);
 
-              if(max_str < device->info()->name.length())
-                max_str = device->info()->name.length();
+              if(max_str < device->config()->name.length())
+                max_str = device->config()->name.length();
 
             }
           }
@@ -1006,8 +1006,8 @@ bool readSignals()
 
         QString line2 = QString(max_dev, '-');
         if(DEVICES.contains(s->config()->device_id)) {
-          line2 = QString(max_dev - DEVICES.value(s->config()->device_id)->info()->name.length() + 3, '-');
-          result.append(DEVICES.value(s->config()->device_id)->info()->name).append(line2);
+          line2 = QString(max_dev - DEVICES.value(s->config()->device_id)->config()->name.length() + 3, '-');
+          result.append(DEVICES.value(s->config()->device_id)->config()->name).append(line2);
         }
         else result.append(line2);
 
@@ -1080,19 +1080,99 @@ QJsonArray parse_signals() throw(SvException)
   return r;
 }
 
-ad::SvAbstractDevice* create_device(const ad::DeviceInfo& info) throw(SvException)
+bool readServers(const AppConfig& appcfg)
+{
+  dbus << llinf << me << mtinf << QString("Читаем данные о серверах приложений:") << sv::log::endl;
+
+  try {
+
+    int counter = 0;
+
+    if(!JSON.contains("servers"))
+    {
+
+      dbus << llinf << me << mtinf << QString("Раздел 'servers' отсутствует.");
+
+      return true;
+    }
+
+    else
+    {
+      QJsonArray server_list = JSON.value("servers").toArray();
+
+      for(QJsonValue v: server_list) {
+
+        /** поторошим параметры сервера **/
+        wd::ServerConfig server_cfg = wd::ServerConfig::fromJsonObject(v.toObject());
+
+        if(!server_cfg.enable)
+          continue;
+
+        dbus << lldbg << mtdbg << me
+             << QString("  %1: параметры прочитаны").arg(server_cfg.name) << sv::log::endl;
+
+        if(SERVERS.contains(server_cfg.id))
+          throw SvException(QString("Сервер приложения %1. Повторяющийся идентификатор %2!")
+                          .arg(server_cfg.name).arg(server_cfg.id));
+
+        /** создаем объект хранилища **/
+        wd::SvAbstractServer* newserver = create_server(server_cfg);
+
+        if(newserver) {
+
+          SERVERS.insert(newserver->config()->id, newserver);
+
+          if(appcfg.log_options.logging)
+          {
+            LOGGERS.insert(newserver->config()->id, new sv::SvDBus(appcfg.log_options));
+
+            newserver->setLogger(LOGGERS.value(newserver->config()->id));
+          }
+
+
+          dbus << lldbg << me << mtdbg << QString("  %1 (ID: %2, Тип: %3, Параметры: %4)").arg(newserver->config()->name)
+                  .arg(newserver->config()->id).arg(newserver->config()->type).arg(newserver->config()->params) << sv::log::endl;
+
+          counter++;
+
+        }
+
+        else {
+
+          throw SvException(QString("Не удалось добавить сервер %1 ")
+                          .arg(v.toVariant().toString()));
+
+        }
+      }
+    }
+
+    dbus << llinf << me << mtscc << QString("OK [Прочитано %1]\n").arg(counter) << sv::log::endl;
+
+    return true;
+
+  }
+
+  catch(SvException& e) {
+
+    dbus << llerr<< me << mterr  << QString("Ошибка: %1\n").arg(e.error) << sv::log::endl;
+    return false;
+
+  }
+}
+
+ad::SvAbstractDevice* create_device(const ad::DeviceConfig &config) throw(SvException)
 {  
   ad::SvAbstractDevice* newdev = nullptr;
   
   try {
 
-    QLibrary devlib(info.driver_lib_name); // "/home/user/nmea/lib/libtestlib.so.1.0.0"); //
+    QLibrary devlib(config.driver_lib_name); // "/home/user/nmea/lib/libtestlib.so.1.0.0"); //
 
     if(!devlib.load())
       throw SvException(devlib.errorString());
 
     dbus << lldbg << mtdbg << me
-         << QString("  %1: драйвер загружен").arg(info.name) << sv::log::endl;
+         << QString("  %1: драйвер загружен").arg(config.name) << sv::log::endl;
 
     typedef ad::SvAbstractDevice *(*create_device_func)(void);
     create_device_func create = (create_device_func)devlib.resolve("create");
@@ -1104,13 +1184,13 @@ ad::SvAbstractDevice* create_device(const ad::DeviceInfo& info) throw(SvExceptio
       throw SvException(devlib.errorString());
 
     if(!newdev)
-      exception.raise("Неизвестная ошибка при создании объекта устройства");
+      throw SvException("Неизвестная ошибка при создании объекта устройства");
 
-    if(!newdev->configure(info))
-      exception.raise(newdev->lastError());
+    if(!newdev->configure(config))
+      throw SvException(newdev->lastError());
 
     dbus << lldbg << mtdbg << me
-         << QString("  %1: объект создан").arg(info.name) << sv::log::endl;
+         << QString("  %1: объект создан").arg(config.name) << sv::log::endl;
 
     return newdev;
     
@@ -1153,7 +1233,7 @@ as::SvAbstractStorage* create_storage(const as::StorageConfig& config) throw(SvE
       throw SvException(storelib.errorString());
 
     if(!newstorage)
-      throw SvException("Неизвестная ошибка при создании объекта устройства");
+      throw SvException("Неизвестная ошибка при создании объекта хранилища");
 
     if(!newstorage->configure(config))
       throw SvException(newstorage->lastError());
@@ -1178,6 +1258,53 @@ as::SvAbstractStorage* create_storage(const as::StorageConfig& config) throw(SvE
   }
 }
 
+wd::SvAbstractServer* create_server(const wd::ServerConfig& config) throw(SvException)
+{
+  wd::SvAbstractServer* newserver = nullptr;
+
+  try {
+
+    QLibrary serverlib(config.driver_lib); // "/home/user/nmea/lib/libtestlib.so.1.0.0"); //
+
+    if(!serverlib.load())
+      throw SvException(serverlib.errorString());
+
+    dbus << lldbg << mtdbg << me
+         << QString("  %1: драйвер загружен").arg(config.name) << sv::log::endl;
+
+    typedef wd::SvAbstractServer *(*create_server_func)(void);
+    create_server_func create = (create_server_func)serverlib.resolve("create");
+
+    if (create)
+      newserver = create();
+
+    else
+      throw SvException(serverlib.errorString());
+
+    if(!newserver)
+      throw SvException("Неизвестная ошибка при создании объекта сервера");
+
+    if(!newserver->configure(config))
+      throw SvException(newserver->lastError());
+
+    dbus << lldbg << mtdbg << me
+         << QString("  %1: объект создан").arg(config.name) << sv::log::endl;
+
+    return newserver;
+
+  }
+
+  catch(SvException& e) {
+
+    if(newserver)
+      delete newserver;
+
+    newserver = nullptr;
+
+    throw e;
+
+  }
+}
 
 
 bool openDevices()
@@ -1190,12 +1317,12 @@ bool openDevices()
 
       ad::SvAbstractDevice* device = DEVICES.value(key);
 
-      if(!device->open()) exception.raise(QString("%1 [Индекс %2]: %3")
-                                          .arg(device->info()->name)
-                                          .arg(device->info()->id)
+      if(!device->open()) throw SvException(QString("%1 [Индекс %2]: %3")
+                                          .arg(device->config()->name)
+                                          .arg(device->config()->id)
                                           .arg(device->lastError()));
 
-      dbus << lldbg << me << mtdbg<< QString("  %1: OK").arg(device->info()->name) << sv::log::endl;
+      dbus << lldbg << me << mtdbg<< QString("  %1: OK").arg(device->config()->name) << sv::log::endl;
         
     }
     
@@ -1225,14 +1352,13 @@ bool initStorages()
        if(storage->signalsCount()) {
 
          if(!storage->init())
-           exception.raise(QString("%1: %2").arg(storage->config()->name)
+           throw SvException(QString("%1: %2").arg(storage->config()->name)
                                             .arg(storage->lastError()));
          storage->start();
 
          dbus << lldbg << me << mtdbg
-              << QString("  %1: OK")
-                   .arg(storage->config()->name)
-                << sv::log::endl;
+              << QString("  %1: OK").arg(storage->config()->name)
+              << sv::log::endl;
 
        }
      }
@@ -1250,9 +1376,44 @@ bool initStorages()
      return false;
      
    }
-  
 }
 
+bool initServer()
+{
+   dbus << llinf << me << mtinf << "Инициализируем серверы приложений:" <<  sv::log::endl;
+
+   try {
+
+     foreach(wd::SvAbstractServer* server, SERVERS.values()) {
+
+       if(server->signalsCount()) {
+
+         if(!server->init())
+           throw SvException(QString("%1: %2").arg(server->config()->name)
+                                            .arg(server->lastError()));
+         server->start();
+
+         dbus << lldbg << me << mtdbg
+              << QString("  %1: OK").arg(server->config()->name)
+              << sv::log::endl;
+
+       }
+     }
+
+
+     dbus << llinf << me << mtscc << QString("OK\n") << sv::log::endl;
+
+     return true;
+
+   }
+
+   catch(SvException& e) {
+
+     dbus << llerr << me << mterr << QString("Ошибка: %1").arg(e.error) << sv::log::endl;
+     return false;
+
+   }
+}
 
 void closeDevices()
 {
@@ -1266,7 +1427,7 @@ void closeDevices()
     {
       ad::SvAbstractDevice* device = DEVICES.value(key);
 
-      dbus << llinf << me << mtinf << QString("  %1 (%2):").arg(device->info()->name).arg(device->info()->ifc_name) << sv::log::endl;
+      dbus << llinf << me << mtinf << QString("  %1 (%2):").arg(device->config()->name).arg(device->config()->ifc_name) << sv::log::endl;
 
 //      device->close();
       delete DEVICES.take(key);

@@ -20,7 +20,7 @@
 #define SERVER_IMPERMISSIBLE_VALUE "Недопустимое значение параметра %1: %2.\n%3"
 #define SERVER_NO_PARAM "Не задан обязательный параметр %1"
 
-namespace asrv {
+namespace wd {
 
   struct ServerConfig
   {
@@ -205,8 +205,10 @@ namespace asrv {
     void setLastError(const QString& lastError) { p_last_error = lastError; }
     const QString &lastError() const            { return p_last_error; }
 
-    void addSignal(SvSignal* signal)            { p_signals.append(signal); }
-    void clearSignals()                         { p_signals.clear(); }
+    virtual void addSignal(SvSignal* signal)  throw (SvException)
+                                                { p_signals.append(signal); }
+
+    virtual void clearSignals()                 { p_signals.clear(); }
 
     QList<SvSignal*>* Signals()                 { return &p_signals; }
 
@@ -240,9 +242,6 @@ namespace asrv {
       p_server(server)
     {
       p_started = false;
-      p_finished = true;
-
-      p_signals = p_storage->Signals();
     }
 
     virtual ~SvAbstractServerThread()
@@ -261,32 +260,9 @@ namespace asrv {
 
     SvAbstractServer* p_server;
 
-    QList<SvSignal*>* p_signals;
-
     QString p_last_error = "";
 
     bool p_started = false;
-    bool p_finished = true;
-
-    SvSignal* firstSignal()
-    {
-      if(p_signals->count()) {
-
-        m_pos = 0;
-        return p_signals->value(m_pos);
-
-      }
-
-      else return Q_NULLPTR;
-    }
-
-    SvSignal* nextSignal()
-    {
-      return m_pos < p_signals->count() - 1 ? p_signals->value(++m_pos) : Q_NULLPTR;
-    }
-
-  private:
-    int m_pos = 0;
 
   };
 

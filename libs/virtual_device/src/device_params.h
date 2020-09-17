@@ -15,8 +15,6 @@
 #define P_LAST_REGISTER   "last_register"
 #define P_RESET_TIMEOUT   "reset_timeout"
 
-#define DEV_IMPERMISSIBLE_VALUE "Недопустимое значение параметра \"%1\": %2.\n%3"
-
 //namespace dev {
 
 

@@ -66,7 +66,7 @@ namespace ad {
                                     << P_DEV_PARAMS << P_DRIVER;
       for(QString v: l)
         if(object.value(v).isUndefined())
-          throw SvException(QString(DEVINFO_NO_PARAM).arg(v));
+          throw SvException(QString(DEV_NO_PARAM).arg(v));
 
       QString P;
       DeviceConfig p;
@@ -76,7 +76,7 @@ namespace ad {
       if(object.contains(P))
       {
         if(object.value(P).toInt(-1) == -1)
-          throw SvException(QString(DEVINFO_IMPERMISSIBLE_VALUE)
+          throw SvException(QString(DEV_IMPERMISSIBLE_VALUE)
                                  .arg(P)
                                  .arg(object.value(P).toVariant().toString())
                                  .arg("У каждого устройства должен быть свой уникальный номер"));
@@ -84,7 +84,7 @@ namespace ad {
         p.id = object.value(P).toInt(-1);
 
       }
-      else throw SvException(QString(DEVINFO_NO_PARAM).arg(P));
+      else throw SvException(QString(DEV_NO_PARAM).arg(P));
 
 
       /* name */
@@ -92,7 +92,7 @@ namespace ad {
       if(object.contains(P)) {
 
         if(object.value(P).toString("").isEmpty())
-          throw SvException(QString(DEVINFO_IMPERMISSIBLE_VALUE)
+          throw SvException(QString(DEV_IMPERMISSIBLE_VALUE)
                             .arg(P)
                             .arg(object.value(P).toVariant().toString())
                             .arg("Имя устройства не может быть пустым и должно быть заключено в двойные кавычки"));
@@ -100,14 +100,14 @@ namespace ad {
         p.name = object.value(P).toString("");
 
       }
-      else throw SvException(QString(DEVINFO_NO_PARAM).arg(P));
+      else throw SvException(QString(DEV_NO_PARAM).arg(P));
 
       /* ifc */
       P = P_IFC;
       if(object.contains(P)) {
 
         if(object.value(P).toString("").isEmpty())
-          throw SvException(QString(DEVINFO_IMPERMISSIBLE_VALUE)
+          throw SvException(QString(DEV_IMPERMISSIBLE_VALUE)
                             .arg(P)
                             .arg(object.value(P).toVariant().toString())
                             .arg("Имя интерфейса не может быть пустым и должно быть заключено в двойные кавычки"));
@@ -115,7 +115,7 @@ namespace ad {
         p.ifc_name = object.value(P).toString("");
 
       }
-      else throw SvException(QString(DEVINFO_NO_PARAM).arg(P));
+      else throw SvException(QString(DEV_NO_PARAM).arg(P));
 
 
       /* ifc_params */
@@ -125,7 +125,7 @@ namespace ad {
         p.ifc_params = QString(QJsonDocument(object.value(P).toObject()).toJson(QJsonDocument::Compact));
 
       }
-      else throw SvException(QString(DEVINFO_NO_PARAM).arg(P_IFC_PARAMS));
+      else throw SvException(QString(DEV_NO_PARAM).arg(P_IFC_PARAMS));
 
 
       /* dev_params */
@@ -135,7 +135,7 @@ namespace ad {
         p.dev_params = QString(QJsonDocument(object.value(P).toObject()).toJson(QJsonDocument::Compact));
 
       }
-      else throw SvException(QString(DEVINFO_NO_PARAM).arg(P));
+      else throw SvException(QString(DEV_NO_PARAM).arg(P));
 
 
       /* driver */
@@ -143,7 +143,7 @@ namespace ad {
       if(object.contains(P)) {
 
         if(object.value(P).toString("").isEmpty())
-          throw SvException(QString(DEVINFO_IMPERMISSIBLE_VALUE)
+          throw SvException(QString(DEV_IMPERMISSIBLE_VALUE)
                             .arg(P)
                             .arg(object.value(P).toVariant().toString())
                             .arg("Путь к библиотеке драйвера устройства не может быть пустым"));
@@ -151,14 +151,14 @@ namespace ad {
         p.driver_lib_name = object.value(P).toString("");
 
       }
-      else throw SvException(QString(DEVINFO_NO_PARAM).arg(P));
+      else throw SvException(QString(DEV_NO_PARAM).arg(P));
 
       /* timeout*/
       P = P_TIMEOUT;
       if(object.contains(P))
       {
         if(object.value(P).toInt(-1) < 1)
-          throw SvException(QString(DEVINFO_IMPERMISSIBLE_VALUE)
+          throw SvException(QString(DEV_IMPERMISSIBLE_VALUE)
                                  .arg(P)
                                  .arg(object.value(P).toVariant().toString())
                                  .arg("Таймаут не может быть меньше 1 мсек."));
@@ -283,7 +283,7 @@ public:
 
   virtual bool configure(const ad::DeviceConfig& cfg) = 0;
 
-  virtual const ad::DeviceConfig* config() const { return &p_cfg; }
+  virtual const ad::DeviceConfig* config() const { return &p_config; }
 //  virtual const ad::DeviceParams* params() const { return &p_params; }
 
   virtual bool open() = 0;
@@ -333,7 +333,7 @@ public:
 
   inline void setNewLostEpoch()
   {
-      p_lost_epoch = QDateTime::currentMSecsSinceEpoch() + p_info.timeout;
+      p_lost_epoch = QDateTime::currentMSecsSinceEpoch() + p_config.timeout;
 
       foreach (SvSignal* s, p_signals_without_timeout.values())
         s->setDeviceLostEpoch(p_lost_epoch);
@@ -344,7 +344,7 @@ protected:
 
   ad::SvAbstractDeviceThread* p_thread = nullptr;
 
-  ad::DeviceConfig    p_cfg;
+  ad::DeviceConfig    p_config;
 
   sv::SvAbstractLogger* p_logger;
 
@@ -401,7 +401,17 @@ protected:
   SvException p_exception;
 
   virtual void process_data() = 0;
-  virtual void process_signals() = 0;
+//  virtual void process_signals() = 0;
+
+
+  virtual void process_signals()
+  {
+    foreach (SvSignal* signal, p_device->Signals()->values()) {
+      if((signal->config()->timeout > 0 && !signal->isAlive()) ||
+         (signal->config()->timeout == 0 && !signal->isDeviceAlive()))
+            signal->setLostValue();
+    }
+  }
 
 public slots:
 

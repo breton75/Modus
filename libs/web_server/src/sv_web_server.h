@@ -20,6 +20,19 @@
 
 #include "params.h"
 
+class SvWebServer;
+class SvWebServerThread;
+
+extern "C" {
+
+    WEBSERVERSHARED_EXPORT wd::SvAbstractServer* create();
+
+//    VIRTUAL_DEVICESHARED_EXPORT QString defaultDeviceParams();
+//    VIRTUAL_DEVICESHARED_EXPORT QString defaultIfcParams(const QString& ifc);
+//    VIRTUAL_DEVICESHARED_EXPORT QList<QString> availableInterfaces();
+
+}
+
 const QMap<QString, QString> ContentTypeBySuffix = {{"html", "text/html"},
                                                     {"cmd",  "text/cmd"},
                                                     {"css",  "text/css"},
@@ -39,7 +52,7 @@ const QMap<QString, QString> ContentTypeBySuffix = {{"html", "text/html"},
                                                     {"json", "application/json"}
                                                    };
 
-class WEBSERVERSHARED_EXPORT SvWebServer: public asrv::SvAbstractServer
+class SvWebServer: public wd::SvAbstractServer
 {
   Q_OBJECT
 
@@ -47,78 +60,79 @@ public:
   explicit SvWebServer(sv::SvAbstractLogger* logger = nullptr, QObject *parent = 0);
   ~SvWebServer();
 
-  bool configure(const asrv::ServerConfig& config);
+  bool configure(const wd::ServerConfig& config);
 
-  bool init() { }
+  bool init();
 
   void start();
   void stop();
 
-  void addSignal(SvSignal* signal) throw(SvException)
-  {
-    if(m_signals_by_id.contains(signal->config()->id))
-      throw SvException(QString("Повторяющееся id сигнала: %1").arg(signal->config()->id));
+  void addSignal(SvSignal* signal)  throw (SvException) Q_DECL_OVERRIDE;
 
-    if(m_signals_by_name.contains(signal->config()->name))
-      throw SvException(QString("Повторяющееся id сигнала: %1").arg(signal->config()->name));
-
-    m_signals_by_id.insert(signal->config()->id, signal);
-    m_signals_by_name.insert(signal->config()->name, signal);
-  }
+  const QMap<int, SvSignal*>*      signalsById()   const { return &m_signals_by_id;   }
+  const QHash<QString, SvSignal*>* signalsByName() const { return &m_signals_by_name; }
 
 private:
   QTcpServer m_server;
+  QList<SvWebServerThread*> m_clients;
 
   Params m_params;
 
   sv::SvAbstractLogger* m_logger;
 
-  QMap<qintptr, QTcpSocket*> m_clients;
+  QMap<int, SvSignal*>      m_signals_by_id;//   = QMap<int, SvSignal*>();
+  QHash<QString, SvSignal*> m_signals_by_name;// = QHash<QString, SvSignal*>();
+
+public slots:
+  void threadFinished();
 
 private slots:
   void newConnection();
-  void readClient();
+
+signals:
+  void stopThreads();
 
 };
 
-class SvWebServerThread: public asrv::SvAbstractServerThread
+class SvWebServerThread: public QThread // asrv::SvAbstractServerThread
 {
   Q_OBJECT
 
 public:
-  explicit SvWebServerThread(qintptr socket_descriptor, asrv::SvAbstractServer* server, Params* params):
+  explicit SvWebServerThread(qintptr socket_descriptor, SvWebServer* server, Params* params):
+    m_server(server),
     m_socket_descriptor(socket_descriptor),
-    asrv::SvAbstractServerThread(server),
     m_params(params)
-  {  }
+  {
+
+  }
 
   ~SvWebServerThread()
   {  }
 
-  bool init();
-  void stop();
 
   void run() Q_DECL_OVERRIDE;
 
 
 private:
-  QTcpSocket m_client;
+//  asrv::SvAbstractServer* m_server;
+  SvWebServer* m_server;
+
   qintptr m_socket_descriptor;
+  QTcpSocket m_client;
 
   sv::SvAbstractLogger* m_logger;
 
   Params* m_params;
 
-  QMap<int, SvSignal*> m_signals_by_id;
-  QMap<QString, SvSignal*> m_signals_by_name;
+  bool m_started;
 
-  void reply_GET();
-  void reply_POST();
+  void reply_GET(QList<QByteArray> &parts);
+  void reply_POST(QList<QByteArray> &parts);
   void reply_GET_error(int errorCode, QString errorString);
 
-private slots:
-  void newConnection();
-  void readClient();
+public slots:
+  void stop();
 
 };
 

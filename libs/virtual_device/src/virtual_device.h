@@ -64,7 +64,7 @@ public:
   VirtualDevice(sv::SvAbstractLogger* logger = nullptr);
   ~VirtualDevice();
 
-  bool configure(const ad::DeviceInfo& info);
+  bool configure(const ad::DeviceConfig& cfg);
 
   bool open();
   void close();

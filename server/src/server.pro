@@ -1,5 +1,5 @@
 QT -= gui
-QT += network
+QT += network dbus
 
 CONFIG += c++11 console
 CONFIG -= app_bundle
@@ -25,7 +25,7 @@ SOURCES += main.cpp \
     ../../../svlib/sv_config.cpp \
     ../../../svlib/sv_abstract_logger.cpp \
     ../../../svlib/sv_fnt.cpp \
-    sv_webserver.cpp
+    ../../global/sv_dbus.cpp
 
 HEADERS += \
     ../../global/sv_signal.h \
@@ -35,11 +35,11 @@ HEADERS += \
     ../../../svlib/sv_config.h \
     ../../../svlib/sv_fnt.h \
     ../../../svlib/sv_abstract_logger.h \
-    sv_webserver.h \
     app_config.h \
     ../../global/global_defs.h \
     ../../global/params_defs.h \
-    ../../global/sv_abstract_server.h
+    ../../global/sv_abstract_server.h \
+    ../../global/sv_dbus.h
 
 DISTFILES += \
     ../../../nmea/config.json \

@@ -7,7 +7,7 @@
 QT       += network dbus serialport
 QT       -= gui
 
-TARGET = /home/user/nmea/lib/virtual_device
+TARGET = /home/user/widen/lib/virtual_device
 TEMPLATE = lib
 
 CONFIG += plugin c++11

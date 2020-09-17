@@ -2,13 +2,24 @@
 
 using namespace sv::log;
 
+
+/** ********** EXPORT ************ **/
+wd::SvAbstractServer* create()
+{
+  wd::SvAbstractServer* server = new SvWebServer();
+  return server;
+}
+
+
+/** ********** SvWebServer ************ **/
+
 SvWebServer::SvWebServer(sv::SvAbstractLogger* logger, QObject *parent):
-  asrv::SvAbstractServer(logger)
+  wd::SvAbstractServer(logger)
 {
   setParent(parent);
 }
 
-bool SvWebServer::configure(const asrv::ServerConfig& config)
+bool SvWebServer::configure(const wd::ServerConfig& config)
 {
   p_config = config;
 
@@ -27,29 +38,53 @@ bool SvWebServer::configure(const asrv::ServerConfig& config)
   }
 }
 
-void SvWebServer::start()
+void SvWebServer::addSignal(SvSignal* signal) throw (SvException)
 {
-  connect(&m_server, SIGNAL(newConnection()), this, SLOT(newConnection()));
+  if(m_signals_by_id.contains(signal->config()->id))
+    throw SvException(QString("Повторяющееся id сигнала: %1").arg(signal->config()->id));
 
+  if(m_signals_by_name.contains(signal->config()->name))
+    throw SvException(QString("Повторяющееся имя сигнала: %1").arg(signal->config()->name));
+
+  m_signals_by_id.insert(signal->config()->id, signal);
+  m_signals_by_name.insert(signal->config()->name, signal);
+
+  wd::SvAbstractServer::addSignal(signal);
+
+}
+
+bool SvWebServer::init()
+{
   if (!m_server.listen(QHostAddress::Any, m_params.port))
   {
-    if(m_logger)
-      *m_logger << llInfo << mtInfo << TimeZZZ << QString("Ошибка запуска web сервера: %1").arg(m_server.errorString()) << sv::log::endl;
+    p_last_error =  QString("Ошибка запуска сервера %1: %2").arg(p_config.name).arg(m_server.errorString());
 
     return false;
 
   };
 
-  if(m_logger)
-    *m_logger << llInfo << mtInfo << TimeZZZ << QString("Web сервер запущен на %1 порту").arg(m_port) << endl;
-
   return true;
 
 }
 
+void SvWebServer::start()
+{
+  connect(&m_server, SIGNAL(newConnection()), this, SLOT(newConnection()));
+}
+
 void SvWebServer::stop()
 {
+  emit stopThreads();
 
+  while(!m_clients.isEmpty())
+    qApp->processEvents();
+}
+
+void SvWebServer::threadFinished()
+{
+  SvWebServerThread* thr = (SvWebServerThread*)(sender());
+  m_clients.removeOne(thr);
+  thr->deleteLater();
 }
 
 void SvWebServer::newConnection()
@@ -60,19 +95,12 @@ void SvWebServer::newConnection()
 
     QTcpSocket* client = m_server.nextPendingConnection();
 
-    m_clients.insert(client->socketDescriptor(), client);
-
-    QThreadPool pool;
-    pool.start();
-
     SvWebServerThread *thread = new SvWebServerThread(client->socketDescriptor(), this, &m_params);
-    connect(thread, SIGNAL(finished()), thread, SLOT(deleteLater()));
+    connect(thread, SIGNAL(finished()), this, SLOT(threadFinished()));
+    connect(this, SIGNAL(stopThreads()), thread, SLOT(stop()));
     thread->start();
 
-    connect(client, SIGNAL(readyRead()), this, SLOT(readClient()));
-
-    //   Удалим объект сокета из карты
-      m_clients.remove(client->socketDescriptor());
+    m_clients.append(thread);
 
   }
 }
@@ -83,20 +111,19 @@ void SvWebServerThread::run()
   if(!m_client.setSocketDescriptor(m_socket_descriptor))
   {
     if(m_logger)
-      *m_logger << llError << mtError << TimeZZZ << QString("Ошибка web сервера: %1").arg(m_socket.errorString()) << endl;
+      *m_logger << llError << mtError << TimeZZZ << QString("Ошибка web сервера: %1").arg(m_client.errorString()) << sv::log::endl;
 
     return;
   }
 
-  p_started = true;
-  p_finished = false;
+  m_started = true;
 
-  while(p_started)
+  while(m_started)
   {
     // ждем пока клиент не пришлет запрос
     if(m_client.waitForReadyRead(100))
     {
-      QByteArray request = m_client->readAll();
+      QByteArray request = m_client.readAll();
 
       QList<QByteArray> parts = request.split('\n');
 
@@ -105,10 +132,8 @@ void SvWebServerThread::run()
 
       bool is_GET  = parts.at(0).toUpper().startsWith("GET");
       bool is_POST = parts.at(0).toUpper().startsWith("POST");
-//      bool has_http = parts.at(0).indexOf("HTTP") > 3;
-//      bool part_cnt = parts.at(0).split(' ').count() > 2;
 
-      if(!(is_GET || is_POST)) // && has_http && part_cnt))
+      if(!(is_GET || is_POST))
         return;
 
       if(m_logger && m_logger->options().log_level >= sv::log::llDebug2)
@@ -119,25 +144,23 @@ void SvWebServerThread::run()
       }
 
       if(is_GET)
-        reply_GET();
+        reply_GET(parts);
 
-      else if (is_post)
-        reply_POST();
+      else if (is_POST)
+        reply_POST(parts);
 
       // после обмена данными выходим
-      p_started = false;
+      m_started = false;
 
     }
   }
 
   // нужно закрыть сокет
-  m_client->close();
-
-  p_finished = true;
+  m_client.close();
 
 }
 
-void SvWebServerThread::reply_GET()
+void SvWebServerThread::reply_GET(QList<QByteArray> &parts)
 {
   QDir dir(m_params->html_path);
 
@@ -162,7 +185,7 @@ void SvWebServerThread::reply_GET()
   {
 //    QString html = QString();
 
-    QTextStream replay(m_client);
+    QTextStream replay(&m_client);
     replay.setAutoDetectUnicode(true);
 
     QString content_type = ContentTypeBySuffix.contains(QFileInfo(file).suffix())
@@ -181,8 +204,35 @@ void SvWebServerThread::reply_GET()
 
 }
 
-void SvWebServerThread::reply_POST()
+void SvWebServerThread::reply_POST(QList<QByteArray> &parts)
 {
+  auto getStr = [=](QVariant value) -> QString {
+
+      QString  result = "н/д";
+
+      if(value.isValid())
+      {
+        switch (value.type()) {
+          case QMetaType::Int:
+
+            result = QString::number(value.toInt());
+            break;
+
+          case QMetaType::Double:
+
+            result = QString::number(value.toInt());
+            break;
+
+          default:
+            result = "н/д";
+
+        }
+      }
+
+      return result;
+
+    };
+
   QStringList r1 = QString(parts.last()).split('?');
 
   if(r1.count() < 2)
@@ -199,13 +249,34 @@ void SvWebServerThread::reply_POST()
       if(name.trimmed().isEmpty())
         continue;
 
-      if(m_signals_by_name.contains(name))
-        json.append(QString("{\"name\":\"%1\",\"value\":%2},")
-                      .arg(name).arg(m_signals_by_name.value(name)->value()));
+      if(m_server->signalsByName()->contains(name)) {
 
+//        QVariant value = m_server->signalsByName()->value(name)->value();
+//        QString  v = "н/д";
+
+//        if(value.isValid())
+//        {
+//          switch (value.type()) {
+
+//            case QMetaType::Int:
+//              v = QString::number(value.toInt());
+//              break;
+
+//            case QMetaType::Double:
+//              v = QString::number(value.toInt());
+//              break;
+
+//          }
+//        }
+
+        json.append(QString("{\"name\":\"%1\",\"value\":\"%2\"},")
+                      .arg(name).arg(getStr(m_server->signalsByName()->value(name)->value())));
+
+      }
     }
 
     if(!json.isEmpty()) json.chop(1);
+
   }
 
   else if(r1.at(0) == "ids")
@@ -220,17 +291,40 @@ void SvWebServerThread::reply_POST()
       bool ok;
       int id = curid.toInt(&ok);
 
-      if(ok && m_signals_by_id.contains(id))
-        json.append(QString("{\"id\":\"%1\",\"value\":\"%2\"},")
-                      .arg(id).arg(m_signals_by_id.value(id)->value()));
+      if(ok && m_server->signalsById()->contains(id))
+      {
 
+//        QVariant value = m_server->signalsById()->value(id)->value();
+//        QString  v = "н/д";
+
+//        if(value.isValid())
+//        {
+//          switch (value.type()) {
+//            case QMetaType::Int:
+
+//              v = QString::number(value.toInt());
+//              break;
+
+//            case QMetaType::Double:
+
+//              v = QString::number(value.toInt());
+//              break;
+
+//          }
+//        }
+
+
+        json.append(QString("{\"id\":\"%1\",\"value\":\"%2\"},")
+                      .arg(id).arg(getStr(m_server->signalsById()->value(id)->value())));
+
+      }
     }
 
     if(!json.isEmpty()) json.chop(1);
 
   }
 
-  QTextStream replay(m_client);
+  QTextStream replay(&m_client);
   replay.setAutoDetectUnicode(true);
 
   QString http = QString()
@@ -249,23 +343,12 @@ void SvWebServerThread::reply_POST()
 
 }
 
-bool SvWebServerThread::init()
-{
-
-}
-
-void SvWebServerThread::readClient()
-{
-
-
-}
-
 void SvWebServerThread::reply_GET_error(int errorCode, QString errorString)
 {
   if(m_logger)
     *m_logger <<llError << mtError << errorString << sv::log::endl;
 
-  QTextStream replay(m_client);
+  QTextStream replay(&m_client);
   replay.setAutoDetectUnicode(true);
 
   replay << "HTTP/1.1 %1 Error"
@@ -284,5 +367,5 @@ void SvWebServerThread::reply_GET_error(int errorCode, QString errorString)
 
 void SvWebServerThread::stop()
 {
-
+  m_started = false;
 }
