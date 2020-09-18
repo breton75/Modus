@@ -1,0 +1,15 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+"http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node>
+    <interface name="org.nirpi.WidenDBus">
+      <signal name="message">
+        <arg direction="out" type="s" name="sender"/>
+        <arg direction="out" type="s" name="text"/>
+        <arg direction="out" type="s" name="type"/>
+      </signal>
+      <signal name="action">
+        <arg direction="out" type="s" name="nickname"/>
+        <arg direction="out" type="s" name="text"/>
+      </signal>
+    </interface>
+</node>

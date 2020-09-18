@@ -7,6 +7,8 @@
 
 #include "../../svlib/sv_abstract_logger.h"
 
+#include "../server/build/dbus_interface.h"
+
 #define DBUS_SERVER_NAME "niirpi.proj.widen"
 #define DBUS_SENDER_NAME "device_%1"
 

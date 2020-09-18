@@ -3,23 +3,15 @@
 using namespace sv::log;
 
 
-/** ********** EXPORT ************ **/
-wd::SvAbstractServer* create()
-{
-  wd::SvAbstractServer* server = new SvWebServer();
-  return server;
-}
-
-
 /** ********** SvWebServer ************ **/
 
-SvWebServer::SvWebServer(sv::SvAbstractLogger* logger, QObject *parent):
+wd::SvWebServer::SvWebServer(sv::SvAbstractLogger* logger, QObject *parent):
   wd::SvAbstractServer(logger)
 {
   setParent(parent);
 }
 
-bool SvWebServer::configure(const wd::ServerConfig& config)
+bool wd::SvWebServer::configure(const wd::ServerConfig& config)
 {
   p_config = config;
 
@@ -38,7 +30,7 @@ bool SvWebServer::configure(const wd::ServerConfig& config)
   }
 }
 
-void SvWebServer::addSignal(SvSignal* signal) throw (SvException)
+void wd::SvWebServer::addSignal(SvSignal* signal) throw (SvException)
 {
   if(m_signals_by_id.contains(signal->config()->id))
     throw SvException(QString("Повторяющееся id сигнала: %1").arg(signal->config()->id));
@@ -53,7 +45,7 @@ void SvWebServer::addSignal(SvSignal* signal) throw (SvException)
 
 }
 
-bool SvWebServer::init()
+bool wd::SvWebServer::init()
 {
   if (!m_server.listen(QHostAddress::Any, m_params.port))
   {
@@ -67,12 +59,12 @@ bool SvWebServer::init()
 
 }
 
-void SvWebServer::start()
+void wd::SvWebServer::start()
 {
   connect(&m_server, SIGNAL(newConnection()), this, SLOT(newConnection()));
 }
 
-void SvWebServer::stop()
+void wd::SvWebServer::stop()
 {
   emit stopThreads();
 
@@ -80,14 +72,14 @@ void SvWebServer::stop()
     qApp->processEvents();
 }
 
-void SvWebServer::threadFinished()
+void wd::SvWebServer::threadFinished()
 {
   SvWebServerThread* thr = (SvWebServerThread*)(sender());
   m_clients.removeOne(thr);
   thr->deleteLater();
 }
 
-void SvWebServer::newConnection()
+void wd::SvWebServer::newConnection()
 {
   if(m_server.isListening())
   {
@@ -106,7 +98,7 @@ void SvWebServer::newConnection()
 }
 
 /** SvWebServerThread **/
-void SvWebServerThread::run()
+void wd::SvWebServerThread::run()
 {
   if(!m_client.setSocketDescriptor(m_socket_descriptor))
   {
@@ -160,7 +152,7 @@ void SvWebServerThread::run()
 
 }
 
-void SvWebServerThread::reply_GET(QList<QByteArray> &parts)
+void wd::SvWebServerThread::reply_GET(QList<QByteArray> &parts)
 {
   QDir dir(m_params->html_path);
 
@@ -204,7 +196,7 @@ void SvWebServerThread::reply_GET(QList<QByteArray> &parts)
 
 }
 
-void SvWebServerThread::reply_POST(QList<QByteArray> &parts)
+void wd::SvWebServerThread::reply_POST(QList<QByteArray> &parts)
 {
   auto getStr = [=](QVariant value) -> QString {
 
@@ -343,7 +335,7 @@ void SvWebServerThread::reply_POST(QList<QByteArray> &parts)
 
 }
 
-void SvWebServerThread::reply_GET_error(int errorCode, QString errorString)
+void wd::SvWebServerThread::reply_GET_error(int errorCode, QString errorString)
 {
   if(m_logger)
     *m_logger <<llError << mtError << errorString << sv::log::endl;
@@ -365,7 +357,15 @@ void SvWebServerThread::reply_GET_error(int errorCode, QString errorString)
             .arg(QDateTime::currentDateTime().toString());
 }
 
-void SvWebServerThread::stop()
+void wd::SvWebServerThread::stop()
 {
   m_started = false;
+}
+
+
+/** ********** EXPORT ************ **/
+wd::SvAbstractServer* create()
+{
+//  wd::SvAbstractServer* server = ;
+  return new wd::SvWebServer();
 }

@@ -7,7 +7,7 @@
 QT       += network
 QT       -= gui
 
-CONFIG += plugin c++11
+CONFIG += c++11 plugin
 
 TARGET = /home/user/widen/lib/web_server
 TEMPLATE = lib
@@ -18,7 +18,6 @@ SOURCES += sv_web_server.cpp
 
 HEADERS += sv_web_server.h\
         webserver_global.h \
-    ../WIDEN/global/sv_abstract_server.h \
     params.h \
     ../../../global/sv_abstract_server.h
 

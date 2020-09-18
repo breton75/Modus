@@ -5,13 +5,13 @@
 #include <QCloseEvent>
 #include <QFile>
 #include <QFileDialog>
+#include <QDBusConnection>
 
-#include "../../svlib/sv_widget_log.h"
-#include "../../svlib/sv_pgdb.h"
+#include "../../../svlib/sv_widget_log.h"
 
-#include "../global/sv_dbus.h"
-#include "../global/global_defs.h"
-#include "../global/sql_defs.h"
+#include "../../global/global_defs.h"
+
+//#include "widen_dbus_adaptor.h"
 
 namespace Ui {
 class MainWindow;

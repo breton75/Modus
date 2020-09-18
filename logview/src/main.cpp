@@ -4,10 +4,10 @@
 #include <QMessageBox>
 #include <QDir>
 
-#include "../../svlib/sv_abstract_logger.h"
-#include "../../svlib/sv_config.h"
+#include "../../../svlib/sv_abstract_logger.h"
+#include "../../../svlib/sv_config.h"
 
-#include "../global/global_defs.h"
+#include "../../global/global_defs.h"
 
 void signal_handler(int sig);
 
@@ -52,7 +52,7 @@ bool parse_params(const QStringList& args, AppConfig& cfg, const QString& file_n
     SvCommandLineParser cmd_parser(AppOptions);
 
     cmd_parser.setSingleDashWordOptionMode(QCommandLineParser::ParseAsLongOptions);
-    cmd_parser.setApplicationDescription(QString("\nЛоггер устройств КСУТС v.%1").arg(APP_VERSION));
+    cmd_parser.setApplicationDescription(QString("\nЛоггер системы Widen v.%1").arg(APP_VERSION));
     cmd_parser.addHelpOption();
     cmd_parser.addVersionOption();
 
@@ -60,7 +60,7 @@ bool parse_params(const QStringList& args, AppConfig& cfg, const QString& file_n
       exception.raise(-1, QString("%1\n\n%2").arg(cmd_parser.errorText()).arg(cmd_parser.helpText()));
 
     if (cmd_parser.isSetVersionOption())
-      exception.raise(-1, QString("Логгер устройств КСУТС v.%1").arg(APP_VERSION));
+      exception.raise(-1, QString("Логгер системы Widen v.%1").arg(APP_VERSION));
 
     if (cmd_parser.isSetHelpOption())
       exception.raise(-1, cmd_parser.helpText());

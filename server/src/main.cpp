@@ -24,11 +24,13 @@
 
 #include "../../global/global_defs.h"
 #include "../../global/sv_signal.h"
-#include "../../global/sv_dbus.h"
 
 #include "../../../svlib/sv_sqlite.h"
 #include "../../../svlib/sv_exception.h"
 #include "../../../svlib/sv_config.h"
+
+#include "sv_dbus.h"
+#include "widen_dbus_interface.h"
 
 //#include "sv_storage.h"
 //#include "sv_webserver.h"
@@ -49,6 +51,8 @@ SvException exception;
 QDateTime start_time;
 
 //sv::SvConcoleLogger dbus;
+
+org::niirpi::WidenDBus* widen_dbus_ifc;
 sv::SvDBus dbus;
 
 //SvWebServer webserver;
@@ -95,6 +99,7 @@ QJsonObject JSON;
 
 bool openDevices();
 bool initStorages();
+bool initServers();
 
 void signal_handler(int sig);
 
@@ -526,7 +531,9 @@ int main(int argc, char *argv[])
   }
 
   // инициализируем dbus ПОСЛЕ запуска потомка
-  dbus.init();
+  widen_dbus_ifc = new org::niirpi::WidenDBus(org::niirpi::WidenDBus::staticInterfaceName(), "/", QDBusConnection::sessionBus(), 0);
+
+//  dbus.init();
 
   try {
 
@@ -593,7 +600,7 @@ int main(int argc, char *argv[])
 //    /** читаем устройства, репозитории и сигналы. СИГНАЛЫ В ПОСЛЕДНЮЮ ОЧЕРЕДЬ! **/
     if(!readDevices(cfg)) throw SvException(-20);
     if(!readStorages(cfg)) throw SvException(-30);
-
+    if(!readServers(cfg)) throw SvException(-31);
     if(!readSignals()) throw SvException(-40);
 
 //    close_db();
@@ -601,8 +608,11 @@ int main(int argc, char *argv[])
     /** подключаемся к устройствам и к репозиториям и начинаем работу **/
     if(!openDevices()) throw SvException(-50);
 
-//    /** подключаемся к серверам баз данных - хранилищам **/
+    /** подключаемся к хранилищам **/
     initStorages();
+
+    /** запускаем серверы приложений **/
+    initServers();
 
 //    web_logger = new sv::SvDBus(cfg.log_options);
 //    bool w = webserver.init(web_logger);
@@ -954,8 +964,6 @@ bool readSignals()
 
         if(newsig->id() > max_sig_id) max_sig_id = newsig->id();
 
-        // добавляем сигнал на веб сервер
-//        webserver.addSignal(newsig);
 
         // раскидываем сигналы по устройствам
         if(DEVICES.contains(newsig->config()->device_id)) {
@@ -982,6 +990,11 @@ bool readSignals()
 
             }
           }
+
+          // привязываем сигнал к серверам
+          for(wd::SvAbstractServer* server: SERVERS)
+            server->addSignal(newsig);
+
         }
         else
           dbus << llerr << me << mterr << QString("Сигнал '%1' не привязан ни к одному устройству!").arg(newsig->config()->name) << sv::log::endl;
@@ -1263,7 +1276,7 @@ wd::SvAbstractServer* create_server(const wd::ServerConfig& config) throw(SvExce
   wd::SvAbstractServer* newserver = nullptr;
 
   try {
-
+dbus << config.driver_lib << sv::log::endl;
     QLibrary serverlib(config.driver_lib); // "/home/user/nmea/lib/libtestlib.so.1.0.0"); //
 
     if(!serverlib.load())
@@ -1378,7 +1391,7 @@ bool initStorages()
    }
 }
 
-bool initServer()
+bool initServers()
 {
    dbus << llinf << me << mtinf << "Инициализируем серверы приложений:" <<  sv::log::endl;
 
