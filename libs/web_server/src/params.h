@@ -31,80 +31,83 @@
 
 
 /** структура для хранения параметров udp **/
-struct Params {
+namespace websrv {
 
-  quint16 port       = 80;
-  QString index_file = "index.html";
-  QString html_path  = "html";
+  struct Params {
 
-  static Params fromJsonString(const QString& json) throw (SvException)
-  {
-    QJsonParseError err;
-    QJsonDocument jd = QJsonDocument::fromJson(json.toUtf8(), &err);
+    quint16 port       = 80;
+    QString index_file = "index.html";
+    QString html_path  = "html";
 
-    if(err.error != QJsonParseError::NoError)
-      throw SvException(err.errorString());
+    static Params fromJsonString(const QString& json) throw (SvException)
+    {
+      QJsonParseError err;
+      QJsonDocument jd = QJsonDocument::fromJson(json.toUtf8(), &err);
 
-    try {
-      return fromJsonObject(jd.object());
+      if(err.error != QJsonParseError::NoError)
+        throw SvException(err.errorString());
+
+      try {
+        return fromJsonObject(jd.object());
+      }
+      catch(SvException e) {
+        throw e;
+      }
     }
-    catch(SvException e) {
-      throw e;
+
+    static Params fromJsonObject(const QJsonObject &object) throw (SvException)
+    {
+      Params p;
+      QString P;
+
+      /* port */
+      P = P_PORT;
+      if(object.contains(P)) {
+
+        p.port = object.value(P).toInt(0);
+
+        if(p.port == 0)
+          throw SvException(QString(P_IMPERMISSIBLE_VALUE)
+                             .arg(P).arg(object.value(P).toVariant().toString())
+                             .arg("Допускаются только числовые значения в диапазоне 1 - 65535"));
+
+      }
+      else p.port = 80;
+
+      /* index file name */
+      P = P_INDEX_FILE;
+      p.index_file = object.contains(P) ? object.value(P).toString() : "index.html";
+
+      /* html_path */
+      P = P_HTML_PATH;
+      p.html_path = object.contains(P) ? object.value(P).toString() : "html";
+
+
+      return p;
+
     }
-  }
 
-  static Params fromJsonObject(const QJsonObject &object) throw (SvException)
-  {
-    Params p;
-    QString P;
+    QString toJsonString(QJsonDocument::JsonFormat format = QJsonDocument::Indented) const
+    {
+      QJsonDocument jd;
+      jd.setObject(toJsonObject());
 
-    /* port */
-    P = P_PORT;
-    if(object.contains(P)) {
+      return QString(jd.toJson(format));
+    }
 
-      p.port = object.value(P).toInt(0);
+    QJsonObject toJsonObject() const
+    {
+      QJsonObject j;
 
-      if(p.port == 0)
-        throw SvException(QString(P_IMPERMISSIBLE_VALUE)
-                           .arg(P).arg(object.value(P).toVariant().toString())
-                           .arg("Допускаются только числовые значения в диапазоне 1 - 65535"));
+      j.insert(P_PORT, QJsonValue(static_cast<int>(port)).toInt());
+      j.insert(P_INDEX_FILE, QJsonValue(index_file).toString());
+      j.insert(P_HTML_PATH, QJsonValue(html_path).toString());
+
+      return j;
 
     }
-    p.port = 80;
-
-    /* index file name */
-    P = P_INDEX_FILE;
-    p.index_file = object.contains(P) ? object.value(P).toString() : "index.html";
-
-    /* html_path */
-    P = P_HTML_PATH;
-    p.html_path = object.contains(P) ? object.value(P).toString() : "html";
-
-
-    return p;
-
-  }
-
-  QString toJsonString(QJsonDocument::JsonFormat format = QJsonDocument::Indented) const
-  {
-    QJsonDocument jd;
-    jd.setObject(toJsonObject());
-
-    return QString(jd.toJson(format));
-  }
-
-  QJsonObject toJsonObject() const
-  {
-    QJsonObject j;
-
-    j.insert(P_PORT, QJsonValue(static_cast<int>(port)).toInt());
-    j.insert(P_INDEX_FILE, QJsonValue(index_file).toString());
-    j.insert(P_HTML_PATH, QJsonValue(html_path).toString());
-
-    return j;
-
-  }
-};
+  };
+}
 
 
 #endif // VIRTUAL_DEVICE_UDP_PARAMS

@@ -5,19 +5,24 @@ using namespace sv::log;
 
 /** ********** SvWebServer ************ **/
 
-wd::SvWebServer::SvWebServer(sv::SvAbstractLogger* logger, QObject *parent):
+websrv::SvWebServer::SvWebServer(sv::SvAbstractLogger* logger):
   wd::SvAbstractServer(logger)
 {
-  setParent(parent);
+
 }
 
-bool wd::SvWebServer::configure(const wd::ServerConfig& config)
+websrv::SvWebServer::~SvWebServer()
+{
+
+}
+
+bool websrv::SvWebServer::configure(const wd::ServerConfig& config)
 {
   p_config = config;
 
   try
   {
-    m_params = Params::fromJsonString(p_config.params);
+    m_params = websrv::Params::fromJsonString(p_config.params);
 
     return true;
 
@@ -30,7 +35,7 @@ bool wd::SvWebServer::configure(const wd::ServerConfig& config)
   }
 }
 
-void wd::SvWebServer::addSignal(SvSignal* signal) throw (SvException)
+void websrv::SvWebServer::addSignal(SvSignal* signal) throw (SvException)
 {
   if(m_signals_by_id.contains(signal->config()->id))
     throw SvException(QString("Повторяющееся id сигнала: %1").arg(signal->config()->id));
@@ -45,8 +50,9 @@ void wd::SvWebServer::addSignal(SvSignal* signal) throw (SvException)
 
 }
 
-bool wd::SvWebServer::init()
+bool websrv::SvWebServer::init()
 {
+  qDebug() << "SvWebServer::init()" << m_params.port;
   if (!m_server.listen(QHostAddress::Any, m_params.port))
   {
     p_last_error =  QString("Ошибка запуска сервера %1: %2").arg(p_config.name).arg(m_server.errorString());
@@ -59,12 +65,12 @@ bool wd::SvWebServer::init()
 
 }
 
-void wd::SvWebServer::start()
+void websrv::SvWebServer::start()
 {
   connect(&m_server, SIGNAL(newConnection()), this, SLOT(newConnection()));
 }
 
-void wd::SvWebServer::stop()
+void websrv::SvWebServer::stop()
 {
   emit stopThreads();
 
@@ -72,34 +78,35 @@ void wd::SvWebServer::stop()
     qApp->processEvents();
 }
 
-void wd::SvWebServer::threadFinished()
+void websrv::SvWebServer::threadFinished()
 {
   SvWebServerThread* thr = (SvWebServerThread*)(sender());
   m_clients.removeOne(thr);
   thr->deleteLater();
 }
 
-void wd::SvWebServer::newConnection()
+void websrv::SvWebServer::newConnection()
 {
   if(m_server.isListening())
   {
 //    qDebug() << QString::fromUtf8("У нас новое соединение!");
 
     QTcpSocket* client = m_server.nextPendingConnection();
-
+qDebug() << 1;
     SvWebServerThread *thread = new SvWebServerThread(client->socketDescriptor(), this, &m_params);
     connect(thread, SIGNAL(finished()), this, SLOT(threadFinished()));
     connect(this, SIGNAL(stopThreads()), thread, SLOT(stop()));
     thread->start();
-
+qDebug() << 3;
     m_clients.append(thread);
 
   }
 }
 
 /** SvWebServerThread **/
-void wd::SvWebServerThread::run()
+void websrv::SvWebServerThread::run()
 {
+  qDebug() << 2;
   if(!m_client.setSocketDescriptor(m_socket_descriptor))
   {
     if(m_logger)
@@ -109,7 +116,7 @@ void wd::SvWebServerThread::run()
   }
 
   m_started = true;
-
+qDebug() << 1;
   while(m_started)
   {
     // ждем пока клиент не пришлет запрос
@@ -134,7 +141,7 @@ void wd::SvWebServerThread::run()
         for(QString d: sd)
           *m_logger << sv::log::llDebug2 << sv::log::mtDebug << d << sv::log::endl;
       }
-
+qDebug() << "is_GET || is_POST" << (is_GET || is_POST);
       if(is_GET)
         reply_GET(parts);
 
@@ -152,7 +159,7 @@ void wd::SvWebServerThread::run()
 
 }
 
-void wd::SvWebServerThread::reply_GET(QList<QByteArray> &parts)
+void websrv::SvWebServerThread::reply_GET(QList<QByteArray> &parts)
 {
   QDir dir(m_params->html_path);
 
@@ -196,7 +203,7 @@ void wd::SvWebServerThread::reply_GET(QList<QByteArray> &parts)
 
 }
 
-void wd::SvWebServerThread::reply_POST(QList<QByteArray> &parts)
+void websrv::SvWebServerThread::reply_POST(QList<QByteArray> &parts)
 {
   auto getStr = [=](QVariant value) -> QString {
 
@@ -335,7 +342,7 @@ void wd::SvWebServerThread::reply_POST(QList<QByteArray> &parts)
 
 }
 
-void wd::SvWebServerThread::reply_GET_error(int errorCode, QString errorString)
+void websrv::SvWebServerThread::reply_GET_error(int errorCode, QString errorString)
 {
   if(m_logger)
     *m_logger <<llError << mtError << errorString << sv::log::endl;
@@ -357,7 +364,7 @@ void wd::SvWebServerThread::reply_GET_error(int errorCode, QString errorString)
             .arg(QDateTime::currentDateTime().toString());
 }
 
-void wd::SvWebServerThread::stop()
+void websrv::SvWebServerThread::stop()
 {
   m_started = false;
 }
@@ -367,5 +374,5 @@ void wd::SvWebServerThread::stop()
 wd::SvAbstractServer* create()
 {
 //  wd::SvAbstractServer* server = ;
-  return new wd::SvWebServer();
+  return new websrv::SvWebServer();
 }

@@ -1,0 +1,12 @@
+#ifndef TEST_SERVER_GLOBAL_H
+#define TEST_SERVER_GLOBAL_H
+
+#include <QtCore/qglobal.h>
+
+#if defined(TEST_SERVER_LIBRARY)
+#  define TEST_SERVERSHARED_EXPORT Q_DECL_EXPORT
+#else
+#  define TEST_SERVERSHARED_EXPORT Q_DECL_IMPORT
+#endif
+
+#endif // TEST_SERVER_GLOBAL_H

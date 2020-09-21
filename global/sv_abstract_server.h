@@ -200,7 +200,7 @@ namespace wd {
     virtual const ServerConfig* config() const { return &p_config; }
 
     virtual void setLogger(sv::SvAbstractLogger* logger) { p_logger = logger; }
-    virtual const sv::SvAbstractLogger* logger() const   { return p_logger; }
+    virtual sv::SvAbstractLogger* logger() const   { return p_logger; }
 
     void setLastError(const QString& lastError) { p_last_error = lastError; }
     const QString &lastError() const            { return p_last_error; }

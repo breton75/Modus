@@ -1276,7 +1276,7 @@ wd::SvAbstractServer* create_server(const wd::ServerConfig& config) throw(SvExce
   wd::SvAbstractServer* newserver = nullptr;
 
   try {
-dbus << config.driver_lib << sv::log::endl;
+
     QLibrary serverlib(config.driver_lib); // "/home/user/nmea/lib/libtestlib.so.1.0.0"); //
 
     if(!serverlib.load())
