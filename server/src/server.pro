@@ -44,6 +44,3 @@ HEADERS += \
     ../../global/sv_abstract_server.h \
     sv_dbus.h
 
-DISTFILES += \
-    ../../../widen/config.json \
-    ../../../widen/signals/signals.json

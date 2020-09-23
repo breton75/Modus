@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += network
+QT       += network websockets
 QT       -= gui
 
 CONFIG += c++11 plugin
@@ -14,12 +14,14 @@ TEMPLATE = lib
 
 DEFINES += WEBSERVER_LIBRARY
 
-SOURCES += sv_web_server.cpp
+SOURCES += sv_web_server.cpp \
+    ../../../global/sv_signal.cpp
 
 HEADERS += sv_web_server.h\
         webserver_global.h \
     params.h \
-    ../../../global/sv_abstract_server.h
+    ../../../global/sv_abstract_server.h \
+    ../../../global/sv_signal.h
 
 unix {
     target.path = /usr/lib

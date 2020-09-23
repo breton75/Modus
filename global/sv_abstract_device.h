@@ -12,11 +12,10 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-#include "../../svlib/sv_exception.h"
-#include "../../svlib/sv_abstract_logger.h"
+#include "../../../svlib/sv_exception.h"
+#include "../../../svlib/sv_abstract_logger.h"
 
-#include "../global/params_defs.h"
-
+#include "params_defs.h"
 #include "sv_signal.h"
 
 #define MAX_PACKET_SIZE 0xFFFF
@@ -270,10 +269,8 @@ public:
 /* обязательно виртуальй деструктор, чтобы вызывались деструкторы наследников */
   virtual ~SvAbstractDevice()
   {
-//    deleteLater();
+
   }
-  
-//  virtual dev::HardwareType type() const { return p_hardware_type; }
   
   virtual void create_new_thread() throw(SvException) = 0;
   virtual ad::SvAbstractDeviceThread* thread() const { return p_thread; }
@@ -284,7 +281,6 @@ public:
   virtual bool configure(const ad::DeviceConfig& cfg) = 0;
 
   virtual const ad::DeviceConfig* config() const { return &p_config; }
-//  virtual const ad::DeviceParams* params() const { return &p_params; }
 
   virtual bool open() = 0;
 
@@ -321,7 +317,7 @@ public:
 
   const ad::SignalMap* Signals() const { return &p_signals; }
 
-  inline void setSignalValue(const QString& signal_name, qreal value)
+  inline void setSignalValue(const QString& signal_name, QVariant value)
   {
     if(p_signals.contains(signal_name)) {
 

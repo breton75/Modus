@@ -9,13 +9,16 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QFile>
+#include <QMutex>
 
-#include "../global/params_defs.h"
+#include "params_defs.h"
 
 #include "../../svlib/sv_exception.h"
 
 #define SIG_IMPERMISSIBLE_VALUE "Недопустимое значение параметра %1: %2.\n%3"
 #define SIG_NO_PARAM  "В разделе \"signals\" отсутствует или не задан обязательный параметр \"%1\""
+
+
 
 enum SignalDataTypes {
   dtInt = 0,
@@ -245,7 +248,7 @@ public:
   quint64   lostEpoch()  const { return p_lost_epoch; }
   QDateTime lastUpdate() const { return p_last_update; }
 
-  QVariant value() const { return p_value; }
+  QVariant value(); // { QMutexLocker l(M);  return p_value; }
 
   void setDeviceLostEpoch(const quint64 lost_epoch) { p_device_lost_epoch = lost_epoch; }
 
@@ -286,6 +289,8 @@ private:
 
   QVariant p_value = QVariant();
   QVariant p_previous_value = QVariant();
+
+  QMutex m_mutex;
   
 public slots:
   void setValue(QVariant value);
