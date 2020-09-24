@@ -38,8 +38,8 @@ struct SignalConfig
   bool        enable = false;
   QString     description = "";
   int         timeout = 3000;
-  int         timeout_value = -3;
-  int         timeout_signal_id = -1;
+//  int         timeout_value = -3;
+//  int         timeout_signal_id = -1;
   QString     comment = "";
 
   static SignalConfig fromJsonString(const QString& json_string) throw (SvException)
@@ -63,8 +63,7 @@ struct SignalConfig
   static SignalConfig fromJsonObject(const QJsonObject &object) throw (SvException)
   {
     // проверяем наличие основных полей
-    QStringList l = QStringList() << P_ID << P_NAME << P_TYPE << P_DEVICE
-                                  << P_TIMEOUT << P_TIMEOUT_VALUE;
+    QStringList l = QStringList() << P_ID << P_NAME << P_TYPE << P_DEVICE << P_TIMEOUT; // << P_TIMEOUT_VALUE;
     for(QString v: l)
       if(object.value(v).isUndefined())
         throw SvException(QString(SIG_NO_PARAM).arg(v));
@@ -177,13 +176,13 @@ struct SignalConfig
     P = P_PARAMS;
     p.params = object.contains(P) ? QString(QJsonDocument(object.value(P).toObject()).toJson(QJsonDocument::Compact)) : "\"{ }\"";
 
-    /* timeout_value */
-    P = P_TIMEOUT_VALUE;
-    p.timeout_value = object.contains(P) ? object.value(P).toInt(-1) : -1;
+//    /* timeout_value */
+//    P = P_TIMEOUT_VALUE;
+//    p.timeout_value = object.contains(P) ? object.value(P).toInt(-1) : -1;
 
-    /* timeout_signal_id */
-    P = P_TIMEOUT_SIGNAL_ID;
-    p.timeout_signal_id = object.contains(P) ? object.value(P).toInt(-1) : -1;
+//    /* timeout_signal_id */
+//    P = P_TIMEOUT_SIGNAL_ID;
+//    p.timeout_signal_id = object.contains(P) ? object.value(P).toInt(-1) : -1;
 
     /* description */
     P = P_DESCRIPTION;
@@ -222,8 +221,8 @@ struct SignalConfig
     j.insert(P_TYPE, QJsonValue(type).toString());
     j.insert(P_PARAMS, QJsonValue(params).toString());
     j.insert(P_TIMEOUT, QJsonValue(timeout).toInt());
-    j.insert(P_TIMEOUT_VALUE, QJsonValue(timeout_value).toInt());
-    j.insert(P_TIMEOUT_SIGNAL_ID, QJsonValue(timeout_signal_id).toInt());
+//    j.insert(P_TIMEOUT_VALUE, QJsonValue(timeout_value).toInt());
+//    j.insert(P_TIMEOUT_SIGNAL_ID, QJsonValue(timeout_signal_id).toInt());
     j.insert(P_DESCRIPTION, QJsonValue(description).toString());
     j.insert(P_COMMENT, QJsonValue(comment).toString());
 

@@ -8,12 +8,12 @@ QT       += core gui network dbus
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = /home/user/widen/logview
+TARGET = /home/user/Modus/logview
 TEMPLATE = app
 CONFIG += c++11
 
-#DBUS_INTERFACES += ../../global/widen_dbus.xml # для отправки сообщений
-#DBUS_ADAPTORS += ../../global/widen_dbus.xml  # для приема сообщений
+#DBUS_INTERFACES += ../../global/Modus_dbus.xml # для отправки сообщений
+#DBUS_ADAPTORS += ../../global/Modus_dbus.xml  # для приема сообщений
 
 VERSION = 1.0.0    # major.minor.patch
 DEFINES += APP_VERSION=\\\"$$VERSION\\\"

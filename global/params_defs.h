@@ -23,8 +23,8 @@
 #define P_HWCODE      "hwcode"
 
 /* имена полей для сигналов */
-#define P_TIMEOUT_VALUE     "timeout_value"
-#define P_TIMEOUT_SIGNAL_ID "timeout_signal_id"
+//#define P_TIMEOUT_VALUE     "timeout_value"
+//#define P_TIMEOUT_SIGNAL_ID "timeout_signal_id"
 #define P_DEVICE            "device"
 #define P_STORAGES          "storages"
 #define P_FILE              "file"

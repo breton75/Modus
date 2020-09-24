@@ -30,7 +30,6 @@
 #include "../../../svlib/sv_config.h"
 
 #include "sv_dbus.h"
-#include "widen_dbus_interface.h"
 
 //#include "sv_storage.h"
 //#include "sv_webserver.h"
@@ -147,7 +146,7 @@ QList<pid_t> get_pids_by_name(const QString& name, pid_t exclude = 0)
     if(pid.trimmed().isEmpty())
       continue;
 
-    quint64 upid = pid.toUInt(&ok);
+    pid_t upid = pid.toInt(&ok);
     if(ok && upid != exclude)
       result.append(upid);
 
@@ -168,44 +167,6 @@ sv::log::MessageTypes mtinf = sv::log::mtInfo;
 sv::log::MessageTypes mtscc = sv::log::mtSuccess;
 sv::log::MessageTypes mtfal = sv::log::mtFail;
 
-void parse_operation(const QStringList& args, AppConfig &cfg) throw (SvException)
-{
-    /** разбираем операцию **/
-    SvCommandLineParser op_parser;
-
-    op_parser.addPositionalArgument(APP_OPERATION, "Команда управления сервером", "operation (start|stop|status|restart)");
-
-    op_parser.addOptionStructList(AppOptions);
-    op_parser.setSingleDashWordOptionMode(QCommandLineParser::ParseAsLongOptions);
-    op_parser.addHelpOption();
-    op_parser.addVersionOption();
-
-    if (!op_parser.parse(args))
-      throw SvException(QString("Ошибка разбора командной строки:\n\%1\n\n%2").arg(op_parser.errorText()).arg(op_parser.helpText()));
-
-    if (op_parser.isSetVersionOption())
-      throw SvException(SvException::NoError, QString("Сервер сбора и обработки данных Widen v.%1\n").arg(APP_VERSION));
-
-    if (op_parser.isSetHelpOption())
-      throw SvException(op_parser.helpText());
-
-
-    if(op_parser.positionalArguments().count())
-    {
-      QString op = op_parser.positionalArguments().at(0);
-
-      cfg.start =   op == QString(OPERATION_START);
-      cfg.stop =    op == QString(OPERATION_STOP);
-      cfg.restart = op == QString(OPERATION_RESTART);
-      cfg.status =  op == QString(OPERATION_STATUS);
-      cfg.twin =    op == QString(OPERATION_TWIN);
-    }
-    else
-      throw SvException("Не указана операция.\n\n" + op_parser.helpText());
-
-    cfg.debug = op_parser.isSet(OPTION_DEBUG);
-
-}
 
 bool parse_params(const QStringList& args, AppConfig &cfg, const QString& file_name)
 {
@@ -352,11 +313,45 @@ bool parse_params(const QStringList& args, AppConfig &cfg, const QString& file_n
   }
 }
 
-int server_operate(const QStringList arguments, AppConfig& cfg)
+int server_operate(const QStringList& args, AppConfig& cfg)
 {
   try {
 
-    parse_operation(arguments, cfg);
+    /** разбираем операцию **/
+    SvCommandLineParser op_parser;
+
+    op_parser.addPositionalArgument(APP_OPERATION, "Команда управления сервером", "operation (start|stop|status|restart)");
+
+    op_parser.addOptionStructList(AppOptions);
+    op_parser.setSingleDashWordOptionMode(QCommandLineParser::ParseAsLongOptions);
+    op_parser.addHelpOption();
+    op_parser.addVersionOption();
+
+    if (!op_parser.parse(args))
+      throw SvException(QString("Ошибка разбора командной строки:\n\%1\n\n%2").arg(op_parser.errorText()).arg(op_parser.helpText()));
+
+    if (op_parser.isSetVersionOption())
+      throw SvException(SvException::NoError, QString("Сервер сбора и обработки данных Widen v.%1\n").arg(APP_VERSION));
+
+    if (op_parser.isSetHelpOption())
+      throw SvException(op_parser.helpText());
+
+
+    if(op_parser.positionalArguments().count())
+    {
+      QString op = op_parser.positionalArguments().at(0);
+
+      cfg.start =   op == QString(OPERATION_START);
+      cfg.stop =    op == QString(OPERATION_STOP);
+      cfg.restart = op == QString(OPERATION_RESTART);
+      cfg.status =  op == QString(OPERATION_STATUS);
+      cfg.twin =    op == QString(OPERATION_TWIN);
+    }
+    else
+      throw SvException("Не указана операция.\n\n" + op_parser.helpText());
+
+    cfg.debug = op_parser.isSet(OPTION_DEBUG);
+
 
     // свой pid
     pid_t mypid = getpid();
@@ -534,6 +529,8 @@ int main(int argc, char *argv[])
   widen_dbus_ifc = new org::niirpi::WidenDBus(org::niirpi::WidenDBus::staticInterfaceName(), "/", QDBusConnection::sessionBus(), 0);
 
 //  dbus.init();
+
+  QDir::setCurrent(qApp->applicationDirPath());
 
   try {
 

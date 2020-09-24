@@ -7,7 +7,7 @@
 
 #include "../../../svlib/sv_abstract_logger.h"
 
-#include "widen_dbus_interface.h"
+#include "modus_dbus_interface.h"
 
 namespace sv {
 
