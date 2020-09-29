@@ -7,9 +7,7 @@
 
 #include "../../svlib/sv_abstract_logger.h"
 
-#include "../server/build/dbus_interface.h"
-
-#define DBUS_SERVER_NAME "niirpi.proj.widen"
+#define DBUS_SERVER_NAME "org.ame.modus"
 #define DBUS_SENDER_NAME "device_%1"
 
 namespace sv {
@@ -56,7 +54,7 @@ namespace sv {
 
     public:
       static inline const char *staticInterfaceName()
-      { return "org.example.chat"; }
+      { return DBUS_SERVER_NAME; }
 
     public:
       DBusInterface(const QString &service, const QString &path, const QDBusConnection &connection, QObject *parent = 0)
@@ -79,15 +77,11 @@ namespace sv {
 
     DBusInterface* _iface = nullptr;
 
-//    static SvDBus* _instance;
-
   public:
 
     explicit SvDBus(const sv::log::Options options = sv::log::Options(),
                     const sv::log::Flags flags = sv::log::lfNone,
                     QObject *parent = nullptr);
-
-//    static SvDBus& instance();
 
     void init();
 

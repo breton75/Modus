@@ -11,15 +11,15 @@
 
 #include "modus_dbus_interface.h"
 /*
- * Implementation of interface class OrgNiirpiWidenDBusInterface
+ * Implementation of interface class OrgAmeModusInterface
  */
 
-OrgNiirpiWidenDBusInterface::OrgNiirpiWidenDBusInterface(const QString &service, const QString &path, const QDBusConnection &connection, QObject *parent)
+OrgAmeModusInterface::OrgAmeModusInterface(const QString &service, const QString &path, const QDBusConnection &connection, QObject *parent)
     : QDBusAbstractInterface(service, path, staticInterfaceName(), connection, parent)
 {
 }
 
-OrgNiirpiWidenDBusInterface::~OrgNiirpiWidenDBusInterface()
+OrgAmeModusInterface::~OrgAmeModusInterface()
 {
 }
 

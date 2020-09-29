@@ -13,7 +13,7 @@ void sv::SvDBus::init()
 //  new SvDBusAdaptor(this);
 
   QDBusConnection::sessionBus().registerObject("/", this);
-
+org::ame::modus* modus_dbus_ifc = new org::ame::modus(DBUS_SERVER_NAME, "/", QDBusConnection::sessionBus(), this);
   _iface = new sv::DBusInterface(QString(), QString(), QDBusConnection::sessionBus(), 0);
 
 }

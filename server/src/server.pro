@@ -9,7 +9,7 @@ TARGET = /home/user/Modus/md_server
 VERSION = 1.0.0    # major.minor.patch
 DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 
-DBUS_INTERFACES += ../../global/modus_dbus.xml # для отправки сообщений
+#DBUS_INTERFACES += ../../global/modus_dbus.xml # для отправки сообщений
 #DBUS_ADAPTORS += ../../global/modus_dbus.xml  # для приема сообщений
 
 # The following define makes your compiler emit warnings if you use
@@ -28,7 +28,8 @@ SOURCES += main.cpp \
     ../../../svlib/sv_config.cpp \
     ../../../svlib/sv_abstract_logger.cpp \
     ../../../svlib/sv_fnt.cpp \
-    sv_dbus.cpp
+    ../../global/sv_dbus.cpp
+#    sv_dbus.cpp
 
 HEADERS += \
     ../../global/sv_signal.h \
@@ -42,5 +43,6 @@ HEADERS += \
     ../../global/global_defs.h \
     ../../global/params_defs.h \
     ../../global/sv_abstract_server.h \
-    sv_dbus.h
+    ../../global/sv_dbus.h
+#    sv_dbus.h
 

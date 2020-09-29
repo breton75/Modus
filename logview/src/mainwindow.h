@@ -11,7 +11,8 @@
 
 #include "../../global/global_defs.h"
 
-//#include "widen_dbus_adaptor.h"
+#include "../../global/sv_dbus.h"
+//#include "modus_dbus_adaptor.h"
 
 namespace Ui {
 class MainWindow;

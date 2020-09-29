@@ -21,19 +21,19 @@
 #include <QtDBus/QtDBus>
 
 /*
- * Proxy class for interface org.niirpi.WidenDBus
+ * Proxy class for interface org.ame.modus
  */
-class OrgNiirpiWidenDBusInterface: public QDBusAbstractInterface
+class OrgAmeModusInterface: public QDBusAbstractInterface
 {
     Q_OBJECT
 public:
     static inline const char *staticInterfaceName()
-    { return "org.niirpi.WidenDBus"; }
+    { return "org.ame.modus"; }
 
 public:
-    OrgNiirpiWidenDBusInterface(const QString &service, const QString &path, const QDBusConnection &connection, QObject *parent = 0);
+    OrgAmeModusInterface(const QString &service, const QString &path, const QDBusConnection &connection, QObject *parent = 0);
 
-    ~OrgNiirpiWidenDBusInterface();
+    ~OrgAmeModusInterface();
 
 public Q_SLOTS: // METHODS
 Q_SIGNALS: // SIGNALS
@@ -42,8 +42,8 @@ Q_SIGNALS: // SIGNALS
 };
 
 namespace org {
-  namespace niirpi {
-    typedef ::OrgNiirpiWidenDBusInterface WidenDBus;
+  namespace ame {
+    typedef ::OrgAmeModusInterface modus;
   }
 }
 #endif

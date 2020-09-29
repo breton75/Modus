@@ -29,7 +29,8 @@
 #include "../../../svlib/sv_exception.h"
 #include "../../../svlib/sv_config.h"
 
-#include "sv_dbus.h"
+#include "../../global/sv_dbus.h"
+//#include "../../global/sv_dbus.h"
 
 //#include "sv_storage.h"
 //#include "sv_webserver.h"
@@ -51,7 +52,7 @@ QDateTime start_time;
 
 //sv::SvConcoleLogger dbus;
 
-org::niirpi::WidenDBus* widen_dbus_ifc;
+//org::ame::modus* modus_dbus_ifc;
 sv::SvDBus dbus;
 
 //SvWebServer webserver;
@@ -526,9 +527,9 @@ int main(int argc, char *argv[])
   }
 
   // инициализируем dbus ПОСЛЕ запуска потомка
-  widen_dbus_ifc = new org::niirpi::WidenDBus(org::niirpi::WidenDBus::staticInterfaceName(), "/", QDBusConnection::sessionBus(), 0);
+//  modus_dbus_ifc = new org::ame::modus(org::ame::modus::staticInterfaceName(), "/", QDBusConnection::sessionBus(), 0);
 
-//  dbus.init();
+  dbus.init();
 
   QDir::setCurrent(qApp->applicationDirPath());
 

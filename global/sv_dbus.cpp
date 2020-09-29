@@ -10,6 +10,11 @@ sv::SvDBus::SvDBus(const sv::log::Options options, const sv::log::Flags flags, Q
 
 void sv::SvDBus::init()
 {
+  QDBusConnection::sessionBus().registerObject("/", this);
+
+  new org::ame::modus(DBUS_SERVER_NAME, "/", QDBusConnection::sessionBus(), this);
+
+//  ModusDBusAdaptor *mdba = new ModusDBusAdaptor(this);
 
 }
 
@@ -39,7 +44,7 @@ void sv::SvDBus::sendmsg(const QString &sender, const QString& message, const QS
   // при создании лочится, при завершении функции - locker удаляется, и разлочивается
   QMutexLocker locker(&mutex);
 
-  QDBusMessage msg = QDBusMessage::createSignal("/", org::niirpi::WidenDBus::staticInterfaceName(), "message");
+  QDBusMessage msg = QDBusMessage::createSignal("/", DBUS_SERVER_NAME, "message");
   msg << sender << message << type;
   QDBusConnection::sessionBus().send(msg);
 }
