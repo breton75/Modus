@@ -17,7 +17,8 @@ MainWindow::MainWindow(const AppConfig &cfg, QWidget *parent) :
   this->setWindowTitle(title);
   ui->labelSenderName->setText(title);
 
-  QDBusConnection::sessionBus().connect(QString(), QString(), DBUS_SERVER_NAME, "message", this, SLOT(messageSlot(const QString&,const QString&,const QString&)));
+  bool b = QDBusConnection::sessionBus().connect(QString(), QString(), DBUS_SERVER_NAME, "message", this, SLOT(messageSlot(const QString&,const QString&,const QString&)));
+  qDebug() << "MainWindow" << b << QDBusConnection::sessionBus().lastError();
 
   _enable = true;
 

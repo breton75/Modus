@@ -5,7 +5,7 @@
 #include <QtDBus>
 #include <QDebug>
 
-#include "../../../svlib/sv_abstract_logger.h"
+#include "../../svlib/sv_abstract_logger.h"
 
 #define DBUS_SERVER_NAME "org.ame.modus"
 
