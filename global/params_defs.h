@@ -25,9 +25,10 @@
 /* имена полей для сигналов */
 //#define P_TIMEOUT_VALUE     "timeout_value"
 //#define P_TIMEOUT_SIGNAL_ID "timeout_signal_id"
-#define P_DEVICE            "device"
-#define P_STORAGES          "storages"
-#define P_FILE              "file"
+#define P_DEVICE      "device"
+#define P_STORAGES    "storages"
+#define P_FILE        "file"
+#define P_TAG         "tag"
 
 /* имена полей для всех хранилищ */
 //#define P_STORAGE_PARAMS "params"

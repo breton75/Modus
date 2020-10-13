@@ -18,7 +18,6 @@ MainWindow::MainWindow(const AppConfig &cfg, QWidget *parent) :
   ui->labelSenderName->setText(title);
 
   bool b = QDBusConnection::sessionBus().connect(QString(), QString(), DBUS_SERVER_NAME, "message", this, SLOT(messageSlot(const QString&,const QString&,const QString&)));
-  qDebug() << "MainWindow" << b << QDBusConnection::sessionBus().lastError();
 
   _enable = true;
 
@@ -31,7 +30,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::messageSlot(const QString& sender, const QString& message, const QString& type)
 {
-  qDebug() << sender << _config.log_options.log_sender_name_format;
+//  qDebug() << sender << _config.log_options.log_sender_name_format;
 //  if(_config.device_index == -1 || (_config.device_index > 0 && sender == _sender.name))
     log << sv::log::stringToType(type) << QString("%1").arg(message) << sv::log::endl;
 //  if(sender == _sender.name)

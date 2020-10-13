@@ -774,8 +774,11 @@ bool readDevices(const AppConfig& appcfg)
       if(!devcfg.enable)
         continue;
 
+      dbus << llinf << mtinf << me
+           << QString("\n  %1:").arg(devcfg.name) << sv::log::endl;
+
       dbus << lldbg << mtdbg << me
-           << QString("  %1: параметры прочитаны").arg(devcfg.name) << sv::log::endl;
+           << QString("    параметры прочитаны") << sv::log::endl;
 
       if(DEVICES.contains(devcfg.id))
         throw SvException(QString("Устройство %1. Повторяющийся идентификатор %2!").arg(devcfg.name).arg(devcfg.id));
@@ -785,28 +788,25 @@ bool readDevices(const AppConfig& appcfg)
 
       if(newdev) {
 
-        if(newdev->config()->enable)
+        DEVICES.insert(newdev->config()->id, newdev);
+
+        if(appcfg.log_options.logging)
         {
-          DEVICES.insert(newdev->config()->id, newdev);
+          LOGGERS.insert(newdev->config()->id, new sv::SvDBus(appcfg.log_options));
 
-          if(appcfg.log_options.logging)
-          {
-            LOGGERS.insert(newdev->config()->id, new sv::SvDBus(appcfg.log_options));
-
-            newdev->setLogger(LOGGERS.value(newdev->config()->id));
-          }
-
-          dbus << lldbg2 << mtdbg << me
-               << QString("  %1 [Индекс %2]\n  Параметры: %3\n  Интерфейс: %4 %5").
-                  arg(newdev->config()->name).
-                  arg(newdev->config()->id).
-                  arg(newdev->config()->dev_params).
-                  arg(newdev->config()->ifc_name).arg(newdev->config()->ifc_params)
-               << sv::log::endl;
-
-          counter++;
-
+          newdev->setLogger(LOGGERS.value(newdev->config()->id));
         }
+
+        dbus << lldbg2 << mtdbg << me
+             << QString("  %1 [id %2]\n  Параметры: %3\n  Интерфейс: %4 %5").
+                arg(newdev->config()->name).
+                arg(newdev->config()->id).
+                arg(newdev->config()->dev_params).
+                arg(newdev->config()->ifc_name).arg(newdev->config()->ifc_params)
+             << sv::log::endl;
+
+        counter++;
+
       }
 
       else {
@@ -1183,7 +1183,7 @@ ad::SvAbstractDevice* create_device(const ad::DeviceConfig &config) throw(SvExce
       throw SvException(devlib.errorString());
 
     dbus << lldbg << mtdbg << me
-         << QString("  %1: драйвер загружен").arg(config.name) << sv::log::endl;
+         << QString("    драйвер загружен") << sv::log::endl;
 
     typedef ad::SvAbstractDevice *(*create_device_func)(void);
     create_device_func create = (create_device_func)devlib.resolve("create");
@@ -1201,7 +1201,7 @@ ad::SvAbstractDevice* create_device(const ad::DeviceConfig &config) throw(SvExce
       throw SvException(newdev->lastError());
 
     dbus << lldbg << mtdbg << me
-         << QString("  %1: объект создан").arg(config.name) << sv::log::endl;
+         << QString("    объект создан") << sv::log::endl;
 
     return newdev;
     

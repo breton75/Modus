@@ -35,6 +35,7 @@ struct SignalConfig
   QList<int>  storages;
   QString     params = "";
   QString     type = "";
+  QString     tag = "";
   bool        enable = false;
   QString     description = "";
   int         timeout = 3000;
@@ -153,15 +154,24 @@ struct SignalConfig
     }
     else throw SvException(QString(SIG_NO_PARAM).arg(P));
 
+    /* tag */
+    P = P_TAG;
+    if(object.contains(P)) {
+
+      p.tag = object.value(P).toString("");
+
+    }
+    else p.tag = "";
+
     /* timeout*/
     P = P_TIMEOUT;
     if(object.contains(P))
     {
-      if(object.value(P).toInt(-1) < 1)
+      if(object.value(P).toInt(-1) < 0)
         throw SvException(QString(SIG_IMPERMISSIBLE_VALUE)
                                .arg(P)
                                .arg(object.value(P).toVariant().toString())
-                               .arg(QString("%1. Таймаут не может быть меньше 1 мсек.").arg(p.name)));
+                               .arg(QString("%1. Таймаут должен быть задан целым положительныи числом мсек.").arg(p.name)));
 
       p.timeout = object.value(P).toInt(3000);
 
