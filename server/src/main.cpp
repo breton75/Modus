@@ -927,8 +927,58 @@ bool readSignals()
     if(!JSON.contains("signals"))
       throw SvException("Неверный файл конфигурации. Отсутствует раздел 'signals'.");
 
-    /** парсим список сигналов. в списке сигналов могут содержаться ссылки на другие файлы. для удобства **/
-    QJsonArray signal_list = parse_signals();
+    /// парсим список сигналов. в списке сигналов могут содержаться ссылки на другие файлы. для удобства
+    /// если в массиве сигналов содержатся ссылки на файлы, то разбираем их и добавляем в signal_list
+//    QJsonArray signal_list = parse_signals();
+
+    QJsonArray signal_list = QJsonArray();
+    QString P;
+
+    for(QJsonValue v: JSON.value("signals").toArray())
+    {
+      // вначале проверяем флаг enable, если false, то пропускаем запись
+      P = P_ENABLE;
+      if(v.toObject().contains(P))
+      {
+        if(!v.toObject().value(P).toBool(true))
+          continue;
+      }
+
+      // если содержится ключ file, то пытаемся прочитать список сигналов из файла
+      P = P_FILE;
+      if(v.toObject().contains(P))
+      {
+        QFile f(v.toObject().value(P).toString());
+        if(!f.open(QIODevice::ReadOnly))
+          throw SvException(QString("Ошибка при чтении файла сигналов '%1': %2")
+                            .arg(f.fileName())
+                            .arg(f.errorString()));
+
+        QByteArray json = f.readAll().trimmed();
+        if(!json.startsWith("[")) json.push_front(QString("[").toUtf8());
+        if(!json.endsWith("]")) json.push_back("]");
+
+        QJsonParseError perr;
+        QJsonDocument j = QJsonDocument::fromJson(json, &perr);
+
+        if(perr.error != QJsonParseError::NoError)
+          throw SvException(QString("Ошибка разбора файла '%1': %2")
+                            .arg(f.fileName())
+                            .arg(perr.errorString()));
+
+        QJsonArray sfa = j.array();
+        for(QJsonValue o: sfa) {
+          signal_list.append(o);
+  //        qDebug() << o.toObject().value("name").toString();
+        }
+
+      }
+
+      // если не file, то просто добавляем эту запись в список
+      else
+        signal_list.append(v);
+    }
+
 
 
     // попутно вычисляем наибольшие длины имен сигналов, устройств и хранилищ для красивого вывода
@@ -1052,11 +1102,19 @@ QJsonArray parse_signals() throw(SvException)
 {
   QJsonArray a = JSON.value("signals").toArray();
   QJsonArray r = QJsonArray();
+  QString P;
 
   /** если в массиве сигналов содержатся ссылки на файлы, то разбираем их и добавляем в signal_list **/
   for(QJsonValue v: a)
   {
-    QString P = P_FILE;
+    P = P_ENABLE;
+    if(v.toObject().contains(P))
+    {
+      if(!v.toObject().value(P).toBool(true))
+        continue;
+    }
+
+    P = P_FILE;
     if(v.toObject().contains(P))
     {
       QFile f(v.toObject().value(P).toString());
