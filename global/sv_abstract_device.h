@@ -12,8 +12,8 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-#include "../../../svlib/sv_exception.h"
-#include "../../../svlib/sv_abstract_logger.h"
+#include "../../svlib/sv_exception.h"
+#include "../../svlib/sv_abstract_logger.h"
 
 #include "params_defs.h"
 #include "sv_signal.h"
@@ -231,19 +231,8 @@ namespace ad {
   {
     BUFF() {}
 
-    quint8  buf[MAX_PACKET_SIZE];
+    char  buf[MAX_PACKET_SIZE];
     quint64 offset = 0;
-
-  };
-
-  struct DATA
-  {
-    DATA() {}
-
-    qint8  data[MAX_PACKET_SIZE];
-    quint8  data_type;
-    quint8  data_length;
-    quint16 crc;
 
   };
 
@@ -390,7 +379,6 @@ protected:
   bool p_is_active;
 
   ad::BUFF p_buff;
-  ad::DATA p_data;
 
   QTimer  p_reset_timer;
 

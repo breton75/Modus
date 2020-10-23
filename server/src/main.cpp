@@ -8,6 +8,7 @@
 #include <QProcess>
 #include <QDir>
 #include <QPair>
+#include <QFileInfo>
 
 #include <iostream>
 #include <signal.h>
@@ -87,7 +88,7 @@ bool readStorages(const AppConfig& appcfg);
 bool readSignals();
 bool readServers(const AppConfig& appcfg);
 
-QJsonArray parse_signals() throw(SvException);
+void parse_signals(QString json_file, QJsonArray *json_array) throw(SvException);
 
 ad::SvAbstractDevice*  create_device (const ad::DeviceConfig&  config) throw(SvException);
 as::SvAbstractStorage* create_storage(const as::StorageConfig& config) throw(SvException);
@@ -929,55 +930,55 @@ bool readSignals()
 
     /// парсим список сигналов. в списке сигналов могут содержаться ссылки на другие файлы. для удобства
     /// если в массиве сигналов содержатся ссылки на файлы, то разбираем их и добавляем в signal_list
-//    QJsonArray signal_list = parse_signals();
-
     QJsonArray signal_list = QJsonArray();
-    QString P;
+    parse_signals("config.json", &signal_list);
 
-    for(QJsonValue v: JSON.value("signals").toArray())
-    {
-      // вначале проверяем флаг enable, если false, то пропускаем запись
-      P = P_ENABLE;
-      if(v.toObject().contains(P))
-      {
-        if(!v.toObject().value(P).toBool(true))
-          continue;
-      }
+//    QString P;
 
-      // если содержится ключ file, то пытаемся прочитать список сигналов из файла
-      P = P_FILE;
-      if(v.toObject().contains(P))
-      {
-        QFile f(v.toObject().value(P).toString());
-        if(!f.open(QIODevice::ReadOnly))
-          throw SvException(QString("Ошибка при чтении файла сигналов '%1': %2")
-                            .arg(f.fileName())
-                            .arg(f.errorString()));
+//    for(QJsonValue v: JSON.value("signals").toArray())
+//    {
+//      // вначале проверяем флаг enable, если false, то пропускаем запись
+//      P = P_ENABLE;
+//      if(v.toObject().contains(P))
+//      {
+//        if(!v.toObject().value(P).toBool(true))
+//          continue;
+//      }
 
-        QByteArray json = f.readAll().trimmed();
-        if(!json.startsWith("[")) json.push_front(QString("[").toUtf8());
-        if(!json.endsWith("]")) json.push_back("]");
+//      // если содержится ключ file, то пытаемся прочитать список сигналов из файла
+//      P = P_FILE;
+//      if(v.toObject().contains(P))
+//      {
+//        QFile f(v.toObject().value(P).toString());
+//        if(!f.open(QIODevice::ReadOnly))
+//          throw SvException(QString("Ошибка при чтении файла сигналов '%1': %2")
+//                            .arg(f.fileName())
+//                            .arg(f.errorString()));
 
-        QJsonParseError perr;
-        QJsonDocument j = QJsonDocument::fromJson(json, &perr);
+//        QByteArray json = f.readAll().trimmed();
+//        if(!json.startsWith("[")) json.push_front(QString("[").toUtf8());
+//        if(!json.endsWith("]")) json.push_back("]");
 
-        if(perr.error != QJsonParseError::NoError)
-          throw SvException(QString("Ошибка разбора файла '%1': %2")
-                            .arg(f.fileName())
-                            .arg(perr.errorString()));
+//        QJsonParseError perr;
+//        QJsonDocument j = QJsonDocument::fromJson(json, &perr);
 
-        QJsonArray sfa = j.array();
-        for(QJsonValue o: sfa) {
-          signal_list.append(o);
-  //        qDebug() << o.toObject().value("name").toString();
-        }
+//        if(perr.error != QJsonParseError::NoError)
+//          throw SvException(QString("Ошибка разбора файла '%1': %2")
+//                            .arg(f.fileName())
+//                            .arg(perr.errorString()));
 
-      }
+//        QJsonArray sfa = j.array();
+//        for(QJsonValue o: sfa) {
+//          signal_list.append(o);
+//  //        qDebug() << o.toObject().value("name").toString();
+//        }
 
-      // если не file, то просто добавляем эту запись в список
-      else
-        signal_list.append(v);
-    }
+//      }
+
+//      // если не file, то просто добавляем эту запись в список
+//      else
+//        signal_list.append(v);
+//    }
 
 
 
@@ -1098,55 +1099,74 @@ bool readSignals()
   
 }
 
-QJsonArray parse_signals() throw(SvException)
+void parse_signals(QString json_file, QJsonArray* json_array) throw(SvException)
 {
-  QJsonArray a = JSON.value("signals").toArray();
-  QJsonArray r = QJsonArray();
-  QString P;
+  QFile f(json_file);
+//  QDir cur_dir = QFileInfo(f).absoluteDir(); // QDir::current();
 
-  /** если в массиве сигналов содержатся ссылки на файлы, то разбираем их и добавляем в signal_list **/
-  for(QJsonValue v: a)
-  {
-    P = P_ENABLE;
-    if(v.toObject().contains(P))
+  try {
+
+    if(!f.open(QIODevice::ReadOnly))
+      throw SvException(QString("Ошибка при чтении файла сигналов '%1': %2")
+                        .arg(f.fileName())
+                        .arg(f.errorString()));
+
+    QByteArray json = f.readAll().trimmed();
+    f.close();
+
+    QJsonParseError perr;
+    QJsonDocument jd = QJsonDocument::fromJson(json, &perr);
+
+    if(perr.error != QJsonParseError::NoError)
+      throw SvException(QString("Ошибка разбора файла '%1': %2")
+                        .arg(f.fileName())
+                        .arg(perr.errorString()));
+
+    QJsonObject jo = jd.object();
+    if(!jo.contains("signals"))
+      throw SvException(QString("Неверный файл конфигурации %1. Отсутствует раздел 'signals'.").arg(f.fileName()));
+
+    QJsonArray ja = jo.value("signals").toArray();
+  //  QJsonArray r = QJsonArray();
+    QString P;
+
+    /** если в массиве сигналов содержатся ссылки на файлы, то разбираем их и добавляем в signal_list **/
+    for(QJsonValue v: ja)
     {
-      if(!v.toObject().value(P).toBool(true))
-        continue;
-    }
-
-    P = P_FILE;
-    if(v.toObject().contains(P))
-    {
-      QFile f(v.toObject().value(P).toString());
-      if(!f.open(QIODevice::ReadOnly))
-        throw SvException(QString("Ошибка при чтении файла сигналов '%1': %2")
-                          .arg(f.fileName())
-                          .arg(f.errorString()));
-
-      QByteArray json = f.readAll().trimmed();
-      if(!json.startsWith("[")) json.push_front(QString("[").toUtf8());
-      if(!json.endsWith("]")) json.push_back("]");
-
-      QJsonParseError perr;
-      QJsonDocument j = QJsonDocument::fromJson(json, &perr);
-
-      if(perr.error != QJsonParseError::NoError)
-        throw SvException(QString("Ошибка разбора файла '%1': %2")
-                          .arg(f.fileName())
-                          .arg(perr.errorString()));
-
-      QJsonArray sfa = j.array();
-      for(QJsonValue o: sfa) {
-        r.append(o);
-//        qDebug() << o.toObject().value("name").toString();
+      P = P_ENABLE;
+      if(v.toObject().contains(P))
+      {
+        if(!v.toObject().value(P).toBool(true))
+          continue;
       }
 
+      P = P_FILE;
+      if(v.toObject().contains(P))
+      {
+        QFileInfo fi(QFileInfo(json_file).canonicalPath(), v.toObject().value(P).toString());
+
+        parse_signals(fi.canonicalFilePath(), json_array);
+
+  //      QJsonArray sfa = j.array();
+  //      for(QJsonValue o: sfa) {
+  //        json_array->append(o);
+  //        qDebug() << o.toObject().value("name").toString();
+  //      }
+
+      }
+      else
+        json_array->append(v);
     }
-    else
-      r.append(v);
+  }
+  catch(SvException e)
+  {
+//    QDir::setCurrent(cur_dir.absolutePath());
+    throw e;
   }
 
-  return r;
+//  QDir::setCurrent(cur_dir.path());
+
+//  return r;
 }
 
 bool readServers(const AppConfig& appcfg)
