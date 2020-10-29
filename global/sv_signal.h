@@ -15,6 +15,7 @@
 
 #include "../../svlib/sv_exception.h"
 
+#define SIG_DEFAULT_TIMEOUT 3000
 #define SIG_IMPERMISSIBLE_VALUE "Недопустимое значение параметра %1: %2.\n%3"
 #define SIG_NO_PARAM  "В разделе \"signals\" отсутствует или не задан обязательный параметр \"%1\""
 
@@ -23,6 +24,110 @@
 enum SignalDataTypes {
   dtInt = 0,
   dtFloat
+};
+
+struct SignalGroupParams
+{
+  explicit SignalGroupParams() { }
+
+  explicit SignalGroupParams(const SignalGroupParams* gp)
+  {
+    if(!gp)
+      return;
+
+    name = gp->name;
+    device_id   = gp->device_id;
+    storages    = gp->storages;
+    params      = gp->params;
+    type        = gp->type;
+    tag         = gp->tag;
+    enable      = gp->enable;
+    timeout     = gp->timeout;
+  }
+
+  QString  name        = "";
+  QVariant device_id   = QVariant();
+  QVariant storages    = QVariant();
+  QVariant params      = QVariant();
+  QVariant type        = QVariant();
+  QVariant tag         = QVariant();
+  QVariant enable      = QVariant();
+  QVariant timeout     = QVariant();
+
+  void mergeJsonObject(const QJsonObject &object) throw (SvException)
+  {
+    QString P;
+
+    P = P_ENABLE;
+    if(object.contains(P)) {
+      enable = enable.isValid() ? enable.toBool() && object.value(P).toBool(true) : object.value(P).toBool(true);
+    }
+
+    P = P_NAME;
+    if(object.contains(P))
+      name.append("/").append(object.value(P).toString());
+
+    P = P_DEVICE;
+    if(object.contains(P)) {
+
+      if(object.value(P).toInt(-1) == -1)
+        throw SvException(QString(SIG_IMPERMISSIBLE_VALUE)
+                          .arg(P).arg(object.value(P).toVariant().toString())
+                          .arg("Идентификатор устройства должен быть задан целым положительным числом"));
+
+      device_id = object.value(P).toInt();
+
+    }
+
+    P = P_STORAGES;
+    if(object.contains(P)) {
+
+      if(!object.value(P).isArray())
+        throw SvException(QString(SIG_IMPERMISSIBLE_VALUE)
+                          .arg(P).arg(object.value(P).toVariant().toString())
+                          .arg("Список хранилищ должен быть задан целыми положительными числами через запятую в квадратных скобках"));
+
+      QList<QVariant> l;
+      for(QJsonValue sidv: object.value(P).toArray()) {
+
+        int sid = sidv.toInt(-1);
+        if(sid == -1)
+          throw SvException(QString(SIG_IMPERMISSIBLE_VALUE)
+                           .arg(P).arg(object.value(P).toVariant().toString())
+                           .arg("Идентификатор хранилища должен быть задан целым положительным числом"));
+        l << sid;
+
+      }
+
+      storages = QVariant(l);
+
+    }
+
+    P = P_TIMEOUT;
+    if(object.contains(P)) {
+
+      if(object.value(P).toInt(-1) == -1)
+        throw SvException(QString(SIG_IMPERMISSIBLE_VALUE)
+                          .arg(P).arg(object.value(P).toVariant().toString())
+                          .arg("Таймаут должен быть задан целым положительным числом"));
+
+      timeout = object.value(P).toInt(SIG_DEFAULT_TIMEOUT);
+
+    }
+
+    P = P_TYPE;
+    if(object.contains(P))
+      type = object.value(P).toString();
+
+    P = P_TAG;
+    if(object.contains(P))
+      tag = object.value(P).toString();
+
+    P = P_PARAMS;
+    if(object.contains(P))
+      params = QString(QJsonDocument(object.value(P).toObject()).toJson(QJsonDocument::Compact));
+  }
+
 };
 
 struct SignalConfig
@@ -38,10 +143,37 @@ struct SignalConfig
   QString     tag = "";
   bool        enable = false;
   QString     description = "";
-  int         timeout = 3000;
+  int         timeout = SIG_DEFAULT_TIMEOUT;
 //  int         timeout_value = -3;
 //  int         timeout_signal_id = -1;
   QString     comment = "";
+
+  void mergeGroupParams(const SignalGroupParams* gp)
+  {
+    if(gp->device_id.isValid())
+      device_id = gp->device_id.toInt();
+
+    if(gp->params.isValid())
+      params = gp->params.toString();
+
+    if(gp->storages.isValid()) {
+
+      storages.clear();
+
+      for(QVariant s: gp->storages.toList())
+        storages.append(s.toInt());
+    }
+
+    if(gp->tag.isValid())
+      tag = gp->tag.toString();
+
+    if(gp->timeout.isValid())
+      timeout = gp->timeout.toInt();
+
+    if(gp->type.isValid())
+      type = gp->type.toString();
+
+  }
 
   static SignalConfig fromJsonString(const QString& json_string) throw (SvException)
   {
@@ -61,14 +193,8 @@ struct SignalConfig
     }
   }
 
-  static SignalConfig fromJsonObject(const QJsonObject &object) throw (SvException)
+  static SignalConfig fromJsonObject(const QJsonObject &object, const SignalGroupParams* gp = nullptr) throw (SvException)
   {
-    // проверяем наличие основных полей
-    QStringList l = QStringList() << P_ID << P_NAME << P_TYPE << P_DEVICE << P_TIMEOUT; // << P_TIMEOUT_VALUE;
-    for(QString v: l)
-      if(object.value(v).isUndefined())
-        throw SvException(QString(SIG_NO_PARAM).arg(v));
-
     QString P;
     SignalConfig p;
 
@@ -103,7 +229,7 @@ struct SignalConfig
     }
     else throw SvException(QString(SIG_NO_PARAM).arg(P));
 
-    /* device */
+    /* device */ // может применяться групповая политика
     P = P_DEVICE;
     if(object.contains(P))
     {
@@ -116,9 +242,13 @@ struct SignalConfig
       p.device_id = object.value(P).toInt(-1);
 
     }
-    else throw SvException(QString(SIG_NO_PARAM).arg(P));
+    else if(gp && gp->device_id.isValid())
+      p.device_id = gp->device_id.toInt();
 
-    /* storages */
+    else
+      throw SvException(QString(SIG_NO_PARAM).arg(P));
+
+    /* storages */ // может применяться групповая политика
     P = P_STORAGES;
     if(object.contains(P))
     {
@@ -137,9 +267,18 @@ struct SignalConfig
           p.storages.append(s);
       }
     }
-    else p.storages = QList<int>();
+    else if(gp && gp->storages.isValid()) {
 
-    /* type */
+      p.storages.clear();
+
+      for(QVariant s: gp->storages.toList())
+        p.storages.append(s.toInt());
+    }
+
+    else
+      p.storages = QList<int>();
+
+    /* type */ // может применяться групповая политика
     P = P_TYPE;
     if(object.contains(P)) {
 
@@ -152,18 +291,24 @@ struct SignalConfig
       p.type = object.value(P).toString("");
 
     }
-    else throw SvException(QString(SIG_NO_PARAM).arg(P));
+    else if(gp && gp->type.isValid())
+      p.type = gp->type.toString();
 
-    /* tag */
+    else
+      p.type = ""; // throw SvException(QString(SIG_NO_PARAM).arg(P));
+
+    /* tag */ // может применяться групповая политика
     P = P_TAG;
-    if(object.contains(P)) {
-
+    if(object.contains(P))
       p.tag = object.value(P).toString("");
 
-    }
-    else p.tag = "";
+    else if(gp && gp->tag.isValid())
+      p.tag = gp->tag.toString();
 
-    /* timeout*/
+    else
+      p.tag = "";
+
+    /* timeout*/ // может применяться групповая политика
     P = P_TIMEOUT;
     if(object.contains(P))
     {
@@ -173,18 +318,22 @@ struct SignalConfig
                                .arg(object.value(P).toVariant().toString())
                                .arg(QString("%1. Таймаут должен быть задан целым положительныи числом мсек.").arg(p.name)));
 
-      p.timeout = object.value(P).toInt(3000);
+      p.timeout = object.value(P).toInt(SIG_DEFAULT_TIMEOUT);
 
     }
-    else p.timeout = 3000;
+    else if(gp && gp->timeout.isValid())
+      p.timeout = gp->timeout.toInt();
 
-    /* enable */
+    else
+      p.timeout = SIG_DEFAULT_TIMEOUT;
+
+    /* enable */ // может применяться групповая политика
     P = P_ENABLE;
-    p.enable = object.contains(P) ? object.value(P).toBool(true) : true;
+    p.enable = object.contains(P) ? object.value(P).toBool(true) : ((gp && gp->enable.isValid()) ? gp->enable.toBool() : true);
 
-    /* params */
+    /* params */ // может применяться групповая политика
     P = P_PARAMS;
-    p.params = object.contains(P) ? QString(QJsonDocument(object.value(P).toObject()).toJson(QJsonDocument::Compact)) : "\"{ }\"";
+    p.params = object.contains(P) ? QString(QJsonDocument(object.value(P).toObject()).toJson(QJsonDocument::Compact)) : ((gp && gp->params.isValid()) ? gp->params.toString() : "\"{ }\"");
 
 //    /* timeout_value */
 //    P = P_TIMEOUT_VALUE;

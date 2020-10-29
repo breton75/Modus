@@ -20,6 +20,7 @@
 
 #define MAX_PACKET_SIZE 0xFFFF
 
+#define DEV_DEFAULT_TIMEOUT 3000
 #define DEV_IMPERMISSIBLE_VALUE "Недопустимое значение параметра %1: %2.\n%3"
 #define DEV_NO_PARAM  "В разделе \"devices\" отсутствует или не задан обязательный параметр \"%1\""
 
@@ -39,7 +40,7 @@ namespace ad {
     bool    debug = false;
     bool    debug2 = false;
     QString comment = "";
-    quint32 timeout = 3000;
+    quint32 timeout = DEV_DEFAULT_TIMEOUT;
 
 
     static DeviceConfig fromJsonString(const QString& json_string) throw (SvException)
