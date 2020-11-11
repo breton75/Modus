@@ -213,7 +213,6 @@ struct SignalConfig
     }
     else throw SvException(QString(SIG_NO_PARAM).arg(P));
 
-
     /* name */
     P = P_NAME;
     if(object.contains(P)) {
@@ -297,6 +296,8 @@ struct SignalConfig
     else
       p.type = ""; // throw SvException(QString(SIG_NO_PARAM).arg(P));
 
+    if(p.id == 1340)
+      qDebug() << QJsonValue(object).toString() << (gp ? gp->tag.toString() : "no gp");
     /* tag */ // может применяться групповая политика
     P = P_TAG;
     if(object.contains(P))
@@ -452,6 +453,9 @@ private:
   
 public slots:
   void setValue(QVariant value);
+
+signals:
+  void changed();
   
   
 };

@@ -11,7 +11,7 @@
 #define OPERATION_STATUS  "status"
 
 #define OPTION_DEBUG                     "debug"
-#define OPTION_CONFIG_FILE               "config_file_name"
+#define OPTION_CONFIG_FILE               "config_file"
 #define OPTION_DB_HOST                   "db_host"
 #define OPTION_DB_PORT                   "db_port"
 #define OPTION_DB_NAME                   "db_name"
@@ -35,6 +35,8 @@
 #define OPTION_PATH_TO_POSTGRES_BIN      "postgres_bin_path"
 #define OPTION_LOG_SENDER_NAME_FORMAT    "log_sender_name_format"
 
+#define IMPERMISSIBLE_VALUE "Недопустимое значение параметра %1: %2.\n%3"
+
 struct AppConfig {
 
   bool start    = false;
@@ -45,17 +47,17 @@ struct AppConfig {
   bool debug    = false;
 
     QString config_file_name;
-    QString db_name;
-    QString db_host;
-    quint16 db_port;
-    QString db_user;
-    QString db_pass;
-    quint16 soeg_port;
-//    bool    single_device_mode;
-    int     device_index;
-    QString autorun_cfg_file;
-    QString templates_dir;
-    QString postgres_bin_path;
+//    QString db_name;
+//    QString db_host;
+//    quint16 db_port;
+//    QString db_user;
+//    QString db_pass;
+//    quint16 soeg_port;
+////    bool    single_device_mode;
+//    int     device_index;
+//    QString autorun_cfg_file;
+//    QString templates_dir;
+//    QString postgres_bin_path;
 
     sv::log::Options log_options;
 };
