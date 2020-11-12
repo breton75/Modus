@@ -82,14 +82,14 @@ const OptionStructList AppOptions = {
 
 bool parse_params(const QStringList &args, AppConfig& cfg, const QString& file_name);
 
-bool initConfig(const AppConfig &appcfg);
+bool initConfig(AppConfig &appcfg);
 void close_db();
 bool readDevices(const AppConfig& appcfg);
 bool readStorages(const AppConfig& appcfg);
 bool readSignals(const AppConfig& appcfg);
-bool readDataServers(const AppConfig& appcfg);
+bool readInteracts(const AppConfig& appcfg);
 
-void parse_signals(QString json_file, QJsonArray* array, SignalGroupParams* group_params, QList<QPair<QJsonValue, SignalGroupParams>>* result) throw(SvException);
+void parse_signal_list(QString json_file, QJsonArray* array, SignalGroupParams* group_params, QList<QPair<QJsonValue, SignalGroupParams>>* result) throw(SvException);
 
 ad::SvAbstractDevice*  create_device (const ad::DeviceConfig&  config) throw(SvException);
 as::SvAbstractStorage* create_storage(const as::StorageConfig& config) throw(SvException);
@@ -101,7 +101,7 @@ QJsonObject JSON;
 
 bool openDevices();
 bool initStorages();
-bool initDataServers();
+bool initInteracts();
 
 void signal_handler(int sig);
 
@@ -537,113 +537,33 @@ int main(int argc, char *argv[])
 
   QDir::setCurrent(qApp->applicationDirPath());
 
-  try {
-
-//    QString cfg_file_name = QString("%1%2%3.cfg")
-//            .arg(QCoreApplication::applicationDirPath())
-//            .arg(QDir::separator())
-//            .arg(QCoreApplication::applicationName());
-
-    // проверяем наличие файла cfg. если отсутствует - пытаемся создать его
-//    QFile f(cfg.config_file_name);
-//    if(!f.exists()) {
-//      if(!f.open(QIODevice::ReadWrite))
-//        throw SvException(QString("Файл %1 отсутствует и не удается создать его").arg(cfg.config_file_name));
-
-//      f.close();
-//    }
-
-//    if(!parse_params(a.arguments(), cfg, cfg_file_name))
-//        throw SvException("Ошибка разбора командной строки", -1);
-
-    // задаем параметры логирования по-умолчанию
-    cfg.log_options.logging = true;
-    cfg.log_options.log_level = sv::log::llInfo;
-
-    if(JSON.contains("log")) {
-
-      QJsonObject jl = JSON.value("log").toObject();
-qDebug() << 1;
-      if(jl.contains("level") && jl.value("level").isString()) {
-qDebug() << 2;
-        cfg.log_options.log_level = sv::log::stringToLevel(jl.value("level").toString());
-qDebug() << sv::log::levelToString(cfg.log_options.log_level);
-        if(cfg.log_options.log_level == sv::log::llUndefined)
-          throw SvException(QString(IMPERMISSIBLE_VALUE)
-                            .arg("level").arg(jl.value("level").toString())
-                            .arg("Допустимы значения: none, error, warning, info, debug, debug2, all"));
-
-      }
-    }
-
-    dbus.setOptions(cfg.log_options);
-//    dbus.setSender("main");
-
-//    dbus << lldbg2 << me << mtdbg
-//         << "cfg_file_name=" << cfg.config_file_name
-//         << "\ndb_host=" << cfg.db_host
-//         << "\ndb_port=" << cfg.db_port
-//         << "\ndb_name=" << cfg.db_name << "\ndb_user=" << cfg.db_user << "\ndb_pass=" << cfg.db_pass
-//         << "\nlogging=" << (cfg.log_options.logging ? "on" : "off")
-//         << "\nlog_level=" << sv::log::levelToString(cfg.log_options.log_level)
-//         << "\nlog_devices=" << sv::log::deviceListToString(cfg.log_options.log_devices)
-//         << "\nlog_directory=" << cfg.log_options.log_directory
-//         << "\nlog_filename=" << cfg.log_options.log_filename
-//         << "\nlog_truncate_on_rotation=" << (cfg.log_options.log_truncate_on_rotation ? "on" : "off")
-//         << "\nlog_rotation_age=" << cfg.log_options.log_rotation_age << " (seconds)"
-//         << "\nlog_rotation_size=" << cfg.log_options.log_rotation_size << " (bytes)"
-//         << "\ndevice_index=" << cfg.device_index << "\n"
-//         << "log_sender_name_format" << cfg.log_options.log_sender_name_format << "\n"
-//         << sv::log::endl;
-
-  }
-
-  catch(SvException &e) {
-//    dbus << llerr << me << mterr << QString("%1\n").arg(e.error) << sv::log::endl;
-    qCritical() << QString("%1\n").arg(e.error);
-    return e.code;
-  }
-
-
   /// перехватываем момент закрытия программы, чтобы корректно завершить
   signal(SIGINT, signal_handler);
   signal(SIGTERM, signal_handler);
 
-  dbus << llinf << mtscc << me << QString(50, '-') << sv::log::endl;
-  dbus << llinf << mtscc << me << QString("Сервер сбора и обработки данных Modus v.%1").arg(APP_VERSION)
-       << sv::log::endl;
+
 
   int result = 0;
 
   try {
 
-    /** читаем конфигурацию **/
+    // читаем конфигурацию
     if(!initConfig(cfg)) throw SvException(-10);
 
-//    /** читаем устройства, репозитории и сигналы. СИГНАЛЫ В ПОСЛЕДНЮЮ ОЧЕРЕДЬ! **/
+    // читаем устройства, репозитории и сигналы. СИГНАЛЫ В ПОСЛЕДНЮЮ ОЧЕРЕДЬ!
     if(!readDevices(cfg)) throw SvException(-20);
     if(!readStorages(cfg)) throw SvException(-30);
-    if(!readDataServers(cfg)) throw SvException(-31);
+    if(!readInteracts(cfg)) throw SvException(-31);
     if(!readSignals(cfg)) throw SvException(-40);
 
-//    close_db();
-
-    /** подключаемся к устройствам и к репозиториям и начинаем работу **/
+    // подключаемся к устройствам и к репозиториям и начинаем работу
     if(!openDevices()) throw SvException(-50);
 
-    /** подключаемся к хранилищам **/
+    // подключаемся к хранилищам
     initStorages();
 
-    /** запускаем серверы приложений **/
-    initDataServers();
-
-//    web_logger = new sv::SvDBus(cfg.log_options);
-//    bool w = webserver.init(web_logger);
-
-//    if(w && cfg.debug)
-//        qDebug() << QString("Web сервер запущен на %1!").arg(80);
-//    else if(!w && cfg.debug)
-//        qDebug() << "Ошибка запуска web сервера!";
+    // запускаем серверы приложений
+    initInteracts();
 
   }
   
@@ -704,23 +624,17 @@ void signal_handler(int sig)
 
 }
 
-//void close_db()
-//{
-//  if(PG) {
-//    QString db_connect_name = PG->db.connectionName();
-//    delete PG; // хз как это работает. но работает
-//    QSqlDatabase::removeDatabase(db_connect_name);
-//  }
-
-//  PG = nullptr;
-
-//}
-
-bool initConfig(const AppConfig& appcfg)
+bool initConfig(AppConfig& appcfg)
 {
+  // задаем параметры логирования по-умолчанию, чтобы видеть ошибки
+  appcfg.log_options.logging = true;
+  appcfg.log_options.log_level = sv::log::llInfo;
+
+  dbus.setOptions(appcfg.log_options);
+
   try {
-      
-    dbus << llinf << mtinf << me << QString("Читаем файл конфигурации %1: ").arg(appcfg.config_file_name) << sv::log::endl;
+
+//    dbus << llinf << mtinf << me << QString("Читаем файл конфигурации %1: ").arg(appcfg.config_file_name) << sv::log::endl;
 
     QFile json_file(appcfg.config_file_name);
     if(!json_file.open(QIODevice::ReadWrite))
@@ -735,13 +649,37 @@ bool initConfig(const AppConfig& appcfg)
 
     JSON = jdoc.object();
 
+    // читаем параметры логирования
+    if(JSON.contains("log")) {
+
+      QJsonObject jl = JSON.value("log").toObject();
+
+      if(jl.contains("level") && jl.value("level").isString()) {
+
+        appcfg.log_options.log_level = sv::log::stringToLevel(jl.value("level").toString());
+
+        if(appcfg.log_options.log_level == sv::log::llUndefined)
+          throw SvException(QString(IMPERMISSIBLE_VALUE)
+                            .arg("level").arg(jl.value("level").toString())
+                            .arg("Допустимы значения: none, error, warning, info, debug, debug2, all"));
+      }
+    }
+
+    // задаем прочитанные параметры логирования
+    dbus.setOptions(appcfg.log_options);
+
+    // выводим информация о конфигурации
+    dbus << llinf << mtscc << me << QString(50, '-') << sv::log::endl;
+    dbus << llinf << mtscc << me << QString("Сервер сбора и обработки данных Modus v.%1").arg(APP_VERSION)
+           << sv::log::endl;
+
     if(JSON.contains("info"))
       dbus << llinf << mtdat << me << JSON.value("info").toString() << sv::log::endl;
 
     if(JSON.contains("version"))
-      dbus << llinf << mtdat << me << QString("Версия конфигурации %1").arg(JSON.value("version").toString()) << sv::log::endl;
+      dbus << llinf << mtdat << me << QString("Версия конфигурации %1\n").arg(JSON.value("version").toString()) << sv::log::endl;
     
-    dbus << llinf << mtscc << me << "OK\n" << sv::log::endl;
+//    dbus << llinf << mtscc << me << "OK\n" << sv::log::endl;
 
     return true;
     
@@ -933,7 +871,7 @@ bool readSignals(const AppConfig& appcfg)
 //    QJsonArray signal_list = QJsonArray();
 
     QList<QPair<QJsonValue, SignalGroupParams>> signal_list;
-    parse_signals(appcfg.config_file_name, nullptr, nullptr, &signal_list);
+    parse_signal_list(appcfg.config_file_name, nullptr, nullptr, &signal_list);
 
 
     // попутно вычисляем наибольшие длины имен сигналов, устройств и хранилищ для красивого вывода
@@ -1052,7 +990,7 @@ bool readSignals(const AppConfig& appcfg)
   
 }
 
-void parse_signals(QString json_file, QJsonArray* signals_array, SignalGroupParams* group_params, QList<QPair<QJsonValue, SignalGroupParams>>* result) throw(SvException)
+void parse_signal_list(QString json_file, QJsonArray* signals_array, SignalGroupParams* group_params, QList<QPair<QJsonValue, SignalGroupParams>>* result) throw(SvException)
 {
   try {
 
@@ -1100,7 +1038,7 @@ void parse_signals(QString json_file, QJsonArray* signals_array, SignalGroupPara
 
     }
     else
-      throw SvException("Неверный вызов функции parse_signals");
+      throw SvException("Неверный вызов функции parse_signal_list");
 
 
     /** в массиве сигналов могут содержатся группы со ссылками на файлы. разбираем их и добавляем в signal_list **/
@@ -1123,13 +1061,13 @@ void parse_signals(QString json_file, QJsonArray* signals_array, SignalGroupPara
           if(!fi.exists())
             throw SvException(QString("Файл не найден: %1").arg(v.toObject().value(P_FILE).toString()));
 
-          parse_signals(fi.canonicalFilePath(), nullptr, &gpsub, result);
+          parse_signal_list(fi.canonicalFilePath(), nullptr, &gpsub, result);
 
         }
         else if(v.toObject().contains(P_SIGNALS) && v.toObject().value(P_SIGNALS).isArray()) {
 
           QJsonArray gja = v.toObject().value(P_SIGNALS).toArray();
-          parse_signals("", &gja, &gpsub, result);
+          parse_signal_list("", &gja, &gpsub, result);
 
         }
       }
@@ -1139,7 +1077,7 @@ void parse_signals(QString json_file, QJsonArray* signals_array, SignalGroupPara
         if(!fi.exists())
           throw SvException(QString("Файл не найден: %1").arg(v.toObject().value(P_FILE).toString()));
 
-        parse_signals(fi.canonicalFilePath(), nullptr, &gp, result);
+        parse_signal_list(fi.canonicalFilePath(), nullptr, &gp, result);
 
       }
       else {
@@ -1160,7 +1098,7 @@ void parse_signals(QString json_file, QJsonArray* signals_array, SignalGroupPara
 //  return r;
 }
 
-bool readDataServers(const AppConfig& appcfg)
+bool readInteracts(const AppConfig& appcfg)
 {
   dbus << llinf << me << mtinf << QString("Читаем данные о серверах обмена данными:") << sv::log::endl;
 
@@ -1457,7 +1395,7 @@ bool initStorages()
    }
 }
 
-bool initDataServers()
+bool initInteracts()
 {
    dbus << llinf << me << mtinf << "Инициализируем серверы приложений:" <<  sv::log::endl;
 
