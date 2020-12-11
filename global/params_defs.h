@@ -27,6 +27,7 @@
 //#define P_TIMEOUT_VALUE     "timeout_value"
 //#define P_TIMEOUT_SIGNAL_ID "timeout_signal_id"
 #define P_GROUP       "group"
+#define P_USECASE     "usecase"
 #define P_DEVICE      "device"
 #define P_STORAGES    "storages"
 #define P_FILE        "file"

@@ -20,7 +20,6 @@
 #define SIG_NO_PARAM  "В разделе \"signals\" отсутствует или не задан обязательный параметр \"%1\""
 
 
-
 enum SignalDataTypes {
   dtInt = 0,
   dtFloat
@@ -35,7 +34,8 @@ struct SignalGroupParams
     if(!gp)
       return;
 
-    name = gp->name;
+    name        = gp->name;
+    usecase     = gp->usecase;
     device_id   = gp->device_id;
     storages    = gp->storages;
     params      = gp->params;
@@ -46,6 +46,7 @@ struct SignalGroupParams
   }
 
   QString  name        = "";
+  QVariant usecase     = QVariant();
   QVariant device_id   = QVariant();
   QVariant storages    = QVariant();
   QVariant params      = QVariant();
@@ -66,6 +67,18 @@ struct SignalGroupParams
     P = P_NAME;
     if(object.contains(P))
       name.append("/").append(object.value(P).toString());
+
+    P = P_USECASE;
+    if(object.contains(P)) {
+
+      if(SignalUseCase(object.value(P).toString()).usecase() == SignalUseCase::UNDEFINED)
+        throw SvException(QString(SIG_IMPERMISSIBLE_VALUE)
+                          .arg(P).arg(object.value(P).toVariant().toString())
+                          .arg(QString("Для сигнала должен быть задан один из вариантов использования [\"IN\", \"OUT\", \"VAR\"]")));
+
+      usecase = object.value(P).toInt();
+
+    }
 
     P = P_DEVICE;
     if(object.contains(P)) {
@@ -132,10 +145,13 @@ struct SignalGroupParams
 
 struct SignalConfig
 {
+  enum UseCase { UNDEFINED, IN, OUT, VAR };
+
   SignalConfig() { }
   
   int         id = -1;
   QString     name = "";
+  UseCase     usecase = UNDEFINED;
   int         device_id = -1;
   QList<int>  storages;
   QString     params = "";
@@ -236,13 +252,45 @@ struct SignalConfig
         throw SvException(QString(SIG_IMPERMISSIBLE_VALUE)
                                .arg(P)
                                .arg(object.value(P).toVariant().toString())
-                               .arg(QString("%1. Неверно указан ID устройства, к которому относится сигнал.").arg(p.name)));
+                               .arg(QString("Неверно указан ID устройства, к которому относится сигнал.")));
 
       p.device_id = object.value(P).toInt(-1);
 
     }
     else if(gp && gp->device_id.isValid())
       p.device_id = gp->device_id.toInt();
+
+    else
+      throw SvException(QString(SIG_NO_PARAM).arg(P));
+
+
+    /* usecase */ // может применяться групповая политика
+    P = P_USECASE;
+    if(object.contains(P)) {
+
+      QString v = object.value(P).toString("");
+      if(v.isEmpty())
+        throw SvException(QString(SIG_IMPERMISSIBLE_VALUE)
+                          .arg(P)
+                          .arg(object.value(P).toVariant().toString())
+                          .arg(QString("Для сигнала должен быть задан один из вариантов использования [\"IN\", \"OUT\", \"VAR\"]")));
+
+      if(     v.toUpper() == "IN")  p.usecase == IN;
+      else if(v.toUpper() == "OUT") p.usecase == OUT;
+      else if(v.toUpper() == "VAR") p.usecase == VAR;
+      else                          p.usecase == UNDEFINED;
+
+    }
+    else if(gp && gp->usecase.isValid()) {
+
+      QString v = gp->usecase.toString();
+
+      if(     v.toUpper() == "IN")  p.usecase == IN;
+      else if(v.toUpper() == "OUT") p.usecase == OUT;
+      else if(v.toUpper() == "VAR") p.usecase == VAR;
+      else                          p.usecase == UNDEFINED;
+
+    }
 
     else
       throw SvException(QString(SIG_NO_PARAM).arg(P));
@@ -453,7 +501,7 @@ public slots:
   void setValue(QVariant value);
 
 signals:
-  void changed();
+  void changed(SvSignal* signal);
   
   
 };

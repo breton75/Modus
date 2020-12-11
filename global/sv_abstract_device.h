@@ -8,6 +8,8 @@
 #include <QMutex>
 #include <QTimer>
 #include <QHash>
+#include <QQueue>
+#include <QFuture>
 
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -16,217 +18,14 @@
 #include "../../svlib/sv_abstract_logger.h"
 
 #include "params_defs.h"
+#include "device_config.h"
 #include "sv_signal.h"
+#include "ifc_serial_params.h"
+#include "ifc_udp_params.h"
 
 #define MAX_PACKET_SIZE 0xFFFF
 
-#define DEV_DEFAULT_TIMEOUT 3000
-#define DEV_IMPERMISSIBLE_VALUE "Недопустимое значение параметра %1: %2.\n%3"
-#define DEV_NO_PARAM  "В разделе \"devices\" отсутствует или не задан обязательный параметр \"%1\""
-
-namespace ad {
-
-  struct DeviceConfig
-  {
-    int     id = -1;
-    QString name = "";
-    bool    enable = false;
-    QString hwcode = "";
-    QString ifc_name = "";
-    QString ifc_params = "";
-    QString dev_params = "";
-    QString driver_lib_name = "";
-    QString description = "";
-    bool    debug = false;
-    bool    debug2 = false;
-    QString comment = "";
-    quint32 timeout = DEV_DEFAULT_TIMEOUT;
-
-
-    static DeviceConfig fromJsonString(const QString& json_string) throw (SvException)
-    {
-      QJsonParseError err;
-      QJsonDocument jd = QJsonDocument::fromJson(json_string.toUtf8(), &err);
-
-      if(err.error != QJsonParseError::NoError)
-        throw SvException(err.errorString());
-
-      try {
-        return fromJsonObject(jd.object());
-      }
-      catch(SvException e) {
-        throw e;
-      }
-    }
-
-    static DeviceConfig fromJsonObject(const QJsonObject &object) throw (SvException)
-    {
-      // проверяем наличие основных полей
-      QStringList l = QStringList() << P_ID << P_NAME << P_IFC << P_IFC_PARAMS
-                                    << P_DEV_PARAMS << P_DRIVER;
-      for(QString v: l)
-        if(object.value(v).isUndefined())
-          throw SvException(QString(DEV_NO_PARAM).arg(v));
-
-      QString P;
-      DeviceConfig p;
-
-      /* id */
-      P = P_ID;
-      if(object.contains(P))
-      {
-        if(object.value(P).toInt(-1) == -1)
-          throw SvException(QString(DEV_IMPERMISSIBLE_VALUE)
-                                 .arg(P)
-                                 .arg(object.value(P).toVariant().toString())
-                                 .arg("У каждого устройства должен быть свой уникальный номер"));
-
-        p.id = object.value(P).toInt(-1);
-
-      }
-      else throw SvException(QString(DEV_NO_PARAM).arg(P));
-
-
-      /* name */
-      P = P_NAME;
-      if(object.contains(P)) {
-
-        if(object.value(P).toString("").isEmpty())
-          throw SvException(QString(DEV_IMPERMISSIBLE_VALUE)
-                            .arg(P)
-                            .arg(object.value(P).toVariant().toString())
-                            .arg("Имя устройства не может быть пустым и должно быть заключено в двойные кавычки"));
-
-        p.name = object.value(P).toString("");
-
-      }
-      else throw SvException(QString(DEV_NO_PARAM).arg(P));
-
-      /* ifc */
-      P = P_IFC;
-      if(object.contains(P)) {
-
-        if(object.value(P).toString("").isEmpty())
-          throw SvException(QString(DEV_IMPERMISSIBLE_VALUE)
-                            .arg(P)
-                            .arg(object.value(P).toVariant().toString())
-                            .arg("Имя интерфейса не может быть пустым и должно быть заключено в двойные кавычки"));
-
-        p.ifc_name = object.value(P).toString("");
-
-      }
-      else throw SvException(QString(DEV_NO_PARAM).arg(P));
-
-
-      /* ifc_params */
-      P = P_IFC_PARAMS;
-      if(object.contains(P)) {
-
-        p.ifc_params = QString(QJsonDocument(object.value(P).toObject()).toJson(QJsonDocument::Compact));
-
-      }
-      else throw SvException(QString(DEV_NO_PARAM).arg(P_IFC_PARAMS));
-
-
-      /* dev_params */
-      P = P_DEV_PARAMS;
-      if(object.contains(P)) {
-
-        p.dev_params = QString(QJsonDocument(object.value(P).toObject()).toJson(QJsonDocument::Compact));
-
-      }
-      else throw SvException(QString(DEV_NO_PARAM).arg(P));
-
-
-      /* driver */
-      P = P_DRIVER;
-      if(object.contains(P)) {
-
-        if(object.value(P).toString("").isEmpty())
-          throw SvException(QString(DEV_IMPERMISSIBLE_VALUE)
-                            .arg(P)
-                            .arg(object.value(P).toVariant().toString())
-                            .arg("Путь к библиотеке драйвера устройства не может быть пустым"));
-
-        p.driver_lib_name = object.value(P).toString("");
-
-      }
-      else throw SvException(QString(DEV_NO_PARAM).arg(P));
-
-      /* timeout*/
-      P = P_TIMEOUT;
-      if(object.contains(P))
-      {
-        if(object.value(P).toInt(-1) < 1)
-          throw SvException(QString(DEV_IMPERMISSIBLE_VALUE)
-                                 .arg(P)
-                                 .arg(object.value(P).toVariant().toString())
-                                 .arg("Таймаут не может быть меньше 1 мсек."));
-
-        p.timeout = object.value(P).toInt(3000);
-
-      }
-      else p.timeout = 3000;
-
-      /* hwcode */
-      P = P_HWCODE;
-      p.hwcode = object.contains(P) ? object.value(P).toString("") : "";
-
-      /* description */
-      P = P_DESCRIPTION;
-      p.description = object.contains(P) ? object.value(P).toString("") : "";
-
-      /* enable */
-      P = P_ENABLE;
-      p.enable = object.contains(P) ? object.value(P).toBool(false) : true;
-
-      /* debug */
-      P = P_DEBUG;
-      p.debug = object.contains(P) ? object.value(P).toBool(false) : false;
-
-      /* debug2 */
-      P = P_DEBUG2;
-      p.debug2 = object.contains(P) ? object.value(P).toBool(false) : false;
-
-      /* comment */
-      P = P_COMMENT;
-      p.comment = object.contains(P) ? object.value(P).toString("") : "";
-
-      return p;
-
-    }
-
-    QString toJsonString(QJsonDocument::JsonFormat format = QJsonDocument::Indented) const
-    {
-      QJsonDocument jd;
-      jd.setObject(toJsonObject());
-
-      return QString(jd.toJson(format));
-    }
-
-    QJsonObject toJsonObject() const
-    {
-      QJsonObject j;
-
-      j.insert(P_ID, QJsonValue(static_cast<int>(id)).toInt());
-      j.insert(P_NAME, QJsonValue(name).toString());
-      j.insert(P_ENABLE, QJsonValue(enable).toBool());
-      j.insert(P_IFC, QJsonValue(ifc_name).toString());
-      j.insert(P_IFC_PARAMS, QJsonValue(ifc_params).toString());
-      j.insert(P_DEV_PARAMS, QJsonValue(dev_params).toString());
-      j.insert(P_DRIVER, QJsonValue(driver_lib_name).toString());
-      j.insert(P_DESCRIPTION, QJsonValue(description).toString());
-      j.insert(P_DEBUG, QJsonValue(debug).toBool());
-      j.insert(P_DEBUG2, QJsonValue(debug2).toBool());
-      j.insert(P_COMMENT, QJsonValue(comment).toString());
-      j.insert(P_HWCODE, QJsonValue(hwcode).toString());
-
-      return j;
-
-    }
-
-  };
-
+namespace modus {
 
   struct BUFF
   {
@@ -244,7 +43,7 @@ namespace ad {
 
 }
     
-class ad::SvAbstractDevice: public QObject
+class modus::SvAbstractDevice: public QObject
 {
   Q_OBJECT
   
@@ -262,17 +61,83 @@ public:
 
   }
   
-  virtual void create_new_thread() throw(SvException) = 0;
-  virtual ad::SvAbstractDeviceThread* thread() const { return p_thread; }
+  virtual void create_new_thread() throw(SvException)
+  {
+    try {
+
+      switch (ifcesMap.value(p_config.ifc_name.toUpper(), AvailableIfces::Undefined)) {
+
+        case AvailableIfces::RS485:
+        case AvailableIfces::RS:
+
+          p_thread = new opa::SerialThread(this, p_logger);
+
+          break;
+
+        case AvailableIfces::UDP:
+
+          p_thread = new opa::UDPThread(this, p_logger);
+          break;
+
+
+  //      case AvailableIfces::TEST:
+  //        p_thread = new ConningKongsberTestThread(this, p_logger);
+  //        break;
+
+      default:
+        p_exception.raise(QString("Устройство %1. Неизвестный тип интерфейса: %2").arg(p_config.name).arg(p_config.ifc_name));
+        break;
+
+      }
+
+      p_thread->conform(p_config.dev_params, p_config.ifc_params);
+      static_cast<opa::GenericThread*>(p_thread)->initSignalsCollections();
+
+    }
+
+    catch(SvException e) {
+      throw e;
+
+    }
+  }
+
+  virtual modus::SvAbstractDeviceThread* thread() const { return p_thread; }
 
   virtual void setLogger(sv::SvAbstractLogger* logger) { p_logger = logger; }
   virtual const sv::SvAbstractLogger* logger() const { return p_logger; }
 
-  virtual bool configure(const ad::DeviceConfig& cfg) = 0;
+  virtual bool configure(const modus::DeviceConfig& cfg) = 0;
 
-  virtual const ad::DeviceConfig* config() const { return &p_config; }
+  virtual const modus::DeviceConfig* config() const { return &p_config; }
 
-  virtual bool open() = 0;
+  virtual bool open() {
+
+    try {
+
+      if(!p_is_configured)
+        p_exception.raise(QString("Для устройства '%1' не задана конфигурация").arg(p_config.name));
+
+      create_new_thread();
+
+      connect(p_thread, &modus::SvAbstractDeviceThremodus::finished, this, &opa::SvOPA::deleteThread);
+      connect(this, &opa::SvOPA::stopThread, p_thread, &modus::SvAbstractDeviceThremodus::stop);
+
+      p_thread->open();
+      p_thread->start();
+
+      return true;
+
+    } catch(SvException& e) {
+
+      p_last_error = e.error;
+
+      deleteThread();
+
+      return false;
+
+    }
+
+  }
 
   virtual void close() = 0;
   virtual void stop()   { }
@@ -299,13 +164,16 @@ public:
     if(signal->config()->timeout <= 0)
       p_signals_without_timeout.insert(signal->config()->name, signal);
 
+    if(signal->config()->usecase == SignalConfig::OUT)
+      connect(signal, &SvSignal::changed, this, &SvAbstractDevice::queue);
+
   }
 
   virtual void clearSignals()              throw(SvException) { p_signals.clear(); }
 
   int  signalsCount() const         { return p_signals.count(); }
 
-  const ad::SignalMap* Signals() const { return &p_signals; }
+  const modus::SignalMap* Signals() const { return &p_signals; }
 
   inline void setSignalValue(const QString& signal_name, QVariant value)
   {
@@ -325,17 +193,27 @@ public:
         s->setDeviceLostEpoch(p_lost_epoch);
   }
 
+public slots:
+  void queue(SvSignal* signal)
+  {
+
+  }
+
+private:
+  QQueue q;
+  QFuture f;
+
 protected:
 //  dev::HardwareType p_hardware_type;
 
-  ad::SvAbstractDeviceThread* p_thread = nullptr;
+  modus::SvAbstractDeviceThread* p_thread = nullptr;
 
-  ad::DeviceConfig    p_config;
+  modus::DeviceConfig    p_config;
 
   sv::SvAbstractLogger* p_logger;
 
-  ad::SignalMap p_signals;
-  ad::SignalMap p_signals_without_timeout;
+  modus::SignalMap p_signals;
+  modus::SignalMap p_signals_without_timeout;
 
   SvException p_exception;
   QString p_last_error;
@@ -343,18 +221,45 @@ protected:
   bool p_isOpened = false;
   bool p_isActive = true;
   bool p_is_ready_read = false;
+  bool p_is_configured = false;
 
   quint64 p_lost_epoch = 0;
+
+//  bool p_is_active;
+
+  modus::BUFF p_buff;
+
+  QTimer  p_reset_timer;
+
+  virtual void process_data() = 0;
+//  virtual void process_signals() = 0;
+
+
+  virtual void process_signals()
+  {
+    foreach (SvSignal* signal, p_device->Signals()->values()) {
+      if((signal->config()->timeout > 0 && !signal->isAlive()) ||
+         (signal->config()->timeout == 0 && !signal->isDeviceAlive()))
+            signal->setLostValue();
+    }
+  }
+
+public slots:
+  void reset_buffer()
+  {
+    p_buff.offset = 0;
+  }
+
   
 };
 
 
-class ad::SvAbstractDeviceThread: public QThread
+class modus::SvAbstractDeviceThread: public QThread
 {
   Q_OBJECT
   
 public:
-  SvAbstractDeviceThread(ad::SvAbstractDevice* device, sv::SvAbstractLogger* logger = nullptr):
+  SvAbstractDeviceThread(modus::SvAbstractDevice* device, sv::SvAbstractLogger* logger = nullptr):
     p_logger(logger),
     p_device(device)
   {  }
@@ -375,11 +280,11 @@ public:
   
 protected:
   sv::SvAbstractLogger  *p_logger = nullptr;
-  ad::SvAbstractDevice  *p_device = nullptr;
+  modus::SvAbstractDevice  *p_device = nullptr;
 
   bool p_is_active;
 
-  ad::BUFF p_buff;
+  modus::BUFF p_buff;
 
   QTimer  p_reset_timer;
 

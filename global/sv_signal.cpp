@@ -26,7 +26,7 @@ void SvSignal::setValue(QVariant value)
   p_last_update = QDateTime::currentDateTime();
   p_lost_epoch = p_last_update.toMSecsSinceEpoch() + p_config.timeout;
 
-  emit changed();
+  emit changed(this);
 
 }
 

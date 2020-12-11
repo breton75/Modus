@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>955</width>
-    <height>222</height>
+    <width>937</width>
+    <height>247</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -30,7 +30,7 @@
       <item>
        <widget class="QLineEdit" name="lineRE">
         <property name="text">
-         <string>[$]II(?&lt;name&gt;XDR|GEN)[, ]+\d+[, ]+[\w+\d+., ]+[*](?&lt;crc&gt;[0-9a-fA-F]{2})</string>
+         <string>select[\s]{0,}[(]{1}[\s]{0,}{users.admin.devices.database2:signals_data_rs}[,\s]+'value'[,\s]+'signal_name'[,\s]+'(?&lt;sn&gt;[A-Z0-9_]+(_T|_f){1})'[)]{1}[\s]{0,}==[\s]{0,}1.0[\s]{0,}[|]{2}</string>
         </property>
        </widget>
       </item>
@@ -51,7 +51,7 @@
       <item>
        <widget class="QLineEdit" name="lineText">
         <property name="text">
-         <string>IIXDR,2,0.3, ,0, ,-4.4, ,0, ,2.0, ,0, ,7641.4, ,0*6D</string>
+         <string>select({users.admin.devices.database2:signals_data_rs}, 'value','signal_name', 'BI22_2SS1_T_T') ==  1.0 || </string>
         </property>
        </widget>
       </item>
@@ -81,6 +81,35 @@
       </item>
      </layout>
     </item>
+    <item>
+     <widget class="QGroupBox" name="groupBox">
+      <property name="title">
+       <string>GroupBox</string>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_4">
+       <item>
+        <spacer name="horizontalSpacer_2">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>806</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QPushButton" name="bnTextReal">
+         <property name="text">
+          <string>TestReal</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menuBar">
@@ -88,7 +117,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>955</width>
+     <width>937</width>
      <height>22</height>
     </rect>
    </property>

@@ -4,6 +4,10 @@
 #include <QMainWindow>
 #include <QRegularExpression>
 #include <QDebug>
+#include <QFile>
+#include <QDataStream>
+#include <QDateTime>
+#include <QFileDialog>
 
 namespace Ui {
 class MainWindow;
@@ -19,6 +23,8 @@ public:
 
 private slots:
   void on_bnMatch_clicked();
+
+  void on_bnTextReal_clicked();
 
 private:
   Ui::MainWindow *ui;
