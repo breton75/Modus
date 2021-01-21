@@ -4,7 +4,7 @@ QT += network dbus
 CONFIG += c++11 console
 CONFIG -= app_bundle
 
-TARGET = /home/user/Modus/md_server
+TARGET = /home/user/Modus/modus
 
 VERSION = 1.0.0    # major.minor.patch
 DEFINES += APP_VERSION=\\\"$$VERSION\\\"
@@ -35,16 +35,15 @@ SOURCES += main.cpp \
 #    sv_dbus.cpp
 
 HEADERS += \
-    ../../global/device/device_defs.h \
-    ../../global/device/ifc/ifc_serial.h \
-    ../../global/device/ifc/ifc_udp.h \
+#    ../../global/device/device_defs.h \
+#    ../../global/device/ifc/ifc_udp.h \
     ../../global/device/sv_device_adaptor.h \
+    ../../global/device/ifc/sv_interface_adaptor.h \
+    ../../global/interact/sv_interact_adaptor.h \
     ../../global/interact/interact_config.h \
     ../../global/interact/sv_abstract_interact.h \
-    ../../global/interact/sv_interact_adaptor.h \
-    ../../global/storage/adaptor/storage_file.h \
-    ../../global/storage/adaptor/storage_pgsp.h \
-    ../../global/device/ifc/sv_interface_adaptor.h \
+#    ../../global/storage/adaptor/storage_file.h \
+#    ../../global/storage/adaptor/storage_pgsp.h \
     ../../global/signal/sv_signal.h \
     ../../global/device/sv_abstract_protocol.h \
     ../../global/storage/storage_config.h \
@@ -54,9 +53,9 @@ HEADERS += \
     ../../../svlib/sv_abstract_logger.h \
     ../../global/storage/adaptor/sv_storage_adaptor.h \
     ../../global/storage/sv_abstract_storage.h \
-    ../../global/storage/sv_storage.h \
+#    ../../global/storage/sv_storage.h \
     app_config.h \
-    ../../global/global_defs.h \
+#    ../../global/global_defs.h \
     ../../global/sv_dbus.h
 #    sv_dbus.h
 

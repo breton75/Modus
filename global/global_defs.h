@@ -3,6 +3,46 @@
 
 #include "../../svlib/sv_abstract_logger.h"
 
+#define IMPERMISSIBLE_VALUE "Недопустимое значение параметра %1: %2.\n%3"
+#define MISSING_PARAM "Раздел \"%1\". Не задан обязательный параметр %2"
+
+// имена полей общие
+#define P_ID          "id"
+#define P_NAME        "name"
+#define P_DESCRIPTION "description"
+#define P_DRIVER      "driver"
+#define P_TIMEOUT     "timeout"
+#define P_ENABLE      "enable"
+#define P_DEBUG       "debug"
+#define P_DEBUG2      "debug2"
+#define P_COMMENT     "comment"
+#define P_TYPE        "type"
+#define P_PARAMS      "params"
+#define P_SIGNALS     "signals"
+#define P_INTERVAL    "interval"
+
+// имена полей для всех устройств
+#define P_DEV_PARAMS  "dev_params"
+#define P_IFC         "ifc"
+#define P_IFC_PARAMS  "ifc_params"
+#define P_HWCODE      "hwcode"
+
+// имена полей для сигналов
+#define P_GROUP       "group"
+#define P_USECASE     "usecase"
+#define P_DEVICE      "device"
+#define P_STORAGES    "storages"
+#define P_FILE        "file"
+#define P_TAG         "tag"
+
+// interfaces
+#define DEFAULT_BUFFER_RESET_INTERVAL 20
+#define P_BUFFER_RESET_INTERVAL "buffer_reset_interval"
+
+// storages
+#define DEFAULT_STORE_INTERVAL 1000
+
+// loader operations
 #define APP_OPERATION     "operation"
 #define OPERATION_START   "start"
 #define OPERATION_TWIN    "twin"  // для операции restart
@@ -10,6 +50,7 @@
 #define OPERATION_RESTART "restart"
 #define OPERATION_STATUS  "status"
 
+// loader options
 #define OPTION_DEBUG                     "debug"
 #define OPTION_CONFIG_FILE               "config_file"
 #define OPTION_DB_HOST                   "db_host"
@@ -35,7 +76,6 @@
 #define OPTION_PATH_TO_POSTGRES_BIN      "postgres_bin_path"
 #define OPTION_LOG_SENDER_NAME_FORMAT    "log_sender_name_format"
 
-#define IMPERMISSIBLE_VALUE "Недопустимое значение параметра %1: %2.\n%3"
 
 struct AppConfig {
 
