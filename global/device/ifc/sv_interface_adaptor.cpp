@@ -31,12 +31,12 @@ bool modus::SvInterfaceAdaptor::init(const QString& ifcName, const QString& json
             throw SvException(m_udp_socket->errorString());
 
           // с заданным интервалом сбрасываем входящий буфер, чтобы отсекать мусор и битые пакеты
-          m_reset_input_timer.setInterval(m_udp_params.buffer_reset_interval);
-          m_reset_input_timer.setSingleShot(true);
-          m_reset_input_timer.moveToThread(this);
+//          m_reset_input_timer.setInterval(m_udp_params.buffer_reset_interval);
+//          m_reset_input_timer.setSingleShot(true);
+//          m_reset_input_timer.moveToThread(this);
 
-//          connect(m_udp_socket, SIGNAL(readyRead()), &m_reset_input_timer, SLOT(start()));
-          connect(&m_reset_input_timer, &QTimer::timeout, this, &modus::SvInterfaceAdaptor::resetInputBuffer);
+////          connect(m_udp_socket, SIGNAL(readyRead()), &m_reset_input_timer, SLOT(start()));
+//          connect(&m_reset_input_timer, &QTimer::timeout, this, &modus::SvInterfaceAdaptor::resetInputBuffer);
 
           // именно после всего!
           m_udp_socket->moveToThread(this);
@@ -70,8 +70,9 @@ bool modus::SvInterfaceAdaptor::init(const QString& ifcName, const QString& json
 void modus::SvInterfaceAdaptor::run()
 {
     m_is_active = true;
+    m_input_reset_timer = 0;
 
-    while(m_is_active) {
+
 
       switch (m_ifc) {
 
@@ -83,31 +84,59 @@ void modus::SvInterfaceAdaptor::run()
 
         case modus::UDP:
         {
-          if(m_output_buffer->offset > 0)
-            processOutputData();
+          while(m_is_active) {
 
+//            m_input_buffer->mutex.lock();
 
-          while(m_udp_socket->waitForReadyRead(1000) && m_is_active) {
+//              if(m_output_buffer->mutex.tryLock(10)) {
 
-            while(m_udp_socket->hasPendingDatagrams() && m_is_active)
-            {
-              if(m_udp_socket->pendingDatagramSize() <= 0)
-                continue;
+//                msleep(10);
+//                write(m_output_buffer);
+//                m_output_buffer->mutex.unlock();
 
-              m_input_buffer->mutex.lock();
+//              }
 
-              m_reset_input_timer.start();
+              while(m_udp_socket->waitForReadyRead(m_udp_params.buffer_reset_interval) && m_is_active) {
 
-              if(m_input_buffer->offset > MAX_BUF_SIZE)
-                resetInputBuffer();
+                while(m_udp_socket->hasPendingDatagrams() && m_is_active)
+                {
+                  if(m_udp_socket->pendingDatagramSize() <= 0)
+                    continue;
 
-              /* ... the rest of the datagram will be lost ... */
-              m_input_buffer->offset += m_udp_socket->readDatagram((char*)(&m_input_buffer->buf[m_input_buffer->offset]), MAX_BUF_SIZE - m_input_buffer->offset);
+                  m_input_buffer->mutex.lock();
 
-              m_input_buffer->mutex.unlock();
+                  if(m_input_buffer->offset > MAX_BUF_SIZE)
+                    m_input_buffer->reset();
 
-            }
+                  /* ... the rest of the datagram will be lost ... */
+                  m_input_buffer->offset += m_udp_socket->readDatagram((char*)(&m_input_buffer->buf[m_input_buffer->offset]), MAX_BUF_SIZE - m_input_buffer->offset);
+
+                  m_input_buffer->mutex.unlock();
+                }
+              }
+//              else {
+
+//                m_input_buffer->reset();
+
+//                if(m_signal_buffer->mutex.tryLock(10)) {
+
+//                  write(m_signal_buffer);
+//                  m_signal_buffer->mutex.unlock();
+
+//                }
+//              }
+
+//              m_input_buffer->mutex.unlock();
+
+//            msleep(1);
           }
+
+
+
+//          processOutputBuffer();
+//          msleep(10);
+
+
 
         }
 
@@ -122,16 +151,16 @@ void modus::SvInterfaceAdaptor::run()
         }
 
       }
-    }
 
-    m_udp_socket->close();
+
 
     qDebug() << "finished";
 }
 
-void modus::SvInterfaceAdaptor::processOutputData()
+void modus::SvInterfaceAdaptor::write(modus::BUFF* buffer)
 {
-  QMutexLocker(&m_output_buffer->mutex);
+  if(!buffer->ready())
+    return;
 
   switch (m_ifc) {
 
@@ -143,7 +172,18 @@ void modus::SvInterfaceAdaptor::processOutputData()
 
     case modus::UDP:
     {
-      m_udp_socket->writeDatagram(&m_output_buffer->buf[0], m_output_buffer->offset, m_udp_params.host, m_udp_params.send_port);
+
+      m_udp_socket->writeDatagram(&buffer->buf[0], buffer->offset, m_udp_params.host, m_udp_params.send_port);
+      m_udp_socket->flush();
+
+//      if(m_udp_socket->waitForBytesWritten(m_udp_params.buffer_reset_interval))
+        emit message(QString("<< %1").arg(QString(QByteArray((const char*)&buffer->buf[0], buffer->offset).toHex())));
+//      else
+//        emit message(m_udp_socket->errorString());
+
+      buffer->reset();
+//      msleep(10);
+
       break;
     }
 
@@ -159,11 +199,14 @@ void modus::SvInterfaceAdaptor::processOutputData()
     }
 
   }
+
+
 }
 
 void modus::SvInterfaceAdaptor::resetInputBuffer()
 {
-    m_input_buffer->offset = 0;
+  qDebug() << "timer";
+    m_input_buffer->reset();
 }
 
 void modus::SvInterfaceAdaptor::stop()

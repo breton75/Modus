@@ -24,9 +24,10 @@ namespace modus {
     char  buf[MAX_BUF_SIZE];
     quint64 offset = 0;
 
-    QMutex mutex;
+    QMutex mutex, mutex2;
 
     void reset() { offset = 0; }
+    bool ready() { return offset > 0; }
 
   };
 

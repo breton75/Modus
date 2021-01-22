@@ -55,16 +55,18 @@ public:
 
       m_interface = new modus::SvInterfaceAdaptor();
 
-      m_interface->setInputBuffer(&m_input_buffer);
+      m_interface->setInputBuffer (&m_input_buffer);
       m_interface->setOutputBuffer(&m_output_buffer);
+      m_interface->setSignalBuffer(&m_signal_buffer);
 
       m_protocol = create_device();
 
       if(!m_protocol)
         throw SvException("Объект устройства не создан");
 
-      m_protocol->setInputBuffer(&m_input_buffer);
+      m_protocol->setInputBuffer (&m_input_buffer);
       m_protocol->setOutputBuffer(&m_output_buffer);
+      m_protocol->setSignalBuffer(&m_signal_buffer);
 
       if(!m_protocol->configure(m_config))
         throw SvException(m_protocol->lastError());
@@ -162,8 +164,9 @@ private:
   modus::SvAbstractProtocol* m_protocol  = nullptr;
   modus::SvInterfaceAdaptor* m_interface = nullptr;
 
-  modus::BUFF           m_input_buffer;
-  modus::BUFF           m_output_buffer;
+  modus::BUFF          m_input_buffer;
+  modus::BUFF          m_output_buffer;
+  modus::BUFF          m_signal_buffer;
 
   modus::DeviceConfig   m_config;
 
@@ -231,14 +234,15 @@ private slots:
   {
     qDebug() << msg;
 
-    emit message(msg, level, type);
+//    emit message(msg, level, type);
 
-//    if(m_logger)
-//      *m_logger << sv::log::sender(m_config.name)
-//                << sv::log::Level(level)
-//                << sv::log::MessageTypes(type)
-//                << msg
-//                << sv::log::endl;
+    if(m_logger)
+      *m_logger << sv::log::sender(m_config.name)
+                << sv::log::TimeZZZ
+                << sv::log::Level(level)
+                << sv::log::MessageTypes(type)
+                << msg
+                << sv::log::endl;
   }
 };
 

@@ -49,10 +49,11 @@ public:
 
     void setInputBuffer (modus::BUFF *input_buffer)  { m_input_buffer  = input_buffer;  }
     void setOutputBuffer(modus::BUFF *output_buffer) { m_output_buffer = output_buffer; }
+    void setSignalBuffer(modus::BUFF *signal_buffer) { m_signal_buffer = signal_buffer; }
 
   public slots:
     virtual void stop();
-    virtual void processOutputData();
+//    virtual void processOutputData();
     void resetInputBuffer();
 
 private:
@@ -60,8 +61,9 @@ private:
 
     bool          m_is_active;
 
-    modus::BUFF*  m_input_buffer  = nullptr;
-    modus::BUFF*  m_output_buffer = nullptr;
+    modus::BUFF*  m_input_buffer   = nullptr;
+    modus::BUFF*  m_output_buffer  = nullptr;
+    modus::BUFF*  m_signal_buffer  = nullptr;
 
     QString       m_last_error;
     QTimer        m_reset_input_timer;
@@ -72,11 +74,17 @@ private:
     UdpParams     m_udp_params;
     SerialParams  m_serial_params;
 
+    qint64 m_input_reset_timer;
+
+    void write(modus::BUFF* buffer);
+
+//    bool read();
+
 protected:
     void run() Q_DECL_OVERRIDE;
 
 signals:
-  void inputBufferReady();
+//  void inputBufferReady();
   void message(const QString msg, int level = sv::log::llDebug, int type  = sv::log::mtDebug);
 
 };
