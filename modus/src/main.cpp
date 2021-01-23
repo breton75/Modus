@@ -21,24 +21,15 @@
 #include <QJsonValue>
 
 #include "../../global/device/sv_device_adaptor.h"
-//#include "../../global/device/sv_abstract_protocol.h"
-//#include "../../global/device/ifc/sv_interface_adaptor.h"
-#include "../../global/storage/adaptor/sv_storage_adaptor.h"
+#include "../../global/storage/sv_storage_adaptor.h"
 #include "../../global/interact/sv_interact_adaptor.h"
 
 #include "../../global/global_defs.h"
 #include "../../global/signal/sv_signal.h"
+#include "../../global/misc/sv_dbus.h"
 
 #include "../../../svlib/sv_exception.h"
 #include "../../../svlib/sv_config.h"
-
-#include "../../global/sv_dbus.h"
-//#include "../../global/sv_dbus.h"
-
-//#include "sv_storage.h"
-//#include "sv_webserver.h"
-
-//SvPGDB* PG = nullptr;
 
 QMap<int, modus::SvDeviceAdaptor*>    DEVICES;
 QMap<int, modus::SvStorageAdaptor*>   STORAGES;
@@ -53,12 +44,8 @@ SvException exception;
 
 QDateTime start_time;
 
-//sv::SvConcoleLogger dbus;
-
-//org::ame::modus* modus_dbus_ifc;
 sv::SvDBus dbus;
 
-//SvWebServer webserver;
 
 const OptionStructList AppOptions = {
     {{OPTION_DEBUG},  "Режим отладки","", "", ""},
@@ -812,7 +799,7 @@ bool readStorages(const AppConfig& appcfg)
                           .arg(storage_cfg.name).arg(storage_cfg.id));
 
         /** создаем объект хранилища **/
-        modus::SvStorageAdaptor* newstorage = new modus::SvStorageAdaptor(); // create_storage(storage_cfg);
+        modus::SvStorageAdaptor* newstorage = new modus::SvStorageAdaptor();
 
         if(newstorage->configure(storage_cfg)) {
 
@@ -1370,7 +1357,7 @@ bool initStorages()
 
      foreach(modus::SvStorageAdaptor* storage, STORAGES.values()) {
 
-       if(storage->signalsCount()) {
+       if(storage->signalCount()) {
 
          if(!storage->start())
            throw SvException(QString("%1: %2").arg(storage->config()->name)

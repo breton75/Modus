@@ -4,14 +4,12 @@
 #include <QObject>
 #include <QDebug>
 
-#include "../../../svlib/sv_exception.h"
-#include "../../../svlib/sv_abstract_logger.h"
+#include "../misc/sv_exception.h"
+#include "../misc/sv_abstract_logger.h"
 
-#include "ifc/sv_interface_adaptor.h"
-#include "device_defs.h"
 #include "../signal/sv_signal.h"
-//#include "ifc/ifc_serial.h"
-//#include "ifc/ifc_udp.h"
+#include "interface/sv_interface_adaptor.h"
+#include "device_defs.h"
 #include "sv_abstract_protocol.h"
 
 
@@ -29,23 +27,14 @@ class modus::SvDeviceAdaptor: public QObject
 public:
   SvDeviceAdaptor(sv::SvAbstractLogger* logger = nullptr):
     m_logger(logger)
-  { }
+  {  }
 
   ~SvDeviceAdaptor()
   {
     emit stopAll();
 
-//    if(m_interface)
-//      delete m_interface;
-
-//    if(m_protocol)
-//      delete m_protocol;
-
     deleteLater();
   }
-
-//  void setLogger(sv::SvAbstractLogger* logger)    { m_logger = logger;  }
-//  const sv::SvAbstractLogger* logger() const      { return m_logger;    }
 
   bool configure(const modus::DeviceConfig& cfg)
   {
@@ -59,7 +48,7 @@ public:
       m_interface->setOutputBuffer(&m_output_buffer);
       m_interface->setSignalBuffer(&m_signal_buffer);
 
-      m_protocol = create_device();
+      m_protocol = create_protocol();
 
       if(!m_protocol)
         throw SvException("Объект устройства не создан");
@@ -92,9 +81,9 @@ public:
     try {
 
       if(!m_protocol)
-        throw SvException("Объект устройства не создан");
+        throw SvException("Объект протокола не создан");
 
-      if(!m_interface->init(m_config.ifc_name, m_config.ifc_params))
+      if(!m_interface->configure(m_config))
         throw SvException(m_interface->lastError());
 
       connect(this, &modus::SvDeviceAdaptor::stopAll, m_protocol,  &modus::SvAbstractProtocol::stop);
@@ -102,14 +91,6 @@ public:
 
       connect(m_protocol,  &modus::SvInterfaceAdaptor::finished, m_protocol,  &modus::SvInterfaceAdaptor::deleteLater);
       connect(m_interface, &modus::SvInterfaceAdaptor::finished, m_interface, &modus::SvInterfaceAdaptor::deleteLater);
-
-//      connect(m_protocol,  &modus::SvAbstractProtocol::outputBufferReady, m_interface, &modus::SvInterfaceAdaptor::processOutputData);
-//      connect(m_interface, &modus::SvInterfaceAdaptor::inputBufferReady,  this,  &modus::SvDeviceAdaptor::parseInputBuffer);
-
-//      connect(m_protocol,  &modus::SvAbstractProtocol::inputBufferParsed, m_interface, &modus::SvInterfaceAdaptor::resetInputBuffer);
-
-//      connect(m_protocol,    &modus::SvAbstractProtocol::message,   this, &modus::SvDeviceAdaptor::message);
-//      connect(m_interface, &modus::SvInterfaceAdaptor::message, this, &modus::SvDeviceAdaptor::message);
 
       connect(m_protocol,  &modus::SvAbstractProtocol::message, this, &modus::SvDeviceAdaptor::log);
       connect(m_interface, &modus::SvInterfaceAdaptor::message, this, &modus::SvDeviceAdaptor::log);
@@ -161,25 +142,25 @@ public:
   }
 
 private:
+  modus::DeviceConfig        m_config;
+
   modus::SvAbstractProtocol* m_protocol  = nullptr;
   modus::SvInterfaceAdaptor* m_interface = nullptr;
 
-  modus::BUFF          m_input_buffer;
-  modus::BUFF          m_output_buffer;
-  modus::BUFF          m_signal_buffer;
+  modus::BUFF                m_input_buffer;
+  modus::BUFF                m_output_buffer;
+  modus::BUFF                m_signal_buffer;
 
-  modus::DeviceConfig   m_config;
+  QString                    m_last_error;
 
-  QString     m_last_error;
+  bool                       m_isOpened       = false;
+  bool                       m_is_configured  = false;
 
-  bool m_isOpened       = false;
-  bool m_is_configured  = false;
+  sv::SvAbstractLogger*      m_logger;
 
-  sv::SvAbstractLogger* m_logger;
-
-  modus::SvAbstractProtocol* create_device()
+  modus::SvAbstractProtocol* create_protocol()
   {
-    modus::SvAbstractProtocol* newdevice = nullptr;
+    modus::SvAbstractProtocol* newprotocol = nullptr;
 
     try {
 
@@ -188,41 +169,39 @@ private:
       if(!lib.load())
         throw SvException(lib.errorString());
 
-      emit message(QString("  %1: драйвер загружен").arg(m_config.name));
+      log(QString("  %1: драйвер загружен").arg(m_config.name));
 
       typedef modus::SvAbstractProtocol*(*create_storage_func)(void);
       create_storage_func create = (create_storage_func)lib.resolve("create");
 
       if (create)
-        newdevice = create();
+        newprotocol = create();
 
       else
         throw SvException(lib.errorString());
 
-      if(!newdevice)
-        throw SvException("Неизвестная ошибка при создании объекта хранилища");
+      if(!newprotocol)
+        throw SvException("Неизвестная ошибка при загрузке протокола");
 
-      if(!newdevice->configure(m_config))
-        throw SvException(newdevice->lastError());
+      if(!newprotocol->configure(m_config))
+        throw SvException(newprotocol->lastError());
 
-      emit message(QString("  %1: объект создан").arg(m_config.name));
+      log(QString("  %1: сконфигурирован").arg(m_config.name));
 
     }
 
     catch(SvException& e) {
 
-      if(newdevice)
-        delete newdevice;
+      if(newprotocol)
+        delete newprotocol;
 
-      newdevice = nullptr;
+      newprotocol = nullptr;
 
       m_last_error = e.error;
-  //    throw e;
-  //    emit message(e.error, sv::log::llError, sv::log::mtError);
 
     }
 
-    return newdevice;
+    return newprotocol;
   }
 
 signals:
@@ -232,9 +211,7 @@ signals:
 private slots:
   void log(const QString msg, int level = sv::log::llDebug, int type  = sv::log::mtDebug)
   {
-    qDebug() << msg;
-
-//    emit message(msg, level, type);
+//    qDebug() << msg;
 
     if(m_logger)
       *m_logger << sv::log::sender(m_config.name)

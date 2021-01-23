@@ -1,4 +1,4 @@
-#ifndef INTERACT_CONFIG_H
+﻿#ifndef INTERACT_CONFIG_H
 #define INTERACT_CONFIG_H
 
 #include <QtCore>
@@ -6,7 +6,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-#include "../../../svlib/sv_exception.h"
+#include "../misc/sv_exception.h"
 #include "../global_defs.h"
 
 namespace modus {

@@ -5,8 +5,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-#include "../../../svlib/sv_exception.h"
-
+#include "../misc/sv_exception.h"
 #include "../global_defs.h"
 
 #define DEV_IMPERMISSIBLE_VALUE "Недопустимое значение параметра %1: %2.\n%3"

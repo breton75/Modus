@@ -11,11 +11,11 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-#include "../../../svlib/sv_abstract_logger.h"
-#include "../../../svlib/sv_exception.h"
-
+#include "../misc/sv_abstract_logger.h"
+#include "../misc/sv_exception.h"
 #include "../signal/sv_signal.h"
 #include "../global_defs.h"
+
 #include "sv_abstract_interact.h"
 
 namespace modus {
@@ -34,31 +34,27 @@ namespace modus {
     ~SvInteractAdaptor();
 
     bool configure(const InteractConfig& config);
+    const InteractConfig* config() const         { return &m_config; }
+
+    void setLogger(sv::SvAbstractLogger* logger) { m_logger = logger; }
 
     bool start();
     void stop();
 
-    virtual const InteractConfig* config() const         { return &m_config; }
-
-    virtual void setLogger(sv::SvAbstractLogger* logger) { m_logger = logger; }
-    virtual sv::SvAbstractLogger* logger() const         { return m_logger; }
-
-    const QString &lastError() const                     { return m_last_error; }
-
     void bindSignal(SvSignal* signal);
-    void clearSignals()                 { m_signals.clear(); }
+    void clearSignals()                          { m_signals.clear(); }
 
-    QList<SvSignal*>* Signals()         { return &m_signals; }
+    const QString &lastError()             const { return m_last_error; }
 
-    modus::SvAbstractInteract* interact() const { return m_interact; }
+    QList<SvSignal*>* Signals()                  { return &m_signals; }
+
+    modus::SvAbstractInteract* interact()  const { return m_interact; }
 
   private:
-
-    InteractConfig m_config;
-
-    QList<SvSignal*> m_signals;
-
     modus::SvAbstractInteract* m_interact = nullptr;
+    modus::InteractConfig m_config;
+
+    QList<modus::SvSignal*> m_signals;
 
     sv::SvAbstractLogger* m_logger;
 
@@ -66,15 +62,23 @@ namespace modus {
 
     modus::SvAbstractInteract* create_interact();
 
-
   signals:
     void message(const QString msg, int level = sv::log::llDebug, int type  = sv::log::mtDebug);
-    void stop_thread();
+    void stopAll();
 
+
+  private slots:
+    void log(const QString msg, int level = sv::log::llDebug, int type  = sv::log::mtDebug)
+    {
+      if(m_logger)
+        *m_logger << sv::log::sender(m_config.name)
+                  << sv::log::TimeZZZ
+                  << sv::log::Level(level)
+                  << sv::log::MessageTypes(type)
+                  << msg
+                  << sv::log::endl;
+    }
   };
-
-
-
 
 #endif // SV_ABSTRACT_SERVER
 

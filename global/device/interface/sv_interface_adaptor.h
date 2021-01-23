@@ -7,9 +7,10 @@
 #include <QMap>
 #include <QHostAddress>
 #include <QMutex>
+#include <QtSerialPort/QSerialPort>
 
-#include "../../../svlib/sv_abstract_logger.h"
-#include "../../../svlib/sv_exception.h"
+#include "../../misc/sv_abstract_logger.h"
+#include "../../misc/sv_exception.h"
 
 #include "../device_defs.h"
 
@@ -41,9 +42,7 @@ class modus::SvInterfaceAdaptor : public QThread
 public:
     explicit SvInterfaceAdaptor(QObject *parent = nullptr);
 
-//    sv::SvAbstractLogger  *p_logger = nullptr;
-
-    virtual bool init(const QString &ifcName, const QString &jsonIfcParams);// throw (SvException);
+    bool configure(const DeviceConfig &cfg);
 
     QString lastError() const     { return m_last_error;     }
 
@@ -52,12 +51,11 @@ public:
     void setSignalBuffer(modus::BUFF *signal_buffer) { m_signal_buffer = signal_buffer; }
 
   public slots:
-    virtual void stop();
-//    virtual void processOutputData();
-    void resetInputBuffer();
+    void stop();
 
 private:
     modus::AvailableInterfaces m_ifc;
+    modus::DeviceConfig   m_config;
 
     bool          m_is_active;
 
@@ -66,7 +64,6 @@ private:
     modus::BUFF*  m_signal_buffer  = nullptr;
 
     QString       m_last_error;
-    QTimer        m_reset_input_timer;
 
     QUdpSocket*   m_udp_socket = nullptr;
     QSerialPort*  m_serial_port = nullptr;
@@ -74,17 +71,12 @@ private:
     UdpParams     m_udp_params;
     SerialParams  m_serial_params;
 
-    qint64 m_input_reset_timer;
-
     void write(modus::BUFF* buffer);
-
-//    bool read();
 
 protected:
     void run() Q_DECL_OVERRIDE;
 
 signals:
-//  void inputBufferReady();
   void message(const QString msg, int level = sv::log::llDebug, int type  = sv::log::mtDebug);
 
 };

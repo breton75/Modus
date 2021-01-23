@@ -1,5 +1,5 @@
 QT -= gui
-QT += network dbus
+QT += network dbus serialport
 
 CONFIG += c++11 console
 CONFIG -= app_bundle
@@ -24,38 +24,32 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += main.cpp \
-    ../../global/device/ifc/sv_interface_adaptor.cpp \
+    ../../../svlib/sv_config.cpp \
+    ../../../svlib/sv_fnt.cpp \
+    ../../global/device/interface/sv_interface_adaptor.cpp \
     ../../global/interact/sv_interact_adaptor.cpp \
     ../../global/signal/sv_signal.cpp \
-    ../../../svlib/sv_config.cpp \
-    ../../../svlib/sv_abstract_logger.cpp \
-    ../../../svlib/sv_fnt.cpp \
-    ../../global/sv_dbus.cpp \
-    ../../global/storage/adaptor/sv_storage_adaptor.cpp
-#    sv_dbus.cpp
+    ../../global/misc/sv_abstract_logger.cpp \
+    ../../global/misc/sv_dbus.cpp \
+    ../../global/storage/sv_storage_adaptor.cpp
 
 HEADERS += \
-#    ../../global/device/device_defs.h \
-#    ../../global/device/ifc/ifc_udp.h \
+    ../../../svlib/sv_config.h \
+    ../../../svlib/sv_fnt.h \
     ../../global/device/sv_device_adaptor.h \
-    ../../global/device/ifc/sv_interface_adaptor.h \
+    ../../global/device/interface/sv_interface_adaptor.h \
     ../../global/interact/sv_interact_adaptor.h \
     ../../global/interact/interact_config.h \
     ../../global/interact/sv_abstract_interact.h \
-#    ../../global/storage/adaptor/storage_file.h \
-#    ../../global/storage/adaptor/storage_pgsp.h \
     ../../global/signal/sv_signal.h \
     ../../global/device/sv_abstract_protocol.h \
     ../../global/storage/storage_config.h \
-    ../../../svlib/sv_exception.h \
-    ../../../svlib/sv_config.h \
-    ../../../svlib/sv_fnt.h \
-    ../../../svlib/sv_abstract_logger.h \
-    ../../global/storage/adaptor/sv_storage_adaptor.h \
+    ../../global/misc/sv_exception.h \
+    ../../global/misc/sv_abstract_logger.h \
+    ../../global/storage/sv_storage_adaptor.h \
     ../../global/storage/sv_abstract_storage.h \
-#    ../../global/storage/sv_storage.h \
     app_config.h \
-#    ../../global/global_defs.h \
-    ../../global/sv_dbus.h
+    ../../global/misc/sv_dbus.h \
+    ../../global/modus.h
 #    sv_dbus.h
 

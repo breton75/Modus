@@ -13,7 +13,7 @@
 
 #include "../global_defs.h"
 
-#include "../../../svlib/sv_exception.h"
+#include "../misc/sv_exception.h"
 
 #define DEFAULT_TIMEOUT 3000
 
@@ -44,15 +44,15 @@ struct modus::SignalGroupParams
     if(!gp)
       return;
 
-    name        = gp->name;
-    usecase     = gp->usecase;
-    device_id   = gp->device_id;
-    storages    = gp->storages;
-    params      = gp->params;
-    type        = gp->type;
-    tag         = gp->tag;
-    enable      = gp->enable;
-    timeout     = gp->timeout;
+    name               = gp->name;
+    usecase            = gp->usecase;
+    device_id          = gp->device_id;
+    storages           = gp->storages;
+    params             = gp->params;
+    type               = gp->type;
+    tag                = gp->tag;
+    enable             = gp->enable;
+    timeout            = gp->timeout;
   }
 
   QString  name        = "";
@@ -70,9 +70,9 @@ struct modus::SignalGroupParams
     QString P;
 
     P = P_ENABLE;
-    if(object.contains(P)) {
+    if(object.contains(P))
       enable = enable.isValid() ? enable.toBool() && object.value(P).toBool(true) : object.value(P).toBool(true);
-    }
+
 
     P = P_NAME;
     if(object.contains(P))
@@ -150,25 +150,24 @@ struct modus::SignalGroupParams
     if(object.contains(P))
       params = QString(QJsonDocument(object.value(P).toObject()).toJson(QJsonDocument::Compact));
   }
-
 };
 
 struct modus::SignalConfig
 {
   SignalConfig() { }
   
-  int         id = -1;
-  QString     name = "";
-  UseCase     usecase = UNDEFINED;
-  int         device_id = -1;
+  int         id          = -1;
+  QString     name        = "";
+  UseCase     usecase     = UseCase::UNDEFINED;
+  int         device_id   = -1;
   QList<int>  storages;
-  QString     params = "";
-  QString     type = "";
-  QString     tag = "";
-  bool        enable = false;
+  QString     params      = "";
+  QString     type        = "";
+  QString     tag         = "";
+  bool        enable      = false;
   QString     description = "";
-  int         timeout = DEFAULT_TIMEOUT;
-  QString     comment = "";
+  int         timeout     = DEFAULT_TIMEOUT;
+  QString     comment     = "";
 
   void mergeGroupParams(const SignalGroupParams* gp)
   {
@@ -446,23 +445,15 @@ public:
   
   int id() const { return m_config.id; }
   
-  void configure(const SignalConfig& config) { m_config = config; }
-  const SignalConfig* config() const         { return &m_config; }
+  void configure(const modus::SignalConfig& config) { m_config = config; }
+  const SignalConfig* config() const                { return &m_config;  }
   
-  bool hasTimeout() const { return m_config.timeout > 0; }
-  quint64 aliveAge() const { return m_alive_age; }
-  bool    isAlive()
-  {
-    return m_config.timeout > 0 ? m_alive_age > quint64(QDateTime::currentMSecsSinceEpoch()) :
-                                  m_device_alive_age > quint64(QDateTime::currentMSecsSinceEpoch());
-  }
+  bool      hasTimeout()    const { return m_config.timeout > 0; }
+  QDateTime lastUpdate()    const { return m_last_update;        }
+  QVariant  value()         const { return m_value;              }
+  QVariant  previousValue() const { return m_previous_value;     }
 
-//  bool    isDeviceAlive()  { return m_device_alive_age > quint64(QDateTime::currentMSecsSinceEpoch()); }
-
-  QDateTime lastUpdate() const { return m_last_update; }
-
-  QVariant value();
-  QVariant previousValue() const { return m_previous_value; }
+  bool    isAlive() const;
 
   bool operator==(SvSignal& other) const
   { 
@@ -475,20 +466,20 @@ public:
   }
 
 private:
-  SignalConfig  m_config;
+  modus::SignalConfig  m_config;
   
-  QDateTime     m_last_update;
-  quint64       m_alive_age = 0;
-  quint64       m_device_alive_age = 0;
+  QDateTime            m_last_update;
+  quint64              m_alive_age = 0;
+  quint64              m_device_alive_age = 0;
 
-  QVariant      m_value = QVariant();
-  QVariant      m_previous_value = QVariant();
+  QVariant             m_value = QVariant();
+  QVariant             m_previous_value = QVariant();
 
-  QMutex        m_mutex;
+  QMutex               m_mutex;
   
 public slots:
   void setValue(QVariant value);
-  void setDeviceAliveAge(const quint64 alive_age) { m_device_alive_age = alive_age; }
+  void setDeviceAliveAge(const quint64 alive_age);
 
 signals:
   void changed(SvSignal* signal);  

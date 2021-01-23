@@ -20,8 +20,7 @@ class modus::SvAbstractInteract: public QThread
     Q_OBJECT
 
 public:
-  SvAbstractInteract():
-    p_is_active(false)
+  SvAbstractInteract()
   {   }
 
   virtual ~SvAbstractInteract()
@@ -37,14 +36,14 @@ public:
   const QString &lastError() const            { return p_last_error; }
 
 protected:
+  modus::InteractConfig*    p_config     = nullptr;
+  QList<modus::SvSignal*>*  p_signals    = nullptr;
+
+  QString                   p_last_error = "";
+
+  bool                      p_is_active  = false;
+
   virtual void run() override = 0;
-
-  modus::InteractConfig* p_config     = nullptr;
-  QList<modus::SvSignal*>* p_signals  = nullptr;
-
-  QString p_last_error = "";
-
-  bool p_is_active;
 
 public slots:
   virtual void stop()

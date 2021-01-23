@@ -7,8 +7,8 @@
  *  автор Свиридов С.А. Авиационные и Морская Электроника
  * *********************************************************************/
 
-#ifndef OPA_IFC_UDP_PARAMS
-#define OPA_IFC_UDP_PARAMS
+#ifndef IFC_UDP
+#define IFC_UDP
 
 #include <QtGlobal>
 #include <QtCore/QCommandLineParser>
@@ -19,17 +19,15 @@
 #include <QJsonObject>
 
 #include "../../../svlib/sv_exception.h"
+#include "../../global_defs.h"
 
-// имена параметров для UDP
-#define P_UDP_IFC       "ifc"
-#define P_UDP_HOST      "host"
-#define P_UDP_RECV_PORT "recv_port"
-#define P_UDP_SEND_PORT "send_port"
+#define P_UDP_IFC                   "ifc"
+#define P_UDP_HOST                  "host"
+#define P_UDP_RECV_PORT             "recv_port"
+#define P_UDP_SEND_PORT             "send_port"
 
 #define DEFAULT_RECV_PORT 6001
 #define DEFAULT_SEND_PORT 5001
-
-#define UDP_IMPERMISSIBLE_VALUE "Недопустимое значение параметра \"%1\": %2.\n%3"
 
 const QMap<QString, QHostAddress::SpecialAddress> SpecialHosts = {{"localhost", QHostAddress::LocalHost},
                                                                   {"any", QHostAddress::Any},
@@ -38,10 +36,11 @@ const QMap<QString, QHostAddress::SpecialAddress> SpecialHosts = {{"localhost", 
 /** структура для хранения параметров udp **/
 struct UdpParams {
 
-  QString      ifc  = "";
-  QHostAddress host = QHostAddress::Any;
-  quint16 recv_port = DEFAULT_RECV_PORT;
-  quint16 send_port = DEFAULT_SEND_PORT;
+  QString      ifc              = "";
+  QHostAddress host             = QHostAddress::Any;
+  quint16      recv_port        = DEFAULT_RECV_PORT;
+  quint16      send_port        = DEFAULT_SEND_PORT;
+  quint16 buffer_reset_interval = DEFAULT_BUFFER_RESET_INTERVAL;
 
   static UdpParams fromJsonString(const QString& json_string) throw (SvException)
   {
@@ -76,7 +75,7 @@ struct UdpParams {
         if(QHostAddress(host).toIPv4Address() != 0) p.host = QHostAddress(host);
 
       else
-        throw SvException(QString(UDP_IMPERMISSIBLE_VALUE)
+        throw SvException(QString(IMPERMISSIBLE_VALUE)
                            .arg(P).arg(object.value(P).toVariant().toString())
                            .arg("Допускаются ip адреса в формате 192.168.1.1, а также слова \"localhost\", \"any\", \"broadcast\""));
     }
@@ -88,7 +87,7 @@ struct UdpParams {
     if(object.contains(P))
     {
       if(object.value(P).toInt(-1) < 1)
-        throw SvException(QString(UDP_IMPERMISSIBLE_VALUE)
+        throw SvException(QString(IMPERMISSIBLE_VALUE)
                            .arg(P).arg(object.value(P).toVariant().toString())
                            .arg("Номер порта должен быть задан целым положительным числом в диапазоне [1..65535]"));
 
@@ -103,7 +102,7 @@ struct UdpParams {
     if(object.contains(P))
     {
       if(object.value(P).toInt(-1) < 1)
-        throw SvException(QString(UDP_IMPERMISSIBLE_VALUE)
+        throw SvException(QString(IMPERMISSIBLE_VALUE)
                            .arg(P).arg(object.value(P).toVariant().toString())
                            .arg("Номер порта должен быть задан целым положительным числом в диапазоне [1..65535]"));
 
@@ -113,9 +112,20 @@ struct UdpParams {
     else
       p.send_port = DEFAULT_SEND_PORT;
 
-    /* ifc */
-    P = P_UDP_IFC;
-    p.ifc = object.contains(P) ? object.value(P).toString() : "";
+    /* buffer reset interval */
+    P = P_BUFFER_RESET_INTERVAL;
+    if(object.contains(P)) {
+
+      if(object.value(P).toInt(-1) < 1)
+        throw SvException(QString(IMPERMISSIBLE_VALUE)
+                          .arg(P)
+                          .arg(object.value(P).toVariant().toString())
+                          .arg("Период сброса не может быть меньше 1 мсек."));
+
+      p.buffer_reset_interval = object.value(P).toInt(DEFAULT_BUFFER_RESET_INTERVAL);
+
+    }
+    else p.buffer_reset_interval = quint16(DEFAULT_BUFFER_RESET_INTERVAL);
 
 
     return p;
@@ -137,6 +147,7 @@ struct UdpParams {
     j.insert(P_UDP_HOST, QJsonValue(host.toString()).toString());
     j.insert(P_UDP_RECV_PORT, QJsonValue(static_cast<int>(recv_port)).toInt());
     j.insert(P_UDP_SEND_PORT, QJsonValue(static_cast<int>(send_port)).toInt());
+    j.insert(P_BUFFER_RESET_INTERVAL, QJsonValue(static_cast<int>(buffer_reset_interval)).toInt());
 
     return j;
 
@@ -144,5 +155,5 @@ struct UdpParams {
 };
 
 
-#endif // OPA_IFC_UDP_PARAMS
+#endif // IFC_UDP
 

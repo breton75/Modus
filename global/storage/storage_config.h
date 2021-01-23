@@ -1,11 +1,10 @@
-#ifndef STORAGE_CONFIG_H
+﻿#ifndef STORAGE_CONFIG_H
 #define STORAGE_CONFIG_H
 
 #include <QJsonDocument>
 #include <QJsonObject>
 
-#include "../../../svlib/sv_exception.h"
-
+#include "../misc/sv_exception.h"
 #include "../global_defs.h"
 
 namespace modus {
@@ -82,20 +81,20 @@ namespace modus {
 
 
       /* driver */
-//      P = P_DRIVER;
-//      if(object.contains(P)) {
+      P = P_DRIVER;
+      if(object.contains(P)) {
 
-//        if(object.value(P).toString("").isEmpty())
-//          throw SvException(QString(IMPERMISSIBLE_VALUE)
-//                            .arg(P)
-//                            .arg(object.value(P).toVariant().toString())
-//                            .arg("Путь к библиотеке драйвера хранилища не может быть пустым"));
+        if(object.value(P).toString("").isEmpty())
+          throw SvException(QString(IMPERMISSIBLE_VALUE)
+                            .arg(P)
+                            .arg(object.value(P).toVariant().toString())
+                            .arg("Путь к библиотеке драйвера хранилища не может быть пустым"));
 
-//        p.driver_lib = object.value(P).toString("");
+        p.driver_lib = object.value(P).toString("");
 
-//      }
-//      else
-//        throw SvException(QString(MISSING_PARAM).arg("storages").arg(P));
+      }
+      else
+        throw SvException(QString(MISSING_PARAM).arg("storages").arg(P));
 
       /* interval */
       P = P_INTERVAL;

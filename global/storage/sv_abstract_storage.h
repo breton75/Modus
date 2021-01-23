@@ -5,7 +5,7 @@
 #include <QObject>
 #include <QThread>
 
-#include "../../../svlib/sv_abstract_logger.h"
+#include "../misc/sv_abstract_logger.h"
 #include "../signal/sv_signal.h"
 
 #include "storage_config.h"
@@ -18,7 +18,6 @@ namespace modus {
 
   public:
     SvAbstractStorage():
-      p_is_active(false),
       m_pos(0)
     {  }
 
@@ -36,11 +35,11 @@ namespace modus {
 
   protected:
     modus::StorageConfig* p_config;
-    QList<SvSignal*>* p_signals;
+    QList<SvSignal*>*     p_signals;
 
-    QString p_last_error = "";
+    QString               p_last_error = "";
 
-    bool p_is_active = false;
+    bool                  p_is_active = false;
 
     void run() override = 0;
 
@@ -49,6 +48,7 @@ namespace modus {
       m_pos = 0;
       return p_signals->count() ? p_signals->value(m_pos) : Q_NULLPTR;
     }
+
     SvSignal* nextSignal()
     {
       return m_pos < p_signals->count() - 1 ? p_signals->value(++m_pos) : Q_NULLPTR;
