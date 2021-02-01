@@ -17,7 +17,8 @@ namespace modus {
     QString name        = "";
     bool    enable      = false;
     QString params      = "";
-    QString driver_lib  = "";
+    QString libpath     = "";
+    QString lib         = "";
     QString type        = "";
     QString description = "";
     bool    debug       = false;
@@ -81,17 +82,17 @@ namespace modus {
         throw SvException(QString(MISSING_PARAM).arg(P));
 
 
-        /* driver */
-        P = P_DRIVER;
+        /* lib */
+        P = P_LIB;
         if(object.contains(P)) {
 
           if(object.value(P).toString("").isEmpty())
             throw SvException(QString(IMPERMISSIBLE_VALUE)
                               .arg(P)
                               .arg(object.value(P).toVariant().toString())
-                              .arg("Путь к библиотеке драйвера сервера не может быть пустым"));
+                              .arg("Имя библиотеки драйвера сервера не может быть пустым"));
 
-          p.driver_lib = object.value(P).toString("");
+          p.lib = object.value(P).toString("");
 
         }
         else

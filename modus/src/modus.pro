@@ -36,6 +36,7 @@ SOURCES += main.cpp \
 HEADERS += \
     ../../../svlib/sv_config.h \
     ../../../svlib/sv_fnt.h \
+    ../../global/device/device_defs.h \
     ../../global/device/sv_device_adaptor.h \
     ../../global/device/interface/sv_interface_adaptor.h \
     ../../global/interact/sv_interact_adaptor.h \
@@ -48,6 +49,7 @@ HEADERS += \
     ../../global/misc/sv_abstract_logger.h \
     ../../global/storage/sv_storage_adaptor.h \
     ../../global/storage/sv_abstract_storage.h \
+    ../../global/sv_config.h \
     app_config.h \
     ../../global/misc/sv_dbus.h \
     ../../global/modus.h

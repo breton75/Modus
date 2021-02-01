@@ -164,12 +164,15 @@ private:
 
     try {
 
-      QLibrary lib(m_config.driver_lib);
+      QDir dir(m_config.libpath);
+      QString lib_file(dir.absoluteFilePath(m_config.protocol.lib));
+
+      QLibrary lib(lib_file);
 
       if(!lib.load())
         throw SvException(lib.errorString());
 
-      log(QString("  %1: драйвер загружен").arg(m_config.name));
+      log(QString("  %1: драйвер загружен").arg(m_config.protocol.lib));
 
       typedef modus::SvAbstractProtocol*(*create_storage_func)(void);
       create_storage_func create = (create_storage_func)lib.resolve("create");
@@ -186,7 +189,7 @@ private:
       if(!newprotocol->configure(m_config))
         throw SvException(newprotocol->lastError());
 
-      log(QString("  %1: сконфигурирован").arg(m_config.name));
+      log(QString("  %1: сконфигурирован").arg(m_config.protocol.lib));
 
     }
 

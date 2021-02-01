@@ -10,7 +10,7 @@
 #define P_ID          "id"
 #define P_NAME        "name"
 #define P_DESCRIPTION "description"
-#define P_DRIVER      "driver"
+#define P_LIB         "lib"
 #define P_TIMEOUT     "timeout"
 #define P_ENABLE      "enable"
 #define P_DEBUG       "debug"
@@ -20,12 +20,10 @@
 #define P_PARAMS      "params"
 #define P_SIGNALS     "signals"
 #define P_INTERVAL    "interval"
+#define P_INTERFACE   "interface"
+#define P_PROTOCOL    "protocol"
 
 // имена полей для всех устройств
-#define P_DEV_PARAMS  "dev_params"
-#define P_IFC         "ifc"
-#define P_IFC_PARAMS  "ifc_params"
-#define P_HWCODE      "hwcode"
 
 // имена полей для сигналов
 #define P_GROUP       "group"
@@ -36,6 +34,7 @@
 #define P_TAG         "tag"
 
 // interfaces
+#define DEFAULT_TIMEOUT 3000
 #define DEFAULT_BUFFER_RESET_INTERVAL 20
 #define P_BUFFER_RESET_INTERVAL "buffer_reset_interval"
 
@@ -76,6 +75,17 @@
 #define OPTION_PATH_TO_POSTGRES_BIN      "postgres_bin_path"
 #define OPTION_LOG_SENDER_NAME_FORMAT    "log_sender_name_format"
 
+#define DEFAULT_LIBPATH_PROTOCOLS   "lib/protocols"
+#define DEFAULT_LIBPATH_INTERFACES  "lib/interfaces"
+#define DEFAULT_LIBPATH_STORAGES    "lib/storages"
+#define DEFAULT_LIBPATH_INTERACTS   "lib/interacts"
+#define DEFAULT_LIBPATH_CALCULATORS "lib/calculators"
+#define DEFAULT_LIBPATH "{ "\
+  "\"protocols\": \""   DEFAULT_LIBPATH_PROTOCOLS   "\", "\
+  "\"interfaces\": \""  DEFAULT_LIBPATH_INTERFACES  "\", "\
+  "\"storages\": \""    DEFAULT_LIBPATH_STORAGES    "\", "\
+  "\"interacts\": \""   DEFAULT_LIBPATH_INTERACTS   "\", "\
+  "\"calculators\": \"" DEFAULT_LIBPATH_CALCULATORS "\" }"
 
 struct AppConfig {
 
