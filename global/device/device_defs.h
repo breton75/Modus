@@ -14,16 +14,32 @@ namespace modus {
 
   struct BUFF
   {
-    BUFF() {}
+    BUFF(quint16 size = 0x1000)     // 4096
+    {
+      this->size = size;
+      data = (char*)malloc(size);
+    }
 
-    char  buf[MAX_BUF_SIZE];
+    ~BUFF() { free(data); }
+
+    char *data = nullptr;
+//    char  buf[MAX_BUF_SIZE];
+
     quint64 offset = 0;
 
+    quint16 size;
     QMutex mutex, mutex2;
 
     void reset() { offset = 0; }
     bool ready() { return offset > 0; }
 
+  };
+
+  struct IOBuffer
+  {
+    modus::BUFF input  ;
+    modus::BUFF output ;
+    modus::BUFF confirm;
   };
 
   struct ProtocolConfig

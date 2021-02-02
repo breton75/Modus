@@ -13,7 +13,7 @@ modus::SvSignal::~SvSignal()
 
 void modus::SvSignal::setValue(QVariant value)
 {
-  QMutexLocker l(&m_mutex);
+//  QMutexLocker l(&m_mutex);
 
   m_previous_value = m_value;
   m_value = value;

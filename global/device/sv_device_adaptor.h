@@ -10,7 +10,7 @@
 #include "../signal/sv_signal.h"
 #include "interface/sv_interface_adaptor.h"
 #include "device_defs.h"
-#include "sv_abstract_protocol.h"
+#include "sv_protocol_adaptor.h"
 
 
 
@@ -42,20 +42,14 @@ public:
 
       m_config = cfg;
 
-      m_interface = new modus::SvInterfaceAdaptor();
+      /* interface */
+      m_interface = new modus::SvInterfaceAdaptor(&m_io_buffer);
 
-      m_interface->setInputBuffer (&m_input_buffer);
-      m_interface->setOutputBuffer(&m_output_buffer);
-      m_interface->setSignalBuffer(&m_signal_buffer);
+      if(!m_interface->configure(m_config))
+        throw SvException(m_interface->lastError());
 
-      m_protocol = create_protocol();
-
-      if(!m_protocol)
-        throw SvException("Объект устройства не создан");
-
-      m_protocol->setInputBuffer (&m_input_buffer);
-      m_protocol->setOutputBuffer(&m_output_buffer);
-      m_protocol->setSignalBuffer(&m_signal_buffer);
+      /* protocol */
+      m_protocol = new modus::SvProtocolAdaptor(&m_io_buffer);
 
       if(!m_protocol->configure(m_config))
         throw SvException(m_protocol->lastError());
@@ -64,7 +58,7 @@ public:
 
     } catch (SvException& e) {
       if(m_interface)
-        delete  m_interface;
+        delete m_interface;
 
       if(m_protocol)
         delete m_protocol;
@@ -81,18 +75,18 @@ public:
     try {
 
       if(!m_protocol)
-        throw SvException("Объект протокола не создан");
+        throw SvException("Протокол не подключен");
 
-      if(!m_interface->configure(m_config))
-        throw SvException(m_interface->lastError());
+      if(!m_interface)
+        throw SvException("Интерфейс не подключен");
 
-      connect(this, &modus::SvDeviceAdaptor::stopAll, m_protocol,  &modus::SvAbstractProtocol::stop);
+      connect(this, &modus::SvDeviceAdaptor::stopAll, m_protocol,  &modus::SvProtocolAdaptor::stop);
       connect(this, &modus::SvDeviceAdaptor::stopAll, m_interface, &modus::SvInterfaceAdaptor::stop);
 
-      connect(m_protocol,  &modus::SvInterfaceAdaptor::finished, m_protocol,  &modus::SvInterfaceAdaptor::deleteLater);
-      connect(m_interface, &modus::SvInterfaceAdaptor::finished, m_interface, &modus::SvInterfaceAdaptor::deleteLater);
+//      connect(m_protocol,  &modus::SvInterfaceAdaptor::finished, m_protocol,  &modus::SvInterfaceAdaptor::deleteLater);
+//      connect(m_interface, &modus::SvInterfaceAdaptor::finished, m_interface, &modus::SvInterfaceAdaptor::deleteLater);
 
-      connect(m_protocol,  &modus::SvAbstractProtocol::message, this, &modus::SvDeviceAdaptor::log);
+      connect(m_protocol,  &modus::SvProtocolAdaptor::message,  this, &modus::SvDeviceAdaptor::log);
       connect(m_interface, &modus::SvInterfaceAdaptor::message, this, &modus::SvDeviceAdaptor::log);
 
       m_interface->start();
@@ -114,7 +108,7 @@ public:
 
   const QString lastError() const  { return m_last_error; }
 
-  bool isAlive()            const  { return m_protocol->lastParsedTime().toMSecsSinceEpoch() + m_config.timeout > QDateTime::currentDateTime().toMSecsSinceEpoch();  }
+//  bool isAlive()            const  { return m_protocol->p_is_active().toMSecsSinceEpoch() + m_config.timeout > QDateTime::currentDateTime().toMSecsSinceEpoch();  }
 
   /** работа с сигналами, привязанными к устройству **/
   bool bindSignal(SvSignal* signal)
@@ -125,6 +119,8 @@ public:
       return false;
     }
 
+    m_signals.insert(signal->config()->name, signal);
+
     return true;
 
   }
@@ -134,22 +130,33 @@ public:
     m_protocol->clearSignals();
   }
 
-  int  signalsCount() const         { return m_protocol->signalsCount(); }
+  int  signalsCount() const         { return m_signals.count(); }
 
   void setSignalValue(const QString& signal_name, QVariant& value)
   {
-    m_protocol->setSignalValue(signal_name, value);
+    if(m_signals.contains(signal_name)) {
+
+//      qDebug() << QString("SIGNAL_NAME: %1   VALUE: %2").arg(signal_name).arg(value);
+      SvSignal* signal = m_signals.value(signal_name);
+
+      if(signal->config()->usecase != UseCase::OUT)
+        return;
+
+      signal->mutex()->lock();
+      signal->setValue(value);
+      signal->mutex()->unlock();
+
+    }
   }
 
 private:
   modus::DeviceConfig        m_config;
+  modus::SignalMap           m_signals;
 
-  modus::SvAbstractProtocol* m_protocol  = nullptr;
+  modus::SvProtocolAdaptor*  m_protocol  = nullptr;
   modus::SvInterfaceAdaptor* m_interface = nullptr;
 
-  modus::BUFF                m_input_buffer;
-  modus::BUFF                m_output_buffer;
-  modus::BUFF                m_signal_buffer;
+  modus::IOBuffer            m_io_buffer;
 
   QString                    m_last_error;
 
@@ -160,14 +167,10 @@ private:
 
   modus::SvAbstractProtocol* create_protocol()
   {
-    modus::SvAbstractProtocol* newprotocol = nullptr;
+    modus::SvProtocolAdaptor* newprotocol = nullptr;
 
     try {
 
-      QDir dir(m_config.libpath);
-      QString lib_file(dir.absoluteFilePath(m_config.protocol.lib));
-
-      QLibrary lib(lib_file);
 
       if(!lib.load())
         throw SvException(lib.errorString());

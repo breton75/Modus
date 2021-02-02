@@ -455,6 +455,8 @@ public:
 
   bool    isAlive() const;
 
+  QMutex* mutex() { return &m_mutex; }
+
   bool operator==(SvSignal& other) const
   { 
     return m_config.id == other.config()->id;

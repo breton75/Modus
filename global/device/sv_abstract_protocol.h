@@ -52,9 +52,7 @@ public:
   const QDateTime lastParsedTime()            const { return p_last_parsed_time;       }
   const QDateTime lastOutputTime()            const { return p_last_formed_time;       }
 
-  void setInputBuffer (modus::BUFF *input_buffer)   { p_input_buffer  = input_buffer;  }
-  void setOutputBuffer(modus::BUFF *output_buffer)  { p_output_buffer = output_buffer; }
-  void setSignalBuffer(modus::BUFF *signal_buffer)  { p_signal_buffer = signal_buffer; }
+  void setIOBuffer (modus::IOBuffer *iobuffer)   { p_io_buffer  = iobuffer;  }
 
   /** работа с сигналами, привязанными к устройству **/
   int signalsCount()                          const { return p_input_signals.count();  }
@@ -131,9 +129,7 @@ public:
 protected:
   modus::DeviceConfig  p_config;
 
-  modus::BUFF*         p_input_buffer;
-  modus::BUFF*         p_output_buffer;
-  modus::BUFF*         p_signal_buffer;
+  modus::IOBuffer*     p_io_buffer;
 
   modus::SignalMap     p_input_signals;
   modus::SignalMap     p_output_signals;
@@ -161,24 +157,24 @@ protected:
     while(p_is_active) {
 
       // ждем, когда закончится прием данных и парсим
-      p_input_buffer->mutex.lock();
+      p_io_buffer->input.mutex.lock();
 
       // если требуется квитирование, то ответ формируется в parse_input_data
       if (processInputBuffer()) {
 
           p_last_parsed_time = QDateTime::currentDateTime();
-          p_input_buffer->reset();
+          p_io_buffer->input.reset();
 
           // если данные распарсились, значит устройство на связи
           if(p_is_active)
             validateSignals(p_last_parsed_time);  // подтверждаем валидность привязанных сигналов
       }
 
-      p_input_buffer->mutex.unlock();
+      p_io_buffer->input.mutex.unlock();
 
 
       // формируем данные для отправки команд
-      p_signal_buffer->mutex.lock();
+      p_io_buffer->output.mutex.lock();
 
       if (processSignalBuffer()) {
 
@@ -186,9 +182,9 @@ protected:
 
       }
       else
-        p_signal_buffer->reset();
+        p_io_buffer->output.reset();
 
-      p_signal_buffer->mutex.unlock();
+      p_io_buffer->output.mutex.unlock();
 
     }
   }

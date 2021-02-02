@@ -1,7 +1,8 @@
 ﻿#include "sv_interface_adaptor.h"
 
-modus::SvInterfaceAdaptor::SvInterfaceAdaptor(QObject *parent) :
-    QThread(parent)
+modus::SvInterfaceAdaptor::SvInterfaceAdaptor(modus::IOBuffer *io_buffer, sv::SvAbstractLogger* logger) :
+    m_logger(logger),
+    m_io_buffer(io_buffer)
 {
 
 }
@@ -213,6 +214,21 @@ void modus::SvInterfaceAdaptor::write(modus::BUFF* buffer)
     emit message(QString("<< %1").arg(QString(QByteArray((const char*)&buffer->buf[0], buffer->offset).toHex())));
     buffer->reset();
   }
+}
+
+bool modus::SvInterfaceAdaptor::start()
+{
+//  if(!m_interface)
+//    return false;
+
+//  connect(this,       &modus::SvInterfaceAdaptor::stopAll,  m_interface, &modus::SvAbstractInterface::stop);
+//  connect(m_interface, &QThread::finished,                  m_interface, &QThread::deleteLater);
+//  connect(m_interface, &modus::SvAbstractProtocol::message, this,       &modus::SvInterfaceAdaptor::log);
+
+//  m_interface->start();
+
+  return true;
+
 }
 
 void modus::SvInterfaceAdaptor::stop()

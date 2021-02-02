@@ -27,6 +27,7 @@ SOURCES += main.cpp \
     ../../../svlib/sv_config.cpp \
     ../../../svlib/sv_fnt.cpp \
     ../../global/device/interface/sv_interface_adaptor.cpp \
+    ../../global/device/sv_protocol_adaptor.cpp \
     ../../global/interact/sv_interact_adaptor.cpp \
     ../../global/signal/sv_signal.cpp \
     ../../global/misc/sv_abstract_logger.cpp \
@@ -39,6 +40,7 @@ HEADERS += \
     ../../global/device/device_defs.h \
     ../../global/device/sv_device_adaptor.h \
     ../../global/device/interface/sv_interface_adaptor.h \
+    ../../global/device/sv_protocol_adaptor.h \
     ../../global/interact/sv_interact_adaptor.h \
     ../../global/interact/interact_config.h \
     ../../global/interact/sv_abstract_interact.h \
