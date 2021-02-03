@@ -142,7 +142,7 @@ namespace modus {
       try {
         return fromJsonObject(jd.object());
       }
-      catch(SvException e) {
+      catch(SvException& e) {
         throw e;
       }
     }
@@ -239,6 +239,7 @@ namespace modus {
     QString         libpath     = DEFAULT_LIBPATH;
     InterfaceConfig interface;
     ProtocolConfig  protocol;
+    quint16         bufsize     = DEFAULT_BUFFER_SIZE;
     QString         description = "";
     bool            debug       = false;
     bool            debug2      = false;
@@ -255,7 +256,7 @@ namespace modus {
       try {
         return fromJsonObject(jd.object());
       }
-      catch(SvException e) {
+      catch(SvException& e) {
         throw e;
       }
     }
@@ -308,6 +309,10 @@ namespace modus {
       QString prt = object.contains(P) ? QString(QJsonDocument(object.value(P).toObject()).toJson(QJsonDocument::Compact)) : "{}";
       p.protocol = ProtocolConfig::fromJsonString(prt);
 
+      /* buffer_size */
+      P = P_BUFFER_SIZE;
+      p.bufsize = object.contains(P) ? object.value(P).toInt(DEFAULT_BUFFER_SIZE) : DEFAULT_BUFFER_SIZE;
+
       /* description */
       P = P_DESCRIPTION;
       p.description = object.contains(P) ? object.value(P).toString("") : "";
@@ -349,6 +354,7 @@ namespace modus {
       j.insert(P_ENABLE,      QJsonValue(enable).toBool());
       j.insert(P_INTERFACE,   QJsonValue(interface.toJsonString()).toString());
       j.insert(P_PROTOCOL,    QJsonValue(protocol.toJsonString()).toString());
+      j.insert(P_BUFFER_SIZE, QJsonValue(bufsize).toInt(DEFAULT_BUFFER_SIZE));
       j.insert(P_DESCRIPTION, QJsonValue(description).toString());
       j.insert(P_DEBUG,       QJsonValue(debug).toBool());
       j.insert(P_DEBUG2,      QJsonValue(debug2).toBool());

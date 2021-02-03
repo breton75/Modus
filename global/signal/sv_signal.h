@@ -33,6 +33,8 @@ namespace modus {
 
   class SvSignal;
 
+  typedef QMap<QString, SvSignal*> SignalMap;
+
 }
 
 struct modus::SignalGroupParams
@@ -65,7 +67,7 @@ struct modus::SignalGroupParams
   QVariant enable      = QVariant();
   QVariant timeout     = QVariant();
 
-  void mergeJsonObject(const QJsonObject &object) throw (SvException)
+  void mergeJsonObject(const QJsonObject &object) //throw (SvException)
   {
     QString P;
 
@@ -196,7 +198,7 @@ struct modus::SignalConfig
 
   }
 
-  static SignalConfig fromJsonString(const QString& json_string) throw (SvException)
+  static SignalConfig fromJsonString(const QString& json_string) //throw (SvException)
   {
     QJsonParseError err;
     QJsonDocument jd = QJsonDocument::fromJson(json_string.toUtf8(), &err);
@@ -209,12 +211,12 @@ struct modus::SignalConfig
       return fromJsonObject(jd.object());
 
     }
-    catch(SvException e) {
+    catch(SvException& e) {
       throw e;
     }
   }
 
-  static SignalConfig fromJsonObject(const QJsonObject &object, const SignalGroupParams* gp = nullptr) throw (SvException)
+  static SignalConfig fromJsonObject(const QJsonObject &object, const SignalGroupParams* gp = nullptr) //throw (SvException)
   {
     QString P;
     SignalConfig p;

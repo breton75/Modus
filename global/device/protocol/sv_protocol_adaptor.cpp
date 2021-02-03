@@ -13,25 +13,6 @@ modus::SvProtocolAdaptor::~SvProtocolAdaptor()
   deleteLater();
 }
 
-bool modus::SvProtocolAdaptor::bindSignal(modus::SvSignal* signal)
-{
-  if(!m_protocol) {
-    m_last_error = "Прежде чем привязывать сигналы к устройству, необходимо его сконфигурировать";
-    return false;
-  }
-
-  m_protocol->bindSignal(signal);
-  m_signals.append(signal);
-
-  return true;
-
-}
-
-modus::DeviceConfig* modus::SvProtocolAdaptor::config()
-{
-  return &m_config;
-}
-
 bool modus::SvProtocolAdaptor::configure(modus::DeviceConfig& config)
 {
   try {
@@ -58,6 +39,25 @@ bool modus::SvProtocolAdaptor::configure(modus::DeviceConfig& config)
   }
 }
 
+bool modus::SvProtocolAdaptor::bindSignal(modus::SvSignal* signal)
+{
+  if(!m_protocol) {
+    m_last_error = "Прежде чем привязывать сигналы к обработчику протокола, необходимо его сконфигурировать.";
+    return false;
+  }
+
+  if(!m_protocol->bindSignal(signal)) {
+
+    m_last_error = m_protocol->lastError();
+    return false;
+  }
+
+  m_signals.append(signal);
+
+  return true;
+
+}
+
 modus::SvAbstractProtocol* modus::SvProtocolAdaptor::create_protocol()
 {
   modus::SvAbstractProtocol* newobject = nullptr;
@@ -75,7 +75,7 @@ modus::SvAbstractProtocol* modus::SvProtocolAdaptor::create_protocol()
     log(QString("  %1: драйвер загружен").arg(m_config.name));
 
     typedef modus::SvAbstractProtocol *(*create_protocol_func)(void);
-    create_protocol_func create = (create_protocol_func)protolib.resolve("create");
+    create_protocol_func create = (create_protocol_func)lib.resolve("create");
 
     if (create)
       newobject = create();
@@ -112,8 +112,11 @@ modus::SvAbstractProtocol* modus::SvProtocolAdaptor::create_protocol()
 
 bool modus::SvProtocolAdaptor::start()
 {
-  if(!m_protocol)
+  if(!m_protocol) {
+
+    m_last_error = "Запуск невозможен. Протокол не определен.";
     return false;
+  }
 
   connect(this,       &modus::SvProtocolAdaptor::stopAll,  m_protocol, &modus::SvAbstractProtocol::stop);
   connect(m_protocol, &QThread::finished,                  m_protocol, &QThread::deleteLater);

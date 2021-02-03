@@ -6,6 +6,8 @@
 #define IMPERMISSIBLE_VALUE "Недопустимое значение параметра %1: %2.\n%3"
 #define MISSING_PARAM "Раздел \"%1\". Не задан обязательный параметр %2"
 
+#define DEFAULT_BUFFER_SIZE 4096
+
 // имена полей общие
 #define P_ID          "id"
 #define P_NAME        "name"
@@ -24,6 +26,7 @@
 #define P_PROTOCOL    "protocol"
 
 // имена полей для всех устройств
+#define P_BUFFER_SIZE "buffer_size"
 
 // имена полей для сигналов
 #define P_GROUP       "group"

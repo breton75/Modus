@@ -5,10 +5,10 @@
 #include <QThread>
 #include <QMap>
 
-#include "../misc/sv_abstract_logger.h"
-#include "../misc/sv_exception.h"
+#include "../../misc/sv_abstract_logger.h"
+#include "../../misc/sv_exception.h"
 
-#include "device_defs.h"
+#include "../device_defs.h"
 #include "sv_abstract_protocol.h"
 
 namespace modus {
@@ -19,14 +19,15 @@ namespace modus {
 class modus::SvProtocolAdaptor : public QObject
 {
   Q_OBJECT
+
 public:
   explicit SvProtocolAdaptor(modus::IOBuffer *iobuffer, sv::SvAbstractLogger* logger = nullptr);
   ~SvProtocolAdaptor();
 
   bool configure(modus::DeviceConfig& config);
-  modus::DeviceConfig *config();
-
   bool bindSignal(modus::SvSignal* signal);
+
+  const modus::DeviceConfig *config()          { return &m_config; }
 
   void setLogger(sv::SvAbstractLogger* logger) { m_logger = logger;        }
   QString lastError()                    const { return m_last_error;      }
@@ -41,7 +42,7 @@ private:
     QString                     m_last_error;
     sv::SvAbstractLogger*       m_logger;
 
-    modus::IOBuffer*  m_io_buffer = nullptr;
+    modus::IOBuffer*            m_io_buffer = nullptr;
 
     modus::SvAbstractProtocol*  create_protocol();
 
@@ -54,7 +55,7 @@ public slots:
   void stop();
 
 private slots:
-  void log(const QString msg, int level = sv::log::llDebug, int type  = sv::log::mtDebug)
+  void log(const QString msg, int level = sv::log::llDebug, int type = sv::log::mtDebug)
   {
     if(m_logger)
       *m_logger << sv::log::sender(m_config.name)

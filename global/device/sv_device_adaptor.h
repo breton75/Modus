@@ -132,23 +132,6 @@ public:
 
   int  signalsCount() const         { return m_signals.count(); }
 
-  void setSignalValue(const QString& signal_name, QVariant& value)
-  {
-    if(m_signals.contains(signal_name)) {
-
-//      qDebug() << QString("SIGNAL_NAME: %1   VALUE: %2").arg(signal_name).arg(value);
-      SvSignal* signal = m_signals.value(signal_name);
-
-      if(signal->config()->usecase != UseCase::OUT)
-        return;
-
-      signal->mutex()->lock();
-      signal->setValue(value);
-      signal->mutex()->unlock();
-
-    }
-  }
-
 private:
   modus::DeviceConfig        m_config;
   modus::SignalMap           m_signals;
@@ -164,51 +147,6 @@ private:
   bool                       m_is_configured  = false;
 
   sv::SvAbstractLogger*      m_logger;
-
-  modus::SvAbstractProtocol* create_protocol()
-  {
-    modus::SvProtocolAdaptor* newprotocol = nullptr;
-
-    try {
-
-
-      if(!lib.load())
-        throw SvException(lib.errorString());
-
-      log(QString("  %1: драйвер загружен").arg(m_config.protocol.lib));
-
-      typedef modus::SvAbstractProtocol*(*create_storage_func)(void);
-      create_storage_func create = (create_storage_func)lib.resolve("create");
-
-      if (create)
-        newprotocol = create();
-
-      else
-        throw SvException(lib.errorString());
-
-      if(!newprotocol)
-        throw SvException("Неизвестная ошибка при загрузке протокола");
-
-      if(!newprotocol->configure(m_config))
-        throw SvException(newprotocol->lastError());
-
-      log(QString("  %1: сконфигурирован").arg(m_config.protocol.lib));
-
-    }
-
-    catch(SvException& e) {
-
-      if(newprotocol)
-        delete newprotocol;
-
-      newprotocol = nullptr;
-
-      m_last_error = e.error;
-
-    }
-
-    return newprotocol;
-  }
 
 signals:
   void message(const QString msg, int level = sv::log::llDebug, int type  = sv::log::mtDebug);

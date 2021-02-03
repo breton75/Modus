@@ -12,8 +12,8 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-#include "device_defs.h"
-#include "../signal/sv_signal.h"
+#include "../device_defs.h"
+#include "../../signal/sv_signal.h"
 
 
 namespace modus {
@@ -24,10 +24,7 @@ namespace modus {
 
   };
 
-  typedef QMap<QString, SvSignal*> SignalMap;
-
   class SvAbstractProtocol;
-//  class SvAbstractDeviceThread;
 
 }
     
@@ -41,7 +38,7 @@ public:
     clearSignals();
   }
 
-/* обязательно виртуальный деструктор, чтобы вызывались деструкторы наследников */
+  /* обязательно виртуальный деструктор, чтобы вызывались деструкторы наследников */
   virtual ~SvAbstractProtocol()
   {  }
 
@@ -52,9 +49,8 @@ public:
   const QDateTime lastParsedTime()            const { return p_last_parsed_time;       }
   const QDateTime lastOutputTime()            const { return p_last_formed_time;       }
 
-  void setIOBuffer (modus::IOBuffer *iobuffer)   { p_io_buffer  = iobuffer;  }
+  void setIOBuffer (modus::IOBuffer *iobuffer)      { p_io_buffer  = iobuffer;  }
 
-  /** работа с сигналами, привязанными к устройству **/
   int signalsCount()                          const { return p_input_signals.count();  }
 
   const modus::SignalMap* inputSignals()      const { return &p_input_signals;         }
@@ -116,12 +112,16 @@ public:
     p_output_signals.clear();
   }
 
-  inline void setSignalValue(const QString& signal_name, QVariant& value)
+  inline void setInputSignalValue(const QString& signal_name, QVariant& value)
   {
     if(p_input_signals.contains(signal_name)) {
 
 //      qDebug() << QString("SIGNAL_NAME: %1   VALUE: %2").arg(signal_name).arg(value);
-      p_input_signals.value(signal_name)->setValue(value);
+      SvSignal* signal = p_input_signals.value(signal_name);
+
+      signal->mutex()->lock();
+      signal->setValue(value);
+      signal->mutex()->unlock();
 
     }
   }
