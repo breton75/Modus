@@ -29,9 +29,14 @@ namespace modus {
       p_signals = signalList;
     }
 
-    virtual bool init(modus::StorageConfig* config) = 0;
+    virtual void bindSignal(modus::SvSignal* signal)
+    {
+      p_signals->append(signal);
+    }
 
-    const QString &lastError() const            { return p_last_error; }
+    virtual bool configure(modus::StorageConfig* config) = 0;
+
+    const QString lastError() const            { return p_last_error; }
 
   protected:
     modus::StorageConfig* p_config;
@@ -61,7 +66,7 @@ namespace modus {
     void message(const QString msg, int level = sv::log::llDebug, int type  = sv::log::mtDebug);
 
   public slots:
-    virtual void stop()
+    void stop()
     {
       p_is_active = false;
     }

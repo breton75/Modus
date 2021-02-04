@@ -30,15 +30,15 @@ public:
   virtual ~SvAbstractInterface()
   {  }
 
-  virtual bool configure(const modus::DeviceConfig& config) = 0;
+  virtual bool configure(modus::DeviceConfig* config) = 0;
 
-  const modus::DeviceConfig* config()         const { return &p_config;         }
+  const modus::DeviceConfig* config()         const { return p_config;         }
   const QString   lastError()                 const { return p_last_error;      }
 
   void setIOBuffer (modus::IOBuffer *iobuffer)      { p_io_buffer  = iobuffer;  }
 
 protected:
-  modus::DeviceConfig  p_config;
+  modus::DeviceConfig* p_config;
 
   modus::IOBuffer*     p_io_buffer;
 

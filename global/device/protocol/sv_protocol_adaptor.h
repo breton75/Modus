@@ -21,30 +21,28 @@ class modus::SvProtocolAdaptor : public QObject
   Q_OBJECT
 
 public:
-  explicit SvProtocolAdaptor(modus::IOBuffer *iobuffer, sv::SvAbstractLogger* logger = nullptr);
+  explicit SvProtocolAdaptor();
   ~SvProtocolAdaptor();
 
-  bool configure(modus::DeviceConfig& config);
-  bool bindSignal(modus::SvSignal* signal);
+  bool init(const modus::DeviceConfig& config, modus::IOBuffer *iobuffer);
+  void bindSignal(modus::SvSignal* signal);
 
-  const modus::DeviceConfig *config()          { return &m_config; }
+  void setLogger(sv::SvAbstractLogger* logger) { m_logger = logger;   }
 
-  void setLogger(sv::SvAbstractLogger* logger) { m_logger = logger;        }
-  QString lastError()                    const { return m_last_error;      }
-
-  int signalCount()                      const { return m_signals.count(); }
+  const modus::DeviceConfig *config()          { return &m_config;    }
+  const QString lastError()                    { return m_last_error; }
+  const QList<modus::SvSignal*>* Signals()     { return &m_signals;   }
 
 private:
-    modus::SvAbstractProtocol*  m_protocol = nullptr;
-    modus::DeviceConfig         m_config;
-    QList<modus::SvSignal*>     m_signals;
+  modus::SvAbstractProtocol*  m_protocol  = nullptr;
+  modus::IOBuffer*            m_io_buffer = nullptr;
+  sv::SvAbstractLogger*       m_logger    = nullptr;
 
-    QString                     m_last_error;
-    sv::SvAbstractLogger*       m_logger;
+  modus::DeviceConfig         m_config;
+  QList<modus::SvSignal*>     m_signals;
+  QString                     m_last_error;
 
-    modus::IOBuffer*            m_io_buffer = nullptr;
-
-    modus::SvAbstractProtocol*  create_protocol();
+  modus::SvAbstractProtocol*  create_protocol();
 
 signals:
   void message(const QString msg, int level = sv::log::llDebug, int type  = sv::log::mtDebug);

@@ -9,8 +9,8 @@
 
 #include "../signal/sv_signal.h"
 #include "interface/sv_interface_adaptor.h"
+#include "protocol/sv_protocol_adaptor.h"
 #include "device_defs.h"
-#include "sv_protocol_adaptor.h"
 
 
 
@@ -36,22 +36,22 @@ public:
     deleteLater();
   }
 
-  bool configure(const modus::DeviceConfig& cfg)
+  bool init(const modus::DeviceConfig& config)
   {
     try {
 
-      m_config = cfg;
+      m_config = config;
 
       /* interface */
-      m_interface = new modus::SvInterfaceAdaptor(&m_io_buffer);
+      m_interface = new modus::SvInterfaceAdaptor();
 
-      if(!m_interface->configure(m_config))
+      if(!m_interface->init(&m_config, &m_io_buffer))
         throw SvException(m_interface->lastError());
 
       /* protocol */
-      m_protocol = new modus::SvProtocolAdaptor(&m_io_buffer);
+      m_protocol = new modus::SvProtocolAdaptor();
 
-      if(!m_protocol->configure(m_config))
+      if(!m_protocol->init(&m_config, &m_io_buffer))
         throw SvException(m_protocol->lastError());
 
       return  true;
@@ -113,6 +113,12 @@ public:
   /** работа с сигналами, привязанными к устройству **/
   bool bindSignal(SvSignal* signal)
   {
+    if(!m_protocol) {
+
+      m_last_error = "Протокол не подключен";
+      return false;
+    }
+
     if(!m_protocol->bindSignal(signal)) {
 
       m_last_error = m_protocol->lastError();
@@ -125,12 +131,7 @@ public:
 
   }
 
-  virtual void clearSignals()
-  {
-    m_protocol->clearSignals();
-  }
-
-  int  signalsCount() const         { return m_signals.count(); }
+  modus::SignalMap* Signals()       { return &m_signals; }
 
 private:
   modus::DeviceConfig        m_config;

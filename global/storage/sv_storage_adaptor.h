@@ -20,32 +20,30 @@ class modus::SvStorageAdaptor : public QObject
 {
   Q_OBJECT
 public:
-  explicit SvStorageAdaptor(sv::SvAbstractLogger* logger = nullptr);
+  explicit SvStorageAdaptor();
   ~SvStorageAdaptor();
 
-  bool configure(modus::StorageConfig& config);
-  modus::StorageConfig *config();
-
+  bool init(const StorageConfig &config);
   void bindSignal(modus::SvSignal* signal);
 
-  void setLogger(sv::SvAbstractLogger* logger) { m_logger = logger;        }
-  QString lastError()                    const { return m_last_error;      }
+  void setLogger(sv::SvAbstractLogger* logger) { m_logger = logger;    }
 
-  int signalCount()                      const { return m_signals.count(); }
+  const modus::StorageConfig *config()         { return &m_config;     }
+  const QString lastError()                    { return m_last_error;  }
+  const QList<modus::SvSignal*>* Signals()     { return &m_signals;    }
 
 private:
-  modus::SvAbstractStorage*   m_storage = nullptr;
-    modus::StorageConfig      m_config;
-    QList<modus::SvSignal*>   m_signals;
+  modus::StorageConfig      m_config;
 
-    QString                   m_last_error;
+  modus::SvAbstractStorage* m_storage = nullptr;
+  sv::SvAbstractLogger*     m_logger = nullptr;
 
-    sv::SvAbstractLogger*     m_logger;
+  QList<modus::SvSignal*>   m_signals;
+  QString                   m_last_error;
 
-    modus::SvAbstractStorage* create_storage();
+  modus::SvAbstractStorage* create_storage();
 
 signals:
-  void message(const QString msg, int level = sv::log::llDebug, int type  = sv::log::mtDebug);
   void stopAll();
 
 public slots:

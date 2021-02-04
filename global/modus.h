@@ -2,9 +2,9 @@
 #define SV_MODUS_GLOBAL
 
 #include "device/sv_device_adaptor.h"
-#include "device/ifc/sv_interface_adaptor.h"
+#include "device/interface/sv_interface_adaptor.h"
 #include "signal/sv_signal.h"
-#include "storage/adaptor/sv_storage_adaptor.h"
+#include "storage/sv_storage_adaptor.h"
 #include "interact/sv_interact_adaptor.h"
 
 #endif // SV_MODUS_GLOBAL

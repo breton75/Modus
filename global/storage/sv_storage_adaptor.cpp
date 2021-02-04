@@ -1,7 +1,8 @@
 ﻿#include "sv_storage_adaptor.h"
 
-modus::SvStorageAdaptor::SvStorageAdaptor(sv::SvAbstractLogger* logger) :
-  m_logger(logger)
+modus::SvStorageAdaptor::SvStorageAdaptor() :
+  m_storage (nullptr),
+  m_logger  (nullptr)
 {
 
 }
@@ -12,55 +13,65 @@ modus::SvStorageAdaptor::~SvStorageAdaptor()
   deleteLater();
 }
 
+bool modus::SvStorageAdaptor::init(const modus::StorageConfig& config)
+{
+  try {
+
+    m_config = config;
+
+    m_storage = create_storage();
+
+    if(!m_storage)
+      throw SvException(m_last_error);
+
+    if(!m_storage->configure(&m_config))
+      throw SvException(m_storage->lastError());
+
+    return true;
+
+  } catch (SvException& e) {
+
+    if(m_storage)
+      delete m_storage;
+
+    m_last_error = e.error;
+
+    return false;
+  }
+}
+
 void modus::SvStorageAdaptor::bindSignal(modus::SvSignal* signal)
 {
   m_signals.append(signal);
 }
 
-modus::StorageConfig* modus::SvStorageAdaptor::config()
-{
-  return &m_config;
-}
-
-bool modus::SvStorageAdaptor::configure(modus::StorageConfig& config)
-{
-  m_config = config;
-
-  m_storage = create_storage();
-
-  if(!m_storage)
-    return false;
-
-  return true;
-}
-
 modus::SvAbstractStorage* modus::SvStorageAdaptor::create_storage()
 {
-  modus::SvAbstractStorage* newstorage = nullptr;
+  modus::SvAbstractStorage* newobject = nullptr;
 
   try {
 
-    QLibrary storelib(m_config.driver_lib);
+    QDir dir(m_config.libpath);
+    QString lib_file(dir.absoluteFilePath(m_config.lib));
 
-    if(!storelib.load())
-      throw SvException(storelib.errorString());
+    QLibrary lib(lib_file);
+
+    if(!lib.load())
+      throw SvException(lib.errorString());
 
     log(QString("  %1: драйвер загружен").arg(m_config.name));
 
     typedef modus::SvAbstractStorage *(*create_storage_func)(void);
-    create_storage_func create = (create_storage_func)storelib.resolve("create");
+    create_storage_func create = (create_storage_func)lib.resolve("create");
 
     if (create)
-      newstorage = create();
+      newobject = create();
 
     else
-      throw SvException(storelib.errorString());
+      throw SvException(lib.errorString());
 
-    if(!newstorage)
+    if(!newobject)
       throw SvException("Неизвестная ошибка при создании объекта хранилища");
-
-    if(!newstorage->init(&m_config))
-      throw SvException(newstorage->lastError());
 
     log(QString("  %1: сконфигурирован").arg(m_config.name));
 
@@ -68,16 +79,16 @@ modus::SvAbstractStorage* modus::SvStorageAdaptor::create_storage()
 
   catch(SvException& e) {
 
-    if(newstorage)
-      delete newstorage;
+    if(newobject)
+      delete newobject;
 
-    newstorage = nullptr;
+    newobject = nullptr;
 
     m_last_error = e.error;
 
   }
 
-  return newstorage;
+  return newobject;
 
 }
 

@@ -8,7 +8,7 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET =/home/user/ksuts_server/test
+TARGET =/home/developer/ksuts_server/test
 TEMPLATE = app
 
 CONFIG += c++11

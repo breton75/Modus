@@ -9,12 +9,13 @@
 #include "../global_defs.h"
 
 #define MAX_BUF_SIZE 0xFFFF
+#define DEFAULT_BUF_SIZE 0x1000
 
 namespace modus {
 
   struct BUFF
   {
-    BUFF(quint16 size = 0x1000)     // 4096
+    BUFF(quint16 size = DEFAULT_BUF_SIZE)     // 4096
     {
       this->size = size;
       data = (char*)malloc(size);
@@ -37,9 +38,23 @@ namespace modus {
 
   struct IOBuffer
   {
-    modus::BUFF input  ;
-    modus::BUFF output ;
-    modus::BUFF confirm;
+    explicit IOBuffer(quint16 size = DEFAULT_BUF_SIZE)
+    {
+      input   = new modus::BUFF(size);
+      output  = new modus::BUFF(size);
+      confirm = new modus::BUFF(size);
+    }
+
+    ~IOBuffer()
+    {
+      delete input  ;
+      delete output ;
+      delete confirm;
+    }
+
+    modus::BUFF* input  ;
+    modus::BUFF* output ;
+    modus::BUFF* confirm;
   };
 
   struct ProtocolConfig

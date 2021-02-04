@@ -19,37 +19,27 @@ class modus::SvInterfaceAdaptor : public QObject
     Q_OBJECT
 
 public:
-    explicit SvInterfaceAdaptor(modus::IOBuffer *iobuffer, sv::SvAbstractLogger* logger = nullptr);
+    explicit SvInterfaceAdaptor();
     ~SvInterfaceAdaptor();
 
-    bool configure(const DeviceConfig &config);
-    modus::DeviceConfig *config();
+    bool init(const DeviceConfig &config, modus::IOBuffer *iobuffer);
 
     void setLogger(sv::SvAbstractLogger* logger) { m_logger = logger;        }
-    QString lastError()                    const { return m_last_error;      }
+
+    const modus::DeviceConfig *config()          { return &m_config;         }
+    const QString lastError()                    { return m_last_error;      }
 
 private:
-    modus::SvAbstractInterface* m_interface = nullptr;
     modus::DeviceConfig         m_config;
 
-    sv::SvAbstractLogger*       m_logger = nullptr;
-    modus::IOBuffer*            m_io_buffer   = nullptr;
+    modus::SvAbstractInterface* m_interface = nullptr;
+    modus::IOBuffer*            m_io_buffer = nullptr;
+    sv::SvAbstractLogger*       m_logger    = nullptr;
 
-    bool          m_is_active;
-    QString       m_last_error;    
+    bool                        m_is_active;
+    QString                     m_last_error;
 
     modus::SvAbstractInterface*  create_interface();
-
-//    QUdpSocket*   m_udp_socket = nullptr;
-//    QSerialPort*  m_serial_port = nullptr;
-
-//    UdpParams     m_udp_params;
-//    SerialParams  m_serial_params;
-
-//    void write(modus::BUFF* buffer);
-
-//protected:
-//    void run() Q_DECL_OVERRIDE;
 
 signals:
   void message(const QString msg, int level = sv::log::llDebug, int type  = sv::log::mtDebug);

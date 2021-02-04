@@ -26,18 +26,31 @@ public:
   virtual ~SvAbstractInteract()
   {   }
 
-  virtual void bindSignalList(QList<modus::SvSignal*>* signalList)
+  virtual bool bindSignal(modus::SvSignal* signal)
   {
-    p_signals = signalList;
+    try {
+
+      if(p_signals.contains(signal->config()->name))
+         throw SvException(QString("Повторяющееся имя сигнала: %1").arg(signal->config()->name));
+
+      p_signals.insert(signal->config()->name, signal);
+
+      return true;
+
+    } catch (SvException& e) {
+
+         p_last_error = e.error;
+         return false;
+    }
   }
 
-  virtual bool init(modus::InteractConfig* config) = 0;
+  virtual bool configure(modus::InteractConfig* config) = 0;
 
   const QString &lastError() const            { return p_last_error; }
 
 protected:
   modus::InteractConfig*    p_config     = nullptr;
-  QList<modus::SvSignal*>*  p_signals    = nullptr;
+  modus::SignalMap          p_signals;
 
   QString                   p_last_error = "";
 

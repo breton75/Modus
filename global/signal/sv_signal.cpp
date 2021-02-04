@@ -11,7 +11,7 @@ modus::SvSignal::~SvSignal()
   deleteLater();
 }
 
-void modus::SvSignal::setValue(QVariant value)
+void modus::SvSignal::setValue(const QVariant& value)
 {
 //  QMutexLocker l(&m_mutex);
 

@@ -24,7 +24,7 @@ namespace modus {
     bool    debug2      = false;
     QString comment     = "";
 
-    static StorageConfig fromJsonString(const QString& json_string) throw (SvException)
+    static StorageConfig fromJsonString(const QString& json_string) //throw (SvException)
     {
       QJsonParseError err;
       QJsonDocument jd = QJsonDocument::fromJson(json_string.toUtf8(), &err);
@@ -37,12 +37,12 @@ namespace modus {
         return fromJsonObject(jd.object());
 
       }
-      catch(SvException e) {
+      catch(SvException& e) {
         throw e;
       }
     }
 
-    static StorageConfig fromJsonObject(const QJsonObject &object) throw (SvException)
+    static StorageConfig fromJsonObject(const QJsonObject &object) //throw (SvException)
     {
       QString P;
       StorageConfig p;
@@ -161,7 +161,7 @@ namespace modus {
       j.insert(P_NAME, QJsonValue(name).toString());
       j.insert(P_ENABLE, QJsonValue(enable).toBool());
       j.insert(P_PARAMS, QJsonValue(params).toString());
-//      j.insert(P_DRIVER, QJsonValue(driver_lib).toString());
+      j.insert(P_LIB, QJsonValue(lib).toString());
       j.insert(P_DESCRIPTION, QJsonValue(description).toString());
       j.insert(P_DEBUG, QJsonValue(debug).toBool());
       j.insert(P_DEBUG2, QJsonValue(debug2).toBool());

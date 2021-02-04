@@ -25,7 +25,7 @@ namespace modus {
     bool    debug2      = false;
     QString comment     = "";
 
-    static InteractConfig fromJsonString(const QString& json) throw (SvException)
+    static InteractConfig fromJsonString(const QString& json) //throw (SvException)
     {
       QJsonParseError err;
       QJsonDocument jd = QJsonDocument::fromJson(json.toUtf8(), &err);
@@ -38,12 +38,12 @@ namespace modus {
         return fromJsonObject(jd.object());
 
       }
-      catch(SvException e) {
+      catch(SvException& e) {
         throw e;
       }
     }
 
-    static InteractConfig fromJsonObject(const QJsonObject &object) throw (SvException)
+    static InteractConfig fromJsonObject(const QJsonObject &object) //throw (SvException)
     {
       QString P;
       InteractConfig p;
@@ -78,25 +78,27 @@ namespace modus {
         p.name = object.value(P).toString("");
 
       }
-      else
+      else {
         throw SvException(QString(MISSING_PARAM).arg(P));
+      }
 
 
-        /* lib */
-        P = P_LIB;
-        if(object.contains(P)) {
+      /* lib */
+      P = P_LIB;
+      if(object.contains(P)) {
 
-          if(object.value(P).toString("").isEmpty())
-            throw SvException(QString(IMPERMISSIBLE_VALUE)
-                              .arg(P)
-                              .arg(object.value(P).toVariant().toString())
-                              .arg("Имя библиотеки драйвера сервера не может быть пустым"));
+        if(object.value(P).toString("").isEmpty())
+          throw SvException(QString(IMPERMISSIBLE_VALUE)
+                            .arg(P)
+                            .arg(object.value(P).toVariant().toString())
+                            .arg("Имя библиотеки драйвера сервера не может быть пустым"));
 
-          p.lib = object.value(P).toString("");
+        p.lib = object.value(P).toString("");
 
-        }
-        else
-          throw SvException(QString(MISSING_PARAM).arg(P));
+      }
+      else {
+        throw SvException(QString(MISSING_PARAM).arg(P));
+      }
 
 
       /* storage_params */
@@ -143,15 +145,15 @@ namespace modus {
     {
       QJsonObject j;
 
-      j.insert(P_ID, QJsonValue(static_cast<int>(id)).toInt());
-      j.insert(P_NAME, QJsonValue(name).toString());
-      j.insert(P_ENABLE, QJsonValue(enable).toBool());
-      j.insert(P_PARAMS, QJsonValue(params).toString());
-      j.insert(P_DRIVER, QJsonValue(driver_lib).toString());
+      j.insert(P_ID,          QJsonValue(static_cast<int>(id)).toInt());
+      j.insert(P_NAME,        QJsonValue(name).toString());
+      j.insert(P_ENABLE,      QJsonValue(enable).toBool());
+      j.insert(P_PARAMS,      QJsonValue(params).toString());
+      j.insert(P_LIB,         QJsonValue(lib).toString());
       j.insert(P_DESCRIPTION, QJsonValue(description).toString());
-      j.insert(P_DEBUG, QJsonValue(debug).toBool());
-      j.insert(P_DEBUG2, QJsonValue(debug2).toBool());
-      j.insert(P_COMMENT, QJsonValue(comment).toString());
+      j.insert(P_DEBUG,       QJsonValue(debug).toBool());
+      j.insert(P_DEBUG2,      QJsonValue(debug2).toBool());
+      j.insert(P_COMMENT,     QJsonValue(comment).toString());
 
       return j;
 

@@ -15,8 +15,6 @@
 
 #include "../misc/sv_exception.h"
 
-#define DEFAULT_TIMEOUT 3000
-
 namespace modus {
 
   enum SignalDataTypes {
@@ -482,7 +480,7 @@ private:
   QMutex               m_mutex;
   
 public slots:
-  void setValue(QVariant value);
+  void setValue(const QVariant &value);
   void setDeviceAliveAge(const quint64 alive_age);
 
 signals:

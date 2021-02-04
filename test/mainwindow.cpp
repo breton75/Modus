@@ -104,3 +104,9 @@ void MainWindow::on_bnTextReal_clicked()
 
 
 }
+
+void MainWindow::on_pushButton_clicked()
+{
+  QVariant v;
+  qDebug() << v.isValid();
+}

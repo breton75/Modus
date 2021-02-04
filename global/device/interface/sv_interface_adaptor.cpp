@@ -1,8 +1,9 @@
 ﻿#include "sv_interface_adaptor.h"
 
-modus::SvInterfaceAdaptor::SvInterfaceAdaptor(modus::IOBuffer *iobuffer, sv::SvAbstractLogger* logger) :
-    m_logger(logger),
-    m_io_buffer(iobuffer)
+modus::SvInterfaceAdaptor::SvInterfaceAdaptor() :
+  m_interface (nullptr),
+  m_io_buffer (nullptr),
+  m_logger    (nullptr)
 {
 
 }
@@ -13,7 +14,7 @@ modus::SvInterfaceAdaptor::~SvInterfaceAdaptor()
   deleteLater();
 }
 
-bool modus::SvInterfaceAdaptor::configure(const modus::DeviceConfig& config)
+bool modus::SvInterfaceAdaptor::init(const modus::DeviceConfig& config, modus::IOBuffer *iobuffer)
 {
   try {
 
@@ -22,10 +23,13 @@ bool modus::SvInterfaceAdaptor::configure(const modus::DeviceConfig& config)
     m_interface = create_interface();
 
     if(!m_interface)
-      throw SvException("Не удалось создать обработчик интерфейса");
+      throw SvException(m_last_error);
 
-    if(!m_interface->configure(m_config))
+    if(!m_interface->configure(&m_config))
       throw SvException(m_interface->lastError());
+
+    m_io_buffer = iobuffer;
+    m_interface->setIOBuffer(iobuffer);
 
     return  true;
 
@@ -67,11 +71,6 @@ modus::SvAbstractInterface* modus::SvInterfaceAdaptor::create_interface()
     if(!newobject)
       throw SvException("Неизвестная ошибка при создании объекта хранилища");
 
-    if(!newobject->configure(m_config))
-      throw SvException(newobject->lastError());
-
-    newobject->setIOBuffer(m_io_buffer);
-
     log(QString("  %1: сконфигурирован").arg(m_config.name));
 
   }
@@ -93,20 +92,27 @@ modus::SvAbstractInterface* modus::SvInterfaceAdaptor::create_interface()
 
 bool modus::SvInterfaceAdaptor::start()
 {
-  if(!m_interface) {
+  try {
 
-    m_last_error = "Запуск невозможен. Интерфейс не определен.";
-    return false;
+    if(!m_interface)
+      throw SvException("Запуск невозможен. Интерфейс не определен.");
+
+    if(!m_io_buffer)
+      throw SvException("Запуск невозможен. Не определен буфер обмена.");
+
+    connect(this,        &modus::SvInterfaceAdaptor::stopAll,  m_interface, &modus::SvAbstractInterface::stop);
+    connect(m_interface, &QThread::finished,                   m_interface, &QThread::deleteLater);
+    connect(m_interface, &modus::SvAbstractInterface::message, this,       &modus::SvInterfaceAdaptor::log);
+
+    m_interface->start();
+
+    return true;
+
+  } catch (SvException& e) {
+
+    m_last_error = e.error;
+    return  false;
   }
-
-  connect(this,       &modus::SvInterfaceAdaptor::stopAll,  m_interface, &modus::SvAbstractInterface::stop);
-  connect(m_interface, &QThread::finished,                  m_interface, &QThread::deleteLater);
-  connect(m_interface, &modus::SvAbstractInterface::message, this,       &modus::SvInterfaceAdaptor::log);
-
-  m_interface->start();
-
-  return true;
-
 }
 
 void modus::SvInterfaceAdaptor::stop()

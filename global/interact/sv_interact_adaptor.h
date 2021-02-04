@@ -29,35 +29,29 @@ namespace modus {
       Q_OBJECT
 
   public:
-    SvInteractAdaptor(sv::SvAbstractLogger *logger = nullptr, QObject *parent = nullptr);
+    SvInteractAdaptor();
 
     ~SvInteractAdaptor();
 
-    bool configure(const InteractConfig& config);
-    const InteractConfig* config() const         { return &m_config; }
+    bool init(const InteractConfig &config);
+    bool bindSignal(SvSignal* signal);
 
     void setLogger(sv::SvAbstractLogger* logger) { m_logger = logger; }
+
+    const InteractConfig* config() const         { return &m_config; }
+    const QList<modus::SvSignal*>* Signals()     { return &m_signals; }
+    const QString &lastError()             const { return m_last_error; }
 
     bool start();
     void stop();
 
-    void bindSignal(SvSignal* signal);
-    void clearSignals()                          { m_signals.clear(); }
-
-    const QString &lastError()             const { return m_last_error; }
-
-    QList<SvSignal*>* Signals()                  { return &m_signals; }
-
-    modus::SvAbstractInteract* interact()  const { return m_interact; }
-
   private:
+    modus::InteractConfig     m_config;
+
     modus::SvAbstractInteract* m_interact = nullptr;
-    modus::InteractConfig m_config;
+    sv::SvAbstractLogger*      m_logger   = nullptr;
 
-    QList<modus::SvSignal*> m_signals;
-
-    sv::SvAbstractLogger* m_logger;
-
+    QList<modus::SvSignal*>    m_signals;
     QString m_last_error;
 
     modus::SvAbstractInteract* create_interact();

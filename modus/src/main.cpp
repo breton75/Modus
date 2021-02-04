@@ -77,11 +77,11 @@ bool readStorages(const AppConfig& appcfg);
 bool readSignals(const AppConfig& appcfg);
 bool readInteracts(const AppConfig& appcfg);
 
-void parse_signal_list(QString json_file, QJsonArray* array, modus::SignalGroupParams* group_params, QList<QPair<QJsonValue, modus::SignalGroupParams>>* result) throw(SvException);
+void parse_signal_list(QString json_file, QJsonArray* array, modus::SignalGroupParams* group_params, QList<QPair<QJsonValue, modus::SignalGroupParams>>* result); //throw(SvException);
 
-modus::SvDeviceAdaptor*   create_device  (const modus::DeviceConfig&    config) throw(SvException);
-modus::SvStorageAdaptor*  create_storage (const modus::StorageConfig&   config) throw(SvException);
-modus::SvInteractAdaptor* create_interact(const modus::InteractConfig&  config) throw(SvException);
+modus::SvDeviceAdaptor*   create_device  (const modus::DeviceConfig&    config); //throw(SvException);
+modus::SvStorageAdaptor*  create_storage (const modus::StorageConfig&   config); //throw(SvException);
+modus::SvInteractAdaptor* create_interact(const modus::InteractConfig&  config); //throw(SvException);
 
 //sv::SvAbstractLogger* create_logger(const sv::log::Options& options, const QString& sender);
 
@@ -696,24 +696,24 @@ bool readDevices(const AppConfig& appcfg)
     for(QJsonValue v: device_list) {
 
       /** потрошим параметры устройства **/
-      modus::DeviceConfig devcfg = modus::DeviceConfig::fromJsonObject(v.toObject());
+      modus::DeviceConfig config = modus::DeviceConfig::fromJsonObject(v.toObject());
 
-      if(!devcfg.enable)
+      if(!config.enable)
         continue;
 
       dbus << llinf << mtinf << me
-           << QString("\n  %1:").arg(devcfg.name) << sv::log::endl;
+           << QString("\n  %1:").arg(config.name) << sv::log::endl;
 
       dbus << lldbg << mtdbg << me
            << QString("    параметры прочитаны") << sv::log::endl;
 
-      if(DEVICES.contains(devcfg.id))
-        throw SvException(QString("Устройство %1. Повторяющийся идентификатор %2!").arg(devcfg.name).arg(devcfg.id));
+      if(DEVICES.contains(config.id))
+        throw SvException(QString("Устройство %1. Повторяющийся идентификатор %2!").arg(config.name).arg(config.id));
 
       /** создаем объект устройство **/
       modus::SvDeviceAdaptor* newdev = new modus::SvDeviceAdaptor(); //create_device(devcfg);
 
-      if(newdev->configure(devcfg)) {
+      if(newdev->init(config)) {
 
         DEVICES.insert(newdev->config()->id, newdev);
 
@@ -725,11 +725,11 @@ bool readDevices(const AppConfig& appcfg)
         }
 
         dbus << lldbg2 << mtdbg << me
-             << QString("  %1 [id %2]\n  Параметры: %3\n  Интерфейс: %4 %5").
+             << QString("  %1 [id %2]\n  Протокол: %3\n  Интерфейс: %4").
                 arg(newdev->config()->name).
                 arg(newdev->config()->id).
-                arg(newdev->config()->dev_params).
-                arg(newdev->config()->ifc_name).arg(newdev->config()->ifc_params)
+                arg(newdev->config()->protocol.params).
+                arg(newdev->config()->interface.params)
              << sv::log::endl;
 
         counter++;
@@ -739,7 +739,7 @@ bool readDevices(const AppConfig& appcfg)
       else {
 
         throw SvException(QString("Не удалось добавить устройство %1: %2")
-                        .arg(devcfg.name).arg(newdev->lastError()));
+                        .arg(config.name).arg(newdev->lastError()));
 
       }
     }
@@ -786,22 +786,22 @@ bool readStorages(const AppConfig& appcfg)
       for(QJsonValue v: storage_list) {
 
         /** поторошим параметры хранилища **/
-        modus::StorageConfig storage_cfg = modus::StorageConfig::fromJsonObject(v.toObject());
+        modus::StorageConfig config = modus::StorageConfig::fromJsonObject(v.toObject());
 
-        if(!storage_cfg.enable)
+        if(!config.enable)
           continue;
 
         dbus << lldbg << mtdbg << me
-             << QString("  %1: параметры прочитаны").arg(storage_cfg.name) << sv::log::endl;
+             << QString("  %1: параметры прочитаны").arg(config.name) << sv::log::endl;
 
-        if(STORAGES.contains(storage_cfg.id))
+        if(STORAGES.contains(config.id))
           throw SvException(QString("Хранилище %1. Повторяющийся идентификатор %2!")
-                          .arg(storage_cfg.name).arg(storage_cfg.id));
+                          .arg(config.name).arg(config.id));
 
         /** создаем объект хранилища **/
         modus::SvStorageAdaptor* newstorage = new modus::SvStorageAdaptor();
 
-        if(newstorage->configure(storage_cfg)) {
+        if(newstorage->init(config)) {
 
           STORAGES.insert(newstorage->config()->id, newstorage);
 
@@ -824,6 +824,85 @@ bool readStorages(const AppConfig& appcfg)
 
           throw SvException(QString("Не удалось добавить хранилище %1: %2 ")
                           .arg(v.toVariant().toString()).arg(newstorage->lastError()));
+
+        }
+      }
+    }
+
+    dbus << llinf << me << mtscc << QString("OK [Прочитано %1]\n").arg(counter) << sv::log::endl;
+
+    return true;
+
+  }
+
+  catch(SvException& e) {
+
+    dbus << llerr<< me << mterr  << QString("Ошибка: %1\n").arg(e.error) << sv::log::endl;
+    return false;
+
+  }
+}
+
+bool readInteracts(const AppConfig& appcfg)
+{
+  dbus << llinf << me << mtinf << QString("Читаем данные о серверах обмена данными:") << sv::log::endl;
+
+  try {
+
+    int counter = 0;
+
+    if(!JSON.contains("interacts"))
+    {
+
+      dbus << llinf << me << mtinf << QString("Раздел 'interacts' отсутствует.");
+
+    }
+
+    else
+    {
+      QJsonArray server_list = JSON.value("interacts").toArray();
+
+      for(QJsonValue v: server_list) {
+
+        /** поторошим параметры сервера **/
+        modus::InteractConfig config = modus::InteractConfig::fromJsonObject(v.toObject());
+
+        if(!config.enable)
+          continue;
+
+        dbus << lldbg << mtdbg << me
+             << QString("  %1: параметры прочитаны").arg(config.name) << sv::log::endl;
+
+        if(INTERACTS.contains(config.id))
+          throw SvException(QString("Сервер приложения %1. Повторяющийся идентификатор %2!")
+                          .arg(config.name).arg(config.id));
+
+        /** создаем объект хранилища **/
+        modus::SvInteractAdaptor* newinteract = new modus::SvInteractAdaptor(); // c reate_server(interact_cfg);
+
+        if(newinteract->init(config)) {
+
+          INTERACTS.insert(newinteract->config()->id, newinteract);
+
+          if(appcfg.log_options.logging)
+          {
+            LOGGERS.insert(newinteract->config()->id, new sv::SvDBus(appcfg.log_options));
+
+            newinteract->setLogger(LOGGERS.value(newinteract->config()->id));
+          }
+
+
+          dbus << lldbg << me << mtdbg << QString("  %1 (ID: %2, Тип: %3, Параметры: %4)").arg(newinteract->config()->name)
+                  .arg(newinteract->config()->id).arg(newinteract->config()->type).arg(newinteract->config()->params) << sv::log::endl;
+
+          counter++;
+
+        }
+
+        else {
+
+          throw SvException(QString("Не удалось добавить сервер %1: %2")
+                          .arg(v.toVariant().toString()).arg(newinteract->lastError()));
 
         }
       }
@@ -871,20 +950,20 @@ bool readSignals(const AppConfig& appcfg)
     for(QPair<QJsonValue, modus::SignalGroupParams> s: signal_list) {
 
       /* потрошим параметры */
-      modus::SignalConfig signal_cfg = modus::SignalConfig::fromJsonObject(s.first.toObject(), &(s.second));
+      modus::SignalConfig config = modus::SignalConfig::fromJsonObject(s.first.toObject(), &(s.second));
 //      signal_cfg.mergeGroupParams(&(s.second));
 
-      if(!signal_cfg.enable)
+      if(!config.enable)
         continue;
 
 //      qDebug() << signal_cfg.name << signal_cfg.device_id << signal_cfg.timeout << signal_cfg.id;
-      dbus << lldbg2 << mtdbg << me << QString("  %1: параметры прочитаны").arg(signal_cfg.name) << sv::log::endl;
+      dbus << lldbg2 << mtdbg << me << QString("  %1: параметры прочитаны").arg(config.name) << sv::log::endl;
 
-      if(SIGNALS.contains(signal_cfg.id))
-        throw SvException(QString("Сигнал %1. Повторяющийся идентификатор %2!").arg(signal_cfg.name).arg(signal_cfg.id));
+      if(SIGNALS.contains(config.id))
+        throw SvException(QString("Сигнал %1. Повторяющийся идентификатор %2!").arg(config.name).arg(config.id));
 
       /* создаем объект */
-      modus::SvSignal* newsig = new modus::SvSignal(signal_cfg);
+      modus::SvSignal* newsig = new modus::SvSignal(config);
 
       if(newsig) {
 
@@ -909,8 +988,8 @@ bool readSignals(const AppConfig& appcfg)
           // раскидываем сигналы по хранилищам
           for(int storage_id: newsig->config()->storages)
           {
-            if(STORAGES.contains(storage_id))
-            {
+            if(STORAGES.contains(storage_id)) {
+
               modus::SvStorageAdaptor* storage = STORAGES.value(storage_id);
 
               storage->bindSignal(newsig);
@@ -935,7 +1014,7 @@ bool readSignals(const AppConfig& appcfg)
     }
 
     /* выводим на экран для отладки */
-    if(dbus.options().log_level >= sv::log::llDebug)
+    if(dbus.options().log_level >= sv::log::llDebug2)
     {
       for(modus::SvSignal* s: SIGNALS)
       {
@@ -979,7 +1058,7 @@ bool readSignals(const AppConfig& appcfg)
 
 }
 
-void parse_signal_list(QString json_file, QJsonArray* signals_array, modus::SignalGroupParams* group_params, QList<QPair<QJsonValue, modus::SignalGroupParams>>* result) throw(SvException)
+void parse_signal_list(QString json_file, QJsonArray* signals_array, modus::SignalGroupParams* group_params, QList<QPair<QJsonValue, modus::SignalGroupParams>>* result) //throw(SvException)
 {
   try {
 
@@ -1076,7 +1155,7 @@ void parse_signal_list(QString json_file, QJsonArray* signals_array, modus::Sign
       }
     }
   }
-  catch(SvException e)
+  catch(SvException& e)
   {
 //    QDir::setCurrent(cur_dir.absolutePath());
     throw e;
@@ -1087,84 +1166,6 @@ void parse_signal_list(QString json_file, QJsonArray* signals_array, modus::Sign
 //  return r;
 }
 
-bool readInteracts(const AppConfig& appcfg)
-{
-  dbus << llinf << me << mtinf << QString("Читаем данные о серверах обмена данными:") << sv::log::endl;
-
-  try {
-
-    int counter = 0;
-
-    if(!JSON.contains("interacts"))
-    {
-
-      dbus << llinf << me << mtinf << QString("Раздел 'interacts' отсутствует.");
-
-    }
-
-    else
-    {
-      QJsonArray server_list = JSON.value("interacts").toArray();
-
-      for(QJsonValue v: server_list) {
-
-        /** поторошим параметры сервера **/
-        modus::InteractConfig interact_cfg = modus::InteractConfig::fromJsonObject(v.toObject());
-
-        if(!interact_cfg.enable)
-          continue;
-
-        dbus << lldbg << mtdbg << me
-             << QString("  %1: параметры прочитаны").arg(interact_cfg.name) << sv::log::endl;
-
-        if(INTERACTS.contains(interact_cfg.id))
-          throw SvException(QString("Сервер приложения %1. Повторяющийся идентификатор %2!")
-                          .arg(interact_cfg.name).arg(interact_cfg.id));
-
-        /** создаем объект хранилища **/
-        modus::SvInteractAdaptor* newinteract = new modus::SvInteractAdaptor(); // c reate_server(interact_cfg);
-
-        if(newinteract->configure(interact_cfg)) {
-
-          INTERACTS.insert(newinteract->config()->id, newinteract);
-
-          if(appcfg.log_options.logging)
-          {
-            LOGGERS.insert(newinteract->config()->id, new sv::SvDBus(appcfg.log_options));
-
-            newinteract->setLogger(LOGGERS.value(newinteract->config()->id));
-          }
-
-
-          dbus << lldbg << me << mtdbg << QString("  %1 (ID: %2, Тип: %3, Параметры: %4)").arg(newinteract->config()->name)
-                  .arg(newinteract->config()->id).arg(newinteract->config()->type).arg(newinteract->config()->params) << sv::log::endl;
-
-          counter++;
-
-        }
-
-        else {
-
-          throw SvException(QString("Не удалось добавить сервер %1: %2")
-                          .arg(v.toVariant().toString()).arg(newinteract->lastError()));
-
-        }
-      }
-    }
-
-    dbus << llinf << me << mtscc << QString("OK [Прочитано %1]\n").arg(counter) << sv::log::endl;
-
-    return true;
-
-  }
-
-  catch(SvException& e) {
-
-    dbus << llerr<< me << mterr  << QString("Ошибка: %1\n").arg(e.error) << sv::log::endl;
-    return false;
-
-  }
-}
 
 /*modus::SvDeviceAdaptor* create_device(const modus::DeviceConfig &config) throw(SvException)
 {
@@ -1357,7 +1358,7 @@ bool initStorages()
 
      foreach(modus::SvStorageAdaptor* storage, STORAGES.values()) {
 
-       if(storage->signalCount()) {
+       if(storage->Signals()->count()) {
 
          if(!storage->start())
            throw SvException(QString("%1: %2").arg(storage->config()->name)
@@ -1428,7 +1429,7 @@ void closeDevices()
     {
       modus::SvDeviceAdaptor* device = DEVICES.value(key);
 
-      dbus << llinf << me << mtinf << QString("  %1 (%2):").arg(device->config()->name).arg(device->config()->ifc_name) << sv::log::endl;
+      dbus << llinf << me << mtinf << QString("  %1").arg(device->config()->name) << sv::log::endl;
 
 //      device->stop();
       delete DEVICES.take(key);
