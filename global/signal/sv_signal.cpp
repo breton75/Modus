@@ -34,5 +34,5 @@ bool modus::SvSignal::isAlive() const
 
 void modus::SvSignal::setDeviceAliveAge(const quint64 alive_age)
 {
-  m_device_alive_age = alive_age;
+  m_device_alive_age = alive_age + m_config.timeout;
 }

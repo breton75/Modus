@@ -30,12 +30,10 @@ public:
   virtual ~SvAbstractInterface()
   {  }
 
-  virtual bool configure(modus::DeviceConfig* config) = 0;
+  virtual bool configure(modus::DeviceConfig* config, modus::IOBuffer *iobuffer) = 0;
 
   const modus::DeviceConfig* config()         const { return p_config;         }
-  const QString   lastError()                 const { return p_last_error;      }
-
-  void setIOBuffer (modus::IOBuffer *iobuffer)      { p_io_buffer  = iobuffer;  }
+  const QString   lastError()                 const { return p_last_error;     }
 
 protected:
   modus::DeviceConfig* p_config;
@@ -50,6 +48,20 @@ protected:
   bool                 p_is_active      = false;
   bool                 p_is_opened      = false;
   bool                 p_is_configured  = false;
+
+  virtual void processBuffers() = 0;
+
+  void run() override
+  {
+    p_is_active = true;
+
+    while(p_is_active)
+    {
+
+      processBuffers();
+
+    }
+  }
 
 signals:
   void affirmDeviceAlive();

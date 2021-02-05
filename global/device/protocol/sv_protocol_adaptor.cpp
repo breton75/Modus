@@ -52,15 +52,15 @@ modus::SvAbstractProtocol* modus::SvProtocolAdaptor::create_protocol()
 
   try {
 
-    QDir dir(m_config->libpath);
-    QString lib_file(dir.absoluteFilePath(m_config->protocol.lib));
+    QDir dir(m_config.libpath);
+    QString lib_file(dir.absoluteFilePath(m_config.protocol.lib));
 
     QLibrary lib(lib_file);
 
     if(!lib.load())
       throw SvException(lib.errorString());
 
-    log(QString("  %1: драйвер загружен").arg(m_config->name));
+    log(QString("  %1: драйвер загружен").arg(m_config.name));
 
     typedef modus::SvAbstractProtocol *(*create_protocol_func)(void);
     create_protocol_func create = (create_protocol_func)lib.resolve("create");
@@ -74,7 +74,7 @@ modus::SvAbstractProtocol* modus::SvProtocolAdaptor::create_protocol()
     if(!newobject)
       throw SvException("Неизвестная ошибка при создании обработчика протокола");
 
-    log(QString("  %1: сконфигурирован").arg(m_config->name));
+    log(QString("  %1: сконфигурирован").arg(m_config.name));
 
   }
 
@@ -100,10 +100,7 @@ bool modus::SvProtocolAdaptor::start()
     if(!m_protocol)
       throw SvException("Запуск невозможен. Протокол не определен.");
 
-    if(!m_io_buffer)
-      throw SvException("Запуск невозможен. Не определен буфер обмена.");
-
-    if(!m_protocol->assignSignals(&m_signals))
+    if(!m_protocol->setSignalCollection(&m_signals))
       throw m_protocol->lastError();
 
     connect(this,       &modus::SvProtocolAdaptor::stopAll,  m_protocol, &modus::SvAbstractProtocol::stop);

@@ -45,13 +45,13 @@ public:
       /* interface */
       m_interface = new modus::SvInterfaceAdaptor();
 
-      if(!m_interface->init(&m_config, &m_io_buffer))
+      if(!m_interface->init(m_config, &m_io_buffer))
         throw SvException(m_interface->lastError());
 
       /* protocol */
       m_protocol = new modus::SvProtocolAdaptor();
 
-      if(!m_protocol->init(&m_config, &m_io_buffer))
+      if(!m_protocol->init(m_config, &m_io_buffer))
         throw SvException(m_protocol->lastError());
 
       return  true;
@@ -70,7 +70,7 @@ public:
 
   const modus::DeviceConfig* config() const        { return &m_config;   }
 
-  bool open() {
+  bool start() {
 
     try {
 
@@ -79,6 +79,9 @@ public:
 
       if(!m_interface)
         throw SvException("Интерфейс не подключен");
+
+      for(modus::SvSignal* signal: m_signals)
+        m_protocol->bindSignal(signal);
 
       connect(this, &modus::SvDeviceAdaptor::stopAll, m_protocol,  &modus::SvProtocolAdaptor::stop);
       connect(this, &modus::SvDeviceAdaptor::stopAll, m_interface, &modus::SvInterfaceAdaptor::stop);
@@ -111,31 +114,16 @@ public:
 //  bool isAlive()            const  { return m_protocol->p_is_active().toMSecsSinceEpoch() + m_config.timeout > QDateTime::currentDateTime().toMSecsSinceEpoch();  }
 
   /** работа с сигналами, привязанными к устройству **/
-  bool bindSignal(SvSignal* signal)
+  void bindSignal(SvSignal* signal)
   {
-    if(!m_protocol) {
-
-      m_last_error = "Протокол не подключен";
-      return false;
-    }
-
-    if(!m_protocol->bindSignal(signal)) {
-
-      m_last_error = m_protocol->lastError();
-      return false;
-    }
-
-    m_signals.insert(signal->config()->name, signal);
-
-    return true;
-
+    m_signals.append(signal);
   }
 
-  modus::SignalMap* Signals()       { return &m_signals; }
+  QList<modus::SvSignal*>* Signals()       { return &m_signals; }
 
 private:
   modus::DeviceConfig        m_config;
-  modus::SignalMap           m_signals;
+  QList<modus::SvSignal*>    m_signals;
 
   modus::SvProtocolAdaptor*  m_protocol  = nullptr;
   modus::SvInterfaceAdaptor* m_interface = nullptr;

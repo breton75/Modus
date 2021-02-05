@@ -24,39 +24,63 @@ public:
   {   }
 
   virtual ~SvAbstractInteract()
-  {   }
+  {   }  
+
+  virtual bool configure(modus::InteractConfig* config) = 0;
+
+  virtual bool setSignalCollection(QList<SvSignal*>* signalList)
+  {
+    p_signals = signalList;
+
+    for(modus::SvSignal* signal: *p_signals) {
+      if(!bindSignal(signal))
+        return false;
+
+    }
+
+    return true;
+  }
 
   virtual bool bindSignal(modus::SvSignal* signal)
   {
     try {
 
-      if(p_signals.contains(signal->config()->name))
-         throw SvException(QString("Повторяющееся имя сигнала: %1").arg(signal->config()->name));
+      if(p_signals->contains(signal))
+        throw SvException(QString("Повторяющийся сигнал %1").arg(signal->config()->name));
 
-      p_signals.insert(signal->config()->name, signal);
+      p_signals->append(signal);
 
       return true;
 
     } catch (SvException& e) {
 
-         p_last_error = e.error;
-         return false;
+      p_last_error = e.error;
+      return false;
     }
   }
-
-  virtual bool configure(modus::InteractConfig* config) = 0;
 
   const QString &lastError() const            { return p_last_error; }
 
 protected:
   modus::InteractConfig*    p_config     = nullptr;
-  modus::SignalMap          p_signals;
+  QList<SvSignal*>*         p_signals    = nullptr;;
 
   QString                   p_last_error = "";
 
   bool                      p_is_active  = false;
 
-  virtual void run() override = 0;
+  virtual void processRequests() = 0;
+
+  virtual void run() override
+  {
+    p_is_active = true;
+
+    while (p_is_active) {
+
+      processRequests();
+
+    }
+  }
 
 public slots:
   virtual void stop()

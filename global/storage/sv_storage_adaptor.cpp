@@ -97,7 +97,12 @@ bool modus::SvStorageAdaptor::start()
   if(!m_storage)
     return false;
 
-  m_storage->bindSignalList(&m_signals);
+  if(!m_storage->setSignalCollection(&m_signals)) {
+
+    m_last_error = m_storage->lastError();
+    delete m_storage;
+    return false;
+  }
 
   connect(m_storage, &QThread::finished,                 m_storage, &QThread::deleteLater);
   connect(this,      &modus::SvStorageAdaptor::stopAll,  m_storage, &modus::SvAbstractStorage::stop);

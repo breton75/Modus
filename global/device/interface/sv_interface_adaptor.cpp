@@ -19,17 +19,15 @@ bool modus::SvInterfaceAdaptor::init(const modus::DeviceConfig& config, modus::I
   try {
 
     m_config = config;
+    m_io_buffer = iobuffer;
 
     m_interface = create_interface();
 
     if(!m_interface)
       throw SvException(m_last_error);
 
-    if(!m_interface->configure(&m_config))
+    if(!m_interface->configure(&m_config, m_io_buffer))
       throw SvException(m_interface->lastError());
-
-    m_io_buffer = iobuffer;
-    m_interface->setIOBuffer(iobuffer);
 
     return  true;
 

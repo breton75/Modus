@@ -24,17 +24,38 @@ namespace modus {
     virtual ~SvAbstractStorage()
     {  }
 
-    virtual void bindSignalList(QList<SvSignal*>* signalList)
+    virtual bool configure(modus::StorageConfig* config) = 0;
+
+    virtual bool setSignalCollection(QList<SvSignal*>* signalList)
     {
       p_signals = signalList;
+
+      for(modus::SvSignal* signal: *p_signals) {
+        if(!bindSignal(signal))
+          return false;
+
+      }
+
+      return true;
     }
 
-    virtual void bindSignal(modus::SvSignal* signal)
+    virtual bool bindSignal(modus::SvSignal* signal)
     {
-      p_signals->append(signal);
-    }
+      try {
 
-    virtual bool configure(modus::StorageConfig* config) = 0;
+        if(p_signals->contains(signal))
+          throw SvException(QString("Повторяющийся сигнал %1").arg(signal->config()->name));
+
+        p_signals->append(signal);
+
+        return true;
+
+      } catch (SvException& e) {
+
+        p_last_error = e.error;
+        return false;
+      }
+    }
 
     const QString lastError() const            { return p_last_error; }
 
@@ -46,7 +67,18 @@ namespace modus {
 
     bool                  p_is_active = false;
 
-    void run() override = 0;
+    virtual void processSignals() = 0;
+
+    void run() override
+    {
+      p_is_active = true;
+
+      while (p_is_active) {
+
+        processSignals();
+
+      }
+    }
 
     SvSignal* firstSignal()
     {

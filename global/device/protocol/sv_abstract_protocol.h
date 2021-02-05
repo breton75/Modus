@@ -52,10 +52,8 @@ public:
   const QDateTime lastOutputTime()            const { return p_last_formed_time;  }
 
   const QList<modus::SvSignal*>* Signals()          { return p_signals;           }
-//  const QList<modus::SvSignal*>* inputSignals()     { return &p_input_signals;    }
-//  const QList<modus::SvSignal*>* outputSignals()    { return &p_output_signals;   }
 
-  virtual bool assignSignals(QList<SvSignal*>* signalList)
+  virtual bool setSignalCollection(QList<SvSignal*>* signalList)
   {
     p_signals = signalList;
 
@@ -72,6 +70,11 @@ public:
   virtual bool bindSignal(SvSignal* signal)
   {
     try {
+
+      if(p_signals->contains(signal))
+        throw SvException(QString("Повторяющийся сигнал %1").arg(signal->config()->name));
+
+      p_signals->append(signal);
 
       switch (signal->config()->usecase) {
 
@@ -95,7 +98,7 @@ public:
         }
 
         default:
-          throw SvException(QString("Невозможно привязать сигнал '%1' к устройству '%2'. Устройства работают только с сигналами IN и OUT")
+          throw SvException(QString("Невозможно использовать сигнал '%1' с устройством '%2'. Устройства работают только с сигналами IN и OUT")
                             .arg(signal->config()->name).arg(p_config->name));
 
       }
@@ -109,27 +112,10 @@ public:
     }
   }
 
-//  inline void setInputSignalValue(const QString& signal_name, QVariant& value)
-//  {
-//    if(p_input_signals.contains(signal_name)) {
-
-////      qDebug() << QString("SIGNAL_NAME: %1   VALUE: %2").arg(signal_name).arg(value);
-//      SvSignal* signal = p_input_signals.value(signal_name);
-
-//      signal->mutex()->lock();
-//      signal->setValue(value);
-//      signal->mutex()->unlock();
-
-//    }
-//  }
-
 protected:
   modus::DeviceConfig*      p_config    = nullptr;
   QList<modus::SvSignal*>*  p_signals   = nullptr;
   modus::IOBuffer*          p_io_buffer = nullptr;
-
-//  QList<modus::SvSignal*>   p_input_signals;
-//  QList<modus::SvSignal*>   p_output_signals;
 
   QString                   p_last_error;
 
@@ -146,61 +132,68 @@ protected:
   virtual void disposeInputSignal  (modus::SvSignal* signal) = 0;
   virtual void disposeOutputSignal (modus::SvSignal* signal) = 0;
 
-  virtual bool processInputBuffer()                          = 0;
-  virtual bool processSignalBuffer()                         = 0;
+//  virtual void processBuffers()                              = 0;
 
-  virtual void validateSignals(QDateTime& lastParsedTime)    = 0;
+//  virtual bool processInputBuffer()                          = 0;
+//  virtual bool processSignalBuffer()                         = 0;
 
-  virtual void run() override
-  {
-    p_is_active = bool(p_config) && bool(p_io_buffer);
+//  virtual void validateSignals(QDateTime& lastParsedTime)    = 0;
 
-    while(p_is_active) {
-
-      // ждем, когда закончится прием данных и парсим
-      p_io_buffer->input->mutex.lock();
-
-      // если требуется квитирование, то ответ формируется в parse_input_data
-      if (processInputBuffer()) {
-
-          p_last_parsed_time = QDateTime::currentDateTime();
-          p_io_buffer->input->reset();
-
-          // если данные распарсились, значит устройство на связи
-          if(p_is_active)
-            validateSignals(p_last_parsed_time);  // подтверждаем валидность привязанных сигналов
-      }
-
-      p_io_buffer->input->mutex.unlock();
-
-
-      // формируем данные для отправки команд
-      p_io_buffer->output->mutex.lock();
-
-      if (processSignalBuffer()) {
-
-          p_last_formed_time = QDateTime::currentDateTime();
-
-      }
-      else
-        p_io_buffer->output->reset();
-
-      p_io_buffer->output->mutex.unlock();
-
-    }
-  }
-
-
+  virtual void run() = 0;
 //  {
-//    foreach (modus::SvSignal* signal, p_input_signals.values()) {
+//    p_is_active = bool(p_config) && bool(p_io_buffer);
 
-//      if(!signal->hasTimeout())
-//        signal->setDeviceAliveAge(lastParsedTime.toMSecsSinceEpoch());
+//    while(p_is_active) {
 
-//      if(!signal->isAlive())
-//        signal->setValue(QVariant());
+//      processBuffers();
+
+////      // ждем, когда закончится прием данных и парсим
+////      p_io_buffer->input->mutex.lock();
+
+////      // если требуется квитирование, то ответ формируется в parse_input_data
+////      if (processInputBuffer()) {
+
+////          p_last_parsed_time = QDateTime::currentDateTime();
+////          p_io_buffer->input->reset();
+
+////          // если данные распарсились, значит устройство на связи
+////          if(p_is_active)
+////            validateSignals(p_last_parsed_time);  // подтверждаем валидность привязанных сигналов
+////      }
+
+////      p_io_buffer->input->mutex.unlock();
+
+
+////      // формируем данные для отправки команд
+////      p_io_buffer->output->mutex.lock();
+
+////      if (processSignalBuffer()) {
+
+////          p_last_formed_time = QDateTime::currentDateTime();
+
+////      }
+////      else
+////        p_io_buffer->output->reset();
+
+////      p_io_buffer->output->mutex.unlock();
+
 //    }
 //  }
+
+  virtual void validateSignals(QDateTime& lastParsedTime)
+  {
+    for (modus::SvSignal* signal: *p_signals) {
+
+      if(signal->config()->usecase != modus::IN)
+        continue;
+
+      if(!signal->hasTimeout())
+        signal->setDeviceAliveAge(lastParsedTime.toMSecsSinceEpoch());
+
+      if(!signal->isAlive())
+        signal->setValue(QVariant());
+    }
+  }
 
 signals:
   void affirmDeviceAlive();

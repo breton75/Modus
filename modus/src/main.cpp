@@ -979,8 +979,7 @@ bool readSignals(const AppConfig& appcfg)
 
           modus::SvDeviceAdaptor* device = DEVICES.value(newsig->config()->device_id);
 
-          if(!device->bindSignal(newsig))
-            throw SvException(device->lastError());
+          device->bindSignal(newsig);
 
           if(max_dev < device->config()->name.length())
             max_dev = device->config()->name.length();
@@ -1326,7 +1325,8 @@ bool openDevices()
 
       modus::SvDeviceAdaptor* device = DEVICES.value(key);
 
-      if(!device->open()) throw SvException(QString("%1 [Индекс %2]: %3")
+      if(!device->start())
+        throw SvException(QString("%1 [Индекс %2]: %3")
                                           .arg(device->config()->name)
                                           .arg(device->config()->id)
                                           .arg(device->lastError()));

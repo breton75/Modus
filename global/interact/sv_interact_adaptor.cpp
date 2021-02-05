@@ -13,25 +13,9 @@ modus::SvInteractAdaptor::~SvInteractAdaptor()
   deleteLater();
 }
 
-bool modus::SvInteractAdaptor::bindSignal(modus::SvSignal* signal)
+void modus::SvInteractAdaptor::bindSignal(modus::SvSignal* signal)
 {
-  try {
-
-    if(!m_interact)
-      throw SvException("Перед привязкой сигналов необходимо выполнить инициализацию.");
-
-    m_signals.append(signal);
-
-    if(!m_interact->bindSignal(signal))
-      throw m_interact->lastError();
-
-    return true;
-
-  } catch (SvException& e) {
-
-    m_last_error = e.error;
-    return  false;
-  }
+  m_signals.append(signal);
 }
 
 bool modus::SvInteractAdaptor::init(const InteractConfig& config)
@@ -114,6 +98,13 @@ bool modus::SvInteractAdaptor::start()
 
     if(!m_interact)
       throw SvException("Запуск невозможен. Объект не определен.");
+
+    if(!m_interact->setSignalCollection(&m_signals)) {
+
+      m_last_error = m_interact->lastError();
+      delete m_interact;
+      return false;
+    }
 
     connect(m_interact, &QThread::finished,                  m_interact, &QThread::deleteLater);
     connect(m_interact, &modus::SvAbstractInteract::message, this,       &modus::SvInteractAdaptor::log);

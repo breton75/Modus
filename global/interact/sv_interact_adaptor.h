@@ -34,7 +34,7 @@ namespace modus {
     ~SvInteractAdaptor();
 
     bool init(const InteractConfig &config);
-    bool bindSignal(SvSignal* signal);
+    void bindSignal(SvSignal* signal);
 
     void setLogger(sv::SvAbstractLogger* logger) { m_logger = logger; }
 
