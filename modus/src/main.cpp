@@ -631,7 +631,6 @@ bool initConfig(AppConfig& appcfg)
     /* загружаем json конфигурацию в QJSonDocument */
     QJsonParseError parse_error;
     QJsonDocument jdoc = QJsonDocument::fromJson(json_file.readAll(), &parse_error);
-
     if(parse_error.error != QJsonParseError::NoError)
       throw SvException(parse_error.errorString());
 

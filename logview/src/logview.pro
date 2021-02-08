@@ -8,7 +8,7 @@ QT       += core gui network dbus
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = /home/user/Modus/logview
+TARGET = /home/developer/Modus/logview
 TEMPLATE = app
 CONFIG += c++11
 
@@ -21,17 +21,15 @@ DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    ../../../svlib/sv_abstract_logger.cpp \
-    ../../../svlib/sv_config.cpp \
+    ../../global/misc/sv_abstract_logger.cpp \
     ../../../svlib/sv_widget_log.cpp \
-    ../../global/sv_dbus.cpp
+    ../../global/misc/sv_dbus.cpp
 
 HEADERS  += mainwindow.h \
     ../../global/global_defs.h \
-    ../../../svlib/sv_config.h \
     ../../../svlib/sv_widget_log.h \
-    ../../../svlib/sv_abstract_logger.h \
-    ../../global/sv_dbus.h
+    ../../global/misc/sv_abstract_logger.h \
+    ../../global/misc/sv_dbus.h
 
 FORMS    += mainwindow.ui
 

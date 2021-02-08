@@ -47,9 +47,16 @@ modus::SvAbstractInterface* modus::SvInterfaceAdaptor::create_interface()
 
   try {
 
+    QJsonParseError parse_error;
+    QJsonDocument jdoc = QJsonDocument::fromJson(m_config.libpaths.toUtf8(), &parse_error);
+    if(parse_error.error != QJsonParseError::NoError)
+      throw SvException(parse_error.errorString());
+
+    QJsonObject JSON = jdoc.object();
+
     QDir dir(m_config.libpath);
     QString lib_file(dir.absoluteFilePath(m_config.protocol.lib));
-
+qDebug() << lib_file;
     QLibrary lib(lib_file);
 
     if(!lib.load())

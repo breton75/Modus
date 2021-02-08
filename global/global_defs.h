@@ -83,7 +83,7 @@
 #define DEFAULT_LIBPATH_STORAGES    "lib/storages"
 #define DEFAULT_LIBPATH_INTERACTS   "lib/interacts"
 #define DEFAULT_LIBPATH_CALCULATORS "lib/calculators"
-#define DEFAULT_LIBPATH "{ "\
+#define DEFAULT_LIBPATHS "{ "\
   "\"protocols\": \""   DEFAULT_LIBPATH_PROTOCOLS   "\", "\
   "\"interfaces\": \""  DEFAULT_LIBPATH_INTERFACES  "\", "\
   "\"storages\": \""    DEFAULT_LIBPATH_STORAGES    "\", "\

@@ -251,7 +251,7 @@ namespace modus {
     int             id          = -1;
     QString         name        = "";
     bool            enable      = false;
-    QString         libpath     = DEFAULT_LIBPATH;
+    QString         libpaths    = DEFAULT_LIBPATHS;
     InterfaceConfig interface;
     ProtocolConfig  protocol;
     quint16         bufsize     = DEFAULT_BUFFER_SIZE;

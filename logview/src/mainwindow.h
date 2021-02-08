@@ -8,11 +8,8 @@
 #include <QDBusConnection>
 
 #include "../../../svlib/sv_widget_log.h"
-
 #include "../../global/global_defs.h"
-
-#include "../../global/sv_dbus.h"
-//#include "modus_dbus_adaptor.h"
+#include "../../global/misc/sv_dbus.h"
 
 namespace Ui {
 class MainWindow;
