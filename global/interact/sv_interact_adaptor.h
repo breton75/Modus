@@ -29,7 +29,7 @@ namespace modus {
       Q_OBJECT
 
   public:
-    SvInteractAdaptor();
+    SvInteractAdaptor(sv::SvAbstractLogger* logger = nullptr);
 
     ~SvInteractAdaptor();
 
@@ -46,7 +46,7 @@ namespace modus {
     void stop();
 
   private:
-    modus::InteractConfig     m_config;
+    modus::InteractConfig      m_config;
 
     modus::SvAbstractInteract* m_interact = nullptr;
     sv::SvAbstractLogger*      m_logger   = nullptr;
@@ -57,9 +57,7 @@ namespace modus {
     modus::SvAbstractInteract* create_interact();
 
   signals:
-    void message(const QString msg, int level = sv::log::llDebug, int type  = sv::log::mtDebug);
     void stopAll();
-
 
   private slots:
     void log(const QString msg, int level = sv::log::llDebug, int type  = sv::log::mtDebug)

@@ -78,6 +78,17 @@
 #define OPTION_PATH_TO_POSTGRES_BIN      "postgres_bin_path"
 #define OPTION_LOG_SENDER_NAME_FORMAT    "log_sender_name_format"
 
+// logging
+#define P_LOG_LEVEL   "level"
+
+// paths
+#define P_LIBPATH     "libpath"
+#define P_INTERFACES  "interfaces"
+#define P_PROTOCOLS   "protocols"
+#define P_INTERACTS   "interacts"
+#define P_STORAGES    "storages"
+#define P_CALCULATORS "calculators"
+
 #define DEFAULT_LIBPATH_PROTOCOLS   "lib/protocols"
 #define DEFAULT_LIBPATH_INTERFACES  "lib/interfaces"
 #define DEFAULT_LIBPATH_STORAGES    "lib/storages"

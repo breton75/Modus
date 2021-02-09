@@ -571,7 +571,7 @@ int main(int argc, char *argv[])
       }
 
       start_time = QDateTime::currentDateTime();
-qDebug() << cfg.debug;
+
       return a.exec();
 
   }
@@ -641,14 +641,19 @@ bool initConfig(AppConfig& appcfg)
 
       QJsonObject jl = JSON.value("log").toObject();
 
-      if(jl.contains("level") && jl.value("level").isString()) {
+      appcfg.log_options.logging = jl.contains(P_ENABLE) ? jl.value(P_ENABLE).toBool(true) : true;
 
-        appcfg.log_options.log_level = sv::log::stringToLevel(jl.value("level").toString());
+      if(appcfg.log_options.logging) {
 
-        if(appcfg.log_options.log_level == sv::log::llUndefined)
-          throw SvException(QString(IMPERMISSIBLE_VALUE)
-                            .arg("level").arg(jl.value("level").toString())
-                            .arg("Допустимы значения: none, error, warning, info, debug, debug2, all"));
+        if(jl.contains(P_LOG_LEVEL) && jl.value(P_LOG_LEVEL).isString()) {
+
+          appcfg.log_options.log_level = sv::log::stringToLevel(jl.value(P_LOG_LEVEL).toString());
+
+          if(appcfg.log_options.log_level == sv::log::llUndefined)
+            throw SvException(QString(IMPERMISSIBLE_VALUE)
+                              .arg(P_LOG_LEVEL).arg(jl.value(P_LOG_LEVEL).toString())
+                              .arg("Допустимы значения: none, error, warning, info, debug, debug2, all"));
+        }
       }
     }
 
@@ -704,24 +709,23 @@ bool readDevices(const AppConfig& appcfg)
            << QString("\n  %1:").arg(config.name) << sv::log::endl;
 
       dbus << lldbg << mtdbg << me
-           << QString("    параметры прочитаны") << sv::log::endl;
+           << QString("  параметры прочитаны") << sv::log::endl;
 
       if(DEVICES.contains(config.id))
         throw SvException(QString("Устройство %1. Повторяющийся идентификатор %2!").arg(config.name).arg(config.id));
 
+
+      if(appcfg.log_options.logging)
+        LOGGERS.insert(config.id, new sv::SvDBus(appcfg.log_options));
+
       /** создаем объект устройство **/
-      modus::SvDeviceAdaptor* newdev = new modus::SvDeviceAdaptor(); //create_device(devcfg);
+      modus::SvDeviceAdaptor* newdev = new modus::SvDeviceAdaptor(LOGGERS.value(config.id)); //create_device(devcfg);
+
+      config.libpaths = JSON.contains(P_LIBPATH) ? QString(QJsonDocument(JSON.value(P_LIBPATH).toObject()).toJson(QJsonDocument::Compact)) : DEFAULT_LIBPATHS;
 
       if(newdev->init(config)) {
 
         DEVICES.insert(newdev->config()->id, newdev);
-
-        if(appcfg.log_options.logging)
-        {
-          LOGGERS.insert(newdev->config()->id, new sv::SvDBus(appcfg.log_options));
-
-          newdev->setLogger(LOGGERS.value(newdev->config()->id));
-        }
 
         dbus << lldbg2 << mtdbg << me
              << QString("  %1 [id %2]\n  Протокол: %3\n  Интерфейс: %4").
@@ -797,20 +801,23 @@ bool readStorages(const AppConfig& appcfg)
           throw SvException(QString("Хранилище %1. Повторяющийся идентификатор %2!")
                           .arg(config.name).arg(config.id));
 
+        if(appcfg.log_options.logging)
+          LOGGERS.insert(config.id, new sv::SvDBus(appcfg.log_options));
+
         /** создаем объект хранилища **/
-        modus::SvStorageAdaptor* newstorage = new modus::SvStorageAdaptor();
+        modus::SvStorageAdaptor* newstorage = new modus::SvStorageAdaptor(LOGGERS.value(config.id));
+
+        config.libpaths = JSON.contains(P_LIBPATH) ? QString(QJsonDocument(JSON.value(P_LIBPATH).toObject()).toJson(QJsonDocument::Compact)) : DEFAULT_LIBPATHS;
+
+        if(appcfg.log_options.logging) {
+
+          LOGGERS.insert(newstorage->config()->id, new sv::SvDBus(appcfg.log_options));
+          newstorage->setLogger(LOGGERS.value(newstorage->config()->id));
+        }
 
         if(newstorage->init(config)) {
 
           STORAGES.insert(newstorage->config()->id, newstorage);
-
-          if(appcfg.log_options.logging)
-          {
-            LOGGERS.insert(newstorage->config()->id, new sv::SvDBus(appcfg.log_options));
-
-            newstorage->setLogger(LOGGERS.value(newstorage->config()->id));
-          }
-
 
           dbus << lldbg << me << mtdbg << QString("  %1 (ID: %2, Тип: %3, Параметры: %4)").arg(newstorage->config()->name)
                   .arg(newstorage->config()->id).arg(newstorage->config()->type).arg(newstorage->config()->params) << sv::log::endl;
@@ -876,20 +883,23 @@ bool readInteracts(const AppConfig& appcfg)
           throw SvException(QString("Сервер приложения %1. Повторяющийся идентификатор %2!")
                           .arg(config.name).arg(config.id));
 
+        if(appcfg.log_options.logging)
+          LOGGERS.insert(config.id, new sv::SvDBus(appcfg.log_options));
+
         /** создаем объект хранилища **/
-        modus::SvInteractAdaptor* newinteract = new modus::SvInteractAdaptor(); // c reate_server(interact_cfg);
+        modus::SvInteractAdaptor* newinteract = new modus::SvInteractAdaptor(LOGGERS.value(config.id)); // c reate_server(interact_cfg);
+
+        config.libpaths = JSON.contains(P_LIBPATH) ? QString(QJsonDocument(JSON.value(P_LIBPATH).toObject()).toJson(QJsonDocument::Compact)) : DEFAULT_LIBPATHS;
+
+        if(appcfg.log_options.logging) {
+
+          LOGGERS.insert(newinteract->config()->id, new sv::SvDBus(appcfg.log_options));
+          newinteract->setLogger(LOGGERS.value(newinteract->config()->id));
+        }
 
         if(newinteract->init(config)) {
 
           INTERACTS.insert(newinteract->config()->id, newinteract);
-
-          if(appcfg.log_options.logging)
-          {
-            LOGGERS.insert(newinteract->config()->id, new sv::SvDBus(appcfg.log_options));
-
-            newinteract->setLogger(LOGGERS.value(newinteract->config()->id));
-          }
-
 
           dbus << lldbg << me << mtdbg << QString("  %1 (ID: %2, Тип: %3, Параметры: %4)").arg(newinteract->config()->name)
                   .arg(newinteract->config()->id).arg(newinteract->config()->type).arg(newinteract->config()->params) << sv::log::endl;

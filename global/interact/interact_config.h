@@ -17,7 +17,7 @@ namespace modus {
     QString name        = "";
     bool    enable      = false;
     QString params      = "";
-    QString libpath     = "";
+    QString libpaths    = "";
     QString lib         = "";
     QString type        = "";
     QString description = "";

@@ -1,9 +1,9 @@
 #include "sv_protocol_adaptor.h"
 
-modus::SvProtocolAdaptor::SvProtocolAdaptor():
+modus::SvProtocolAdaptor::SvProtocolAdaptor(sv::SvAbstractLogger *logger):
   m_protocol  (nullptr),
   m_io_buffer (nullptr),
-  m_logger    (nullptr)
+  m_logger    (logger)
 {
 
 }
@@ -52,15 +52,22 @@ modus::SvAbstractProtocol* modus::SvProtocolAdaptor::create_protocol()
 
   try {
 
-    QDir dir(m_config.libpath);
-    QString lib_file(dir.absoluteFilePath(m_config.protocol.lib));
+    QJsonParseError parse_error;
+    QJsonDocument jdoc = QJsonDocument::fromJson(m_config.libpaths.toUtf8(), &parse_error);
+    if(parse_error.error != QJsonParseError::NoError)
+      throw SvException(parse_error.errorString());
 
-    QLibrary lib(lib_file);
+    QJsonObject j = jdoc.object();
+
+    QString dir = j.contains(P_PROTOCOLS) ? j.value(P_PROTOCOLS).toString(DEFAULT_LIBPATH_PROTOCOLS)
+                                          : DEFAULT_LIBPATH_PROTOCOLS;
+
+    QLibrary lib(QDir(dir).absoluteFilePath(m_config.protocol.lib));
 
     if(!lib.load())
       throw SvException(lib.errorString());
 
-    log(QString("  %1: драйвер загружен").arg(m_config.name));
+    log(QString("    Протокол: драйвер загружен (%1)").arg(m_config.protocol.lib));
 
     typedef modus::SvAbstractProtocol *(*create_protocol_func)(void);
     create_protocol_func create = (create_protocol_func)lib.resolve("create");
@@ -74,7 +81,7 @@ modus::SvAbstractProtocol* modus::SvProtocolAdaptor::create_protocol()
     if(!newobject)
       throw SvException("Неизвестная ошибка при создании обработчика протокола");
 
-    log(QString("  %1: сконфигурирован").arg(m_config.name));
+    log(QString("    Протокол: сконфигурирован")); //.arg(m_config.name));
 
   }
 
@@ -101,7 +108,7 @@ bool modus::SvProtocolAdaptor::start()
       throw SvException("Запуск невозможен. Протокол не определен.");
 
     if(!m_protocol->setSignalCollection(&m_signals))
-      throw m_protocol->lastError();
+      throw SvException(m_protocol->lastError());
 
     connect(this,       &modus::SvProtocolAdaptor::stopAll,  m_protocol, &modus::SvAbstractProtocol::stop);
     connect(m_protocol, &QThread::finished,                  m_protocol, &QThread::deleteLater);

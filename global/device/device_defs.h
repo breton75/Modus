@@ -143,7 +143,6 @@ namespace modus {
     QString lib                   = "";
     QString params                = "";
     QString comment               = "";
-    quint32 timeout               = DEFAULT_TIMEOUT;
     quint32 buffer_reset_interval = DEFAULT_BUFFER_RESET_INTERVAL;
 
     static InterfaceConfig fromJsonString(const QString& json_string) //throw (SvException)
@@ -191,20 +190,6 @@ namespace modus {
       P = P_COMMENT;
       p.comment = object.contains(P) ? object.value(P).toString("") : "";
 
-      /* timeout */
-      P = P_TIMEOUT;
-      if(object.contains(P))
-      {
-        if(object.value(P).toInt(-1) < 1)
-          throw SvException(QString(IMPERMISSIBLE_VALUE)
-                                 .arg(P)
-                                 .arg(object.value(P).toVariant().toString())
-                                 .arg("Таймаут валидности сигналов не может быть меньше 10 мсек."));
-
-        p.timeout = object.value(P).toInt(DEFAULT_TIMEOUT);
-
-      }
-
       /* buffer_reset_interval */
       P = P_BUFFER_RESET_INTERVAL;
       if(object.contains(P))
@@ -238,7 +223,6 @@ namespace modus {
       j.insert(P_PARAMS, QJsonValue(params).toString());
       j.insert(P_LIB, QJsonValue(lib).toString());
       j.insert(P_COMMENT, QJsonValue(comment).toString());
-      j.insert(P_TIMEOUT, QJsonValue(int(timeout)).toInt());
       j.insert(P_BUFFER_RESET_INTERVAL, QJsonValue(int(buffer_reset_interval)).toInt());
 
       return j;
@@ -254,6 +238,7 @@ namespace modus {
     QString         libpaths    = DEFAULT_LIBPATHS;
     InterfaceConfig interface;
     ProtocolConfig  protocol;
+    quint32         timeout     = DEFAULT_TIMEOUT;
     quint16         bufsize     = DEFAULT_BUFFER_SIZE;
     QString         description = "";
     bool            debug       = false;
@@ -324,6 +309,20 @@ namespace modus {
       QString prt = object.contains(P) ? QString(QJsonDocument(object.value(P).toObject()).toJson(QJsonDocument::Compact)) : "{}";
       p.protocol = ProtocolConfig::fromJsonString(prt);
 
+      /* timeout */
+      P = P_TIMEOUT;
+      if(object.contains(P))
+      {
+        if(object.value(P).toInt(-1) < 1)
+          throw SvException(QString(IMPERMISSIBLE_VALUE)
+                                 .arg(P)
+                                 .arg(object.value(P).toVariant().toString())
+                                 .arg("Таймаут валидности сигналов не может быть меньше 10 мсек."));
+
+        p.timeout = object.value(P).toInt(DEFAULT_TIMEOUT);
+
+      }
+
       /* buffer_size */
       P = P_BUFFER_SIZE;
       p.bufsize = object.contains(P) ? object.value(P).toInt(DEFAULT_BUFFER_SIZE) : DEFAULT_BUFFER_SIZE;
@@ -369,6 +368,7 @@ namespace modus {
       j.insert(P_ENABLE,      QJsonValue(enable).toBool());
       j.insert(P_INTERFACE,   QJsonValue(interface.toJsonString()).toString());
       j.insert(P_PROTOCOL,    QJsonValue(protocol.toJsonString()).toString());
+      j.insert(P_TIMEOUT,     QJsonValue(int(timeout)).toInt(DEFAULT_TIMEOUT));
       j.insert(P_BUFFER_SIZE, QJsonValue(bufsize).toInt(DEFAULT_BUFFER_SIZE));
       j.insert(P_DESCRIPTION, QJsonValue(description).toString());
       j.insert(P_DEBUG,       QJsonValue(debug).toBool());
@@ -378,7 +378,6 @@ namespace modus {
       return j;
 
     }
-
   };
 }
 

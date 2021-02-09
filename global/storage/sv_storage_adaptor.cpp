@@ -1,8 +1,8 @@
 ﻿#include "sv_storage_adaptor.h"
 
-modus::SvStorageAdaptor::SvStorageAdaptor() :
+modus::SvStorageAdaptor::SvStorageAdaptor(sv::SvAbstractLogger *logger) :
   m_storage (nullptr),
-  m_logger  (nullptr)
+  m_logger  (logger)
 {
 
 }
@@ -51,15 +51,22 @@ modus::SvAbstractStorage* modus::SvStorageAdaptor::create_storage()
 
   try {
 
-    QDir dir(m_config.libpath);
-    QString lib_file(dir.absoluteFilePath(m_config.lib));
+    QJsonParseError parse_error;
+    QJsonDocument jdoc = QJsonDocument::fromJson(m_config.libpaths.toUtf8(), &parse_error);
+    if(parse_error.error != QJsonParseError::NoError)
+      throw SvException(parse_error.errorString());
 
-    QLibrary lib(lib_file);
+    QJsonObject j = jdoc.object();
+
+    QString dir = j.contains(P_STORAGES) ? j.value(P_STORAGES).toString(DEFAULT_LIBPATH_STORAGES)
+                                         : DEFAULT_LIBPATH_STORAGES;
+
+    QLibrary lib(QDir(dir).absoluteFilePath(m_config.lib));
 
     if(!lib.load())
       throw SvException(lib.errorString());
 
-    log(QString("  %1: драйвер загружен").arg(m_config.name));
+    log(QString("    %1: драйвер загружен (%2)").arg(m_config.name).arg(m_config.lib));
 
     typedef modus::SvAbstractStorage *(*create_storage_func)(void);
     create_storage_func create = (create_storage_func)lib.resolve("create");
@@ -73,7 +80,7 @@ modus::SvAbstractStorage* modus::SvStorageAdaptor::create_storage()
     if(!newobject)
       throw SvException("Неизвестная ошибка при создании объекта хранилища");
 
-    log(QString("  %1: сконфигурирован").arg(m_config.name));
+    log(QString("    %1: сконфигурировано").arg(m_config.name));
 
   }
 

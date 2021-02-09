@@ -20,7 +20,7 @@ class modus::SvStorageAdaptor : public QObject
 {
   Q_OBJECT
 public:
-  explicit SvStorageAdaptor();
+  explicit SvStorageAdaptor(sv::SvAbstractLogger* logger = nullptr);
   ~SvStorageAdaptor();
 
   bool init(const StorageConfig &config);

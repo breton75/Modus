@@ -1,9 +1,9 @@
 ﻿#include "sv_interface_adaptor.h"
 
-modus::SvInterfaceAdaptor::SvInterfaceAdaptor() :
+modus::SvInterfaceAdaptor::SvInterfaceAdaptor(sv::SvAbstractLogger *logger) :
   m_interface (nullptr),
   m_io_buffer (nullptr),
-  m_logger    (nullptr)
+  m_logger    (logger)
 {
 
 }
@@ -52,17 +52,17 @@ modus::SvAbstractInterface* modus::SvInterfaceAdaptor::create_interface()
     if(parse_error.error != QJsonParseError::NoError)
       throw SvException(parse_error.errorString());
 
-    QJsonObject JSON = jdoc.object();
+    QJsonObject j = jdoc.object();
 
-    QDir dir(m_config.libpath);
-    QString lib_file(dir.absoluteFilePath(m_config.protocol.lib));
-qDebug() << lib_file;
-    QLibrary lib(lib_file);
+    QString dir = j.contains(P_INTERFACES) ? j.value(P_INTERFACES).toString(DEFAULT_LIBPATH_INTERFACES)
+                                           : DEFAULT_LIBPATH_INTERFACES;
+
+    QLibrary lib(QDir(dir).absoluteFilePath(m_config.interface.lib));
 
     if(!lib.load())
       throw SvException(lib.errorString());
 
-    log(QString("  %1: драйвер загружен").arg(m_config.name));
+    log(QString("    Интерфейс: драйвер загружен (%1)").arg(m_config.interface.lib));
 
     typedef modus::SvAbstractInterface *(*create_protocol_func)(void);
     create_protocol_func create = (create_protocol_func)lib.resolve("create");
@@ -76,7 +76,7 @@ qDebug() << lib_file;
     if(!newobject)
       throw SvException("Неизвестная ошибка при создании объекта хранилища");
 
-    log(QString("  %1: сконфигурирован").arg(m_config.name));
+    log(QString("    Интерфейс: сконфигурирован")); //.arg(m_config.name));
 
   }
 

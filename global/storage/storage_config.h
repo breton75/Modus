@@ -15,7 +15,7 @@ namespace modus {
     QString name        = "";
     bool    enable      = false;
     QString params      = "";
-    QString libpath     = "";
+    QString libpaths    = DEFAULT_LIBPATHS;
     QString lib         = "";
     quint64 interval    = DEFAULT_STORE_INTERVAL;
     QString type        = "";

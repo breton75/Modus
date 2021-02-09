@@ -28,9 +28,7 @@ namespace modus {
 
     virtual bool setSignalCollection(QList<SvSignal*>* signalList)
     {
-      p_signals = signalList;
-
-      for(modus::SvSignal* signal: *p_signals) {
+      for(modus::SvSignal* signal: *signalList) {
         if(!bindSignal(signal))
           return false;
 
@@ -43,10 +41,8 @@ namespace modus {
     {
       try {
 
-        if(p_signals->contains(signal))
-          throw SvException(QString("Повторяющийся сигнал %1").arg(signal->config()->name));
-
-        p_signals->append(signal);
+        if(!p_signals.contains(signal))
+          p_signals.append(signal);
 
         return true;
 
@@ -61,7 +57,7 @@ namespace modus {
 
   protected:
     modus::StorageConfig* p_config;
-    QList<SvSignal*>*     p_signals;
+    QList<SvSignal*>      p_signals;
 
     QString               p_last_error = "";
 
@@ -83,12 +79,12 @@ namespace modus {
     SvSignal* firstSignal()
     {
       m_pos = 0;
-      return p_signals->count() ? p_signals->value(m_pos) : Q_NULLPTR;
+      return p_signals.count() ? p_signals.value(m_pos) : Q_NULLPTR;
     }
 
     SvSignal* nextSignal()
     {
-      return m_pos < p_signals->count() - 1 ? p_signals->value(++m_pos) : Q_NULLPTR;
+      return m_pos < p_signals.count() - 1 ? p_signals.value(++m_pos) : Q_NULLPTR;
     }
 
   private:

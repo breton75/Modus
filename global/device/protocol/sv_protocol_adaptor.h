@@ -21,7 +21,7 @@ class modus::SvProtocolAdaptor : public QObject
   Q_OBJECT
 
 public:
-  explicit SvProtocolAdaptor();
+  explicit SvProtocolAdaptor(sv::SvAbstractLogger* logger = nullptr);
   ~SvProtocolAdaptor();
 
   bool init(const modus::DeviceConfig& config, modus::IOBuffer *iobuffer);
@@ -45,7 +45,6 @@ private:
   modus::SvAbstractProtocol*  create_protocol();
 
 signals:
-  void message(const QString msg, int level = sv::log::llDebug, int type  = sv::log::mtDebug);
   void stopAll();
 
 public slots:

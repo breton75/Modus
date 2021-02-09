@@ -49,19 +49,9 @@ protected:
   bool                 p_is_opened      = false;
   bool                 p_is_configured  = false;
 
-  virtual void processBuffers() = 0;
+//  virtual void processBuffers() = 0;
 
-  void run() override
-  {
-    p_is_active = true;
-
-    while(p_is_active)
-    {
-
-      processBuffers();
-
-    }
-  }
+  void run() = 0;
 
 signals:
   void affirmDeviceAlive();

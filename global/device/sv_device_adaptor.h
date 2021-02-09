@@ -43,13 +43,13 @@ public:
       m_config = config;
 
       /* interface */
-      m_interface = new modus::SvInterfaceAdaptor();
+      m_interface = new modus::SvInterfaceAdaptor(m_logger);
 
       if(!m_interface->init(m_config, &m_io_buffer))
         throw SvException(m_interface->lastError());
 
       /* protocol */
-      m_protocol = new modus::SvProtocolAdaptor();
+      m_protocol = new modus::SvProtocolAdaptor(m_logger);
 
       if(!m_protocol->init(m_config, &m_io_buffer))
         throw SvException(m_protocol->lastError());
@@ -86,14 +86,11 @@ public:
       connect(this, &modus::SvDeviceAdaptor::stopAll, m_protocol,  &modus::SvProtocolAdaptor::stop);
       connect(this, &modus::SvDeviceAdaptor::stopAll, m_interface, &modus::SvInterfaceAdaptor::stop);
 
-//      connect(m_protocol,  &modus::SvInterfaceAdaptor::finished, m_protocol,  &modus::SvInterfaceAdaptor::deleteLater);
-//      connect(m_interface, &modus::SvInterfaceAdaptor::finished, m_interface, &modus::SvInterfaceAdaptor::deleteLater);
+      if(!m_interface->start())
+        throw SvException(m_interface->lastError());
 
-      connect(m_protocol,  &modus::SvProtocolAdaptor::message,  this, &modus::SvDeviceAdaptor::log);
-      connect(m_interface, &modus::SvInterfaceAdaptor::message, this, &modus::SvDeviceAdaptor::log);
-
-      m_interface->start();
-      m_protocol->start();
+      if(!m_protocol->start())
+        throw SvException(m_protocol->lastError());
 
       return true;
 
@@ -105,7 +102,14 @@ public:
     }
   }
 
-  void setLogger(sv::SvAbstractLogger* logger) { m_logger = logger; }
+  void setLogger(sv::SvAbstractLogger* logger)
+  {
+    m_logger = logger;
+
+    if(m_interface) m_interface->setLogger(m_logger);
+    if(m_protocol)  m_protocol->setLogger(m_logger);
+
+  }
 
   void stop() { emit stopAll(); }
 
@@ -138,7 +142,7 @@ private:
   sv::SvAbstractLogger*      m_logger;
 
 signals:
-  void message(const QString msg, int level = sv::log::llDebug, int type  = sv::log::mtDebug);
+//  void message(const QString msg, int level = sv::log::llDebug, int type  = sv::log::mtDebug);
   void stopAll();
 
 private slots:

@@ -19,7 +19,7 @@ class modus::SvInterfaceAdaptor : public QObject
     Q_OBJECT
 
 public:
-    explicit SvInterfaceAdaptor();
+    explicit SvInterfaceAdaptor(sv::SvAbstractLogger* logger = nullptr);
     ~SvInterfaceAdaptor();
 
     bool init(const DeviceConfig &config, modus::IOBuffer *iobuffer);
@@ -42,7 +42,6 @@ private:
     modus::SvAbstractInterface*  create_interface();
 
 signals:
-  void message(const QString msg, int level = sv::log::llDebug, int type  = sv::log::mtDebug);
   void stopAll();
 
 public slots:

@@ -1,8 +1,8 @@
 ﻿#include "sv_interact_adaptor.h"
 
-modus::SvInteractAdaptor::SvInteractAdaptor() :
+modus::SvInteractAdaptor::SvInteractAdaptor(sv::SvAbstractLogger *logger) :
   m_interact(nullptr),
-  m_logger(nullptr)
+  m_logger  (logger)
 {
 
 }
@@ -51,10 +51,17 @@ modus::SvAbstractInteract* modus::SvInteractAdaptor::create_interact()
 
   try {
 
-    QDir dir(m_config.libpath);
-    QString lib_file(dir.absoluteFilePath(m_config.lib));
+    QJsonParseError parse_error;
+    QJsonDocument jdoc = QJsonDocument::fromJson(m_config.libpaths.toUtf8(), &parse_error);
+    if(parse_error.error != QJsonParseError::NoError)
+      throw SvException(parse_error.errorString());
 
-    QLibrary lib(lib_file);
+    QJsonObject j = jdoc.object();
+
+    QString dir = j.contains(P_INTERACTS) ? j.value(P_INTERACTS).toString(DEFAULT_LIBPATH_INTERACTS)
+                                          : DEFAULT_LIBPATH_INTERACTS;
+
+    QLibrary lib(QDir(dir).absoluteFilePath(m_config.lib));
 
     if(!lib.load())
       throw SvException(lib.errorString());
