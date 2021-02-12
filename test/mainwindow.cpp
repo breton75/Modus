@@ -109,4 +109,7 @@ void MainWindow::on_pushButton_clicked()
 {
   QVariant v;
   qDebug() << v.isValid();
+
+  qDebug() << QString("%1").arg(int(3), 2, 16, QChar('0'));
+
 }
