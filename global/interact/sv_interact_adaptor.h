@@ -67,6 +67,7 @@ namespace modus {
                   << sv::log::TimeZZZ
                   << sv::log::Level(level)
                   << sv::log::MessageTypes(type)
+                  << sv::log::TimeZZZ
                   << msg
                   << sv::log::endl;
     }

@@ -1082,8 +1082,7 @@ void parse_signal_list(QString json_file, QJsonArray* signals_array, modus::Sign
 
       if(!f.open(QIODevice::ReadOnly))
         throw SvException(QString("Ошибка при чтении файла сигналов '%1': %2")
-                          .arg(f.fileName())
-                          .arg(f.errorString()));
+                          .arg(f.fileName(), f.errorString()));
 
       QByteArray json = f.readAll();
       f.close();
@@ -1097,8 +1096,7 @@ void parse_signal_list(QString json_file, QJsonArray* signals_array, modus::Sign
 
       if(perr.error != QJsonParseError::NoError)
         throw SvException(QString("Ошибка разбора файла '%1': %2")
-                          .arg(f.fileName())
-                          .arg(perr.errorString()));
+                          .arg(f.fileName(), perr.errorString()));
 
       QJsonObject jo = jd.object();
 

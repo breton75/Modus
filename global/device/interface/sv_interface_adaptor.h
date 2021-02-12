@@ -55,6 +55,7 @@ private slots:
       *m_logger << sv::log::sender(m_config.name)
                 << sv::log::Level(level)
                 << sv::log::MessageTypes(type)
+                << sv::log::TimeZZZ
                 << msg
                 << sv::log::endl;
   }
