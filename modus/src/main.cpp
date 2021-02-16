@@ -28,8 +28,8 @@
 #include "../../global/signal/sv_signal.h"
 #include "../../global/misc/sv_dbus.h"
 
-#include "../../../svlib/sv_exception.h"
-#include "../../../svlib/sv_config.h"
+#include "../../global/misc/sv_exception.h"
+#include "../../global/misc/sv_config.h"
 
 QMap<int, modus::SvDeviceAdaptor*>    DEVICES;
 QMap<int, modus::SvStorageAdaptor*>   STORAGES;

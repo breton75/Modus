@@ -24,7 +24,6 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += main.cpp \
-    ../../../svlib/sv_config.cpp \
     ../../../svlib/sv_fnt.cpp \
     ../../global/device/interface/sv_interface_adaptor.cpp \
     ../../global/device/protocol/sv_protocol_adaptor.cpp \
@@ -32,10 +31,10 @@ SOURCES += main.cpp \
     ../../global/signal/sv_signal.cpp \
     ../../global/misc/sv_abstract_logger.cpp \
     ../../global/misc/sv_dbus.cpp \
-    ../../global/storage/sv_storage_adaptor.cpp
+    ../../global/storage/sv_storage_adaptor.cpp \
+    ../../global/misc/sv_config.cpp
 
 HEADERS += \
-    ../../../svlib/sv_config.h \
     ../../../svlib/sv_fnt.h \
     ../../global/device/device_defs.h \
     ../../global/device/interface/sv_abstract_interface.h \
@@ -54,6 +53,7 @@ HEADERS += \
     ../../global/storage/sv_abstract_storage.h \
     ../../global/sv_config.h \
     ../../global/misc/sv_dbus.h \
-    ../../global/modus.h
+    ../../global/modus.h \
+    ../../global/misc/sv_config.h
 #    sv_dbus.h
 
