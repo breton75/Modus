@@ -4,7 +4,7 @@ QT += network dbus serialport
 CONFIG += c++11 console
 CONFIG -= app_bundle
 
-TARGET = /home/developer/Modus/modus
+TARGET = /home/user/Modus/modus
 
 VERSION = 1.0.0    # major.minor.patch
 DEFINES += APP_VERSION=\\\"$$VERSION\\\"
