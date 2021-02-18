@@ -112,4 +112,8 @@ void MainWindow::on_pushButton_clicked()
 
   qDebug() << QString("%1").arg(int(3), 2, 16, QChar('0'));
 
+  qDebug() << quint8(1 / 8) << 1 % 8;
+  qDebug() << quint8(32 / 8) <<  32 % 8;
+
 }
+

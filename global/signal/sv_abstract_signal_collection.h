@@ -1,9 +1,53 @@
 ﻿#ifndef SV_ABSTRACT_SIGNAL_COLLECTION
 #define SV_ABSTRACT_SIGNAL_COLLECTION
 
+#include "sv_signal.h"
+
 #include <QObject>
 
 namespace modus {
+
+  struct DATA
+  {
+    DATA():
+      data(nullptr),
+      bufsize(0)
+    {  }
+
+    DATA(quint16 size):
+      data(nullptr),
+      bufsize(size)
+    {
+      data = (quint8*)malloc(size);
+    }
+
+    ~DATA()
+    {
+      if(data)
+        free(data);
+    }
+
+    bool resize(quint16 size)
+    {
+      if(data)
+        free(data);
+
+      data = nullptr;
+
+      bufsize = size;
+      data = (quint8*)malloc(size);
+
+      return bool(data);
+    }
+
+    quint8* data = nullptr;
+    quint8  type;
+    quint8  len;
+    quint16 crc;
+
+    quint16 bufsize;
+
+  };
 
   class SvAbstractSignalCollection: public QObject
   {
@@ -18,7 +62,7 @@ namespace modus {
 
     virtual void addSignal(modus::SvSignal* signal) = 0;
 
-    virtual void updateSignals(const can::DATA* data = nullptr) = 0;
+    virtual void updateSignals(const modus::DATA* data = nullptr) = 0;
 
   protected:
 
