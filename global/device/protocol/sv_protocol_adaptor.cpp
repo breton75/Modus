@@ -1,4 +1,4 @@
-#include "sv_protocol_adaptor.h"
+﻿#include "sv_protocol_adaptor.h"
 
 modus::SvProtocolAdaptor::SvProtocolAdaptor(sv::SvAbstractLogger *logger):
   m_protocol  (nullptr),
@@ -112,7 +112,9 @@ bool modus::SvProtocolAdaptor::start()
 
     connect(this,       &modus::SvProtocolAdaptor::stopAll,  m_protocol, &modus::SvAbstractProtocol::stop);
     connect(m_protocol, &QThread::finished,                  m_protocol, &QThread::deleteLater);
-    connect(m_protocol, &modus::SvAbstractProtocol::message, this,       &modus::SvProtocolAdaptor::log);
+
+    if(m_logger)
+      connect(m_protocol, &modus::SvAbstractProtocol::message, this,       &modus::SvProtocolAdaptor::log);
 
     m_protocol->start();
 

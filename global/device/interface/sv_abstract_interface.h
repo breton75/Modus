@@ -9,7 +9,6 @@
 #include <QJsonObject>
 
 #include "../device_defs.h"
-#include "../../signal/sv_signal.h"
 
 
 namespace modus {
@@ -40,8 +39,8 @@ protected:
 
   modus::IOBuffer*     p_io_buffer;
 
-  modus::SignalMap     p_input_signals;
-  modus::SignalMap     p_output_signals;
+//  modus::SignalMap     p_input_signals;
+//  modus::SignalMap     p_output_signals;
 
   QString              p_last_error;
 

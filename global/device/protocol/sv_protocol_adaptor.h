@@ -1,4 +1,4 @@
-#ifndef SV_PROTOCOL_ADAPTOR_H
+﻿#ifndef SV_PROTOCOL_ADAPTOR_H
 #define SV_PROTOCOL_ADAPTOR_H
 
 #include <QObject>
@@ -52,16 +52,20 @@ public slots:
   void stop();
 
 private slots:
+
   void log(const QString msg, int level = sv::log::llDebug, int type = sv::log::mtDebug)
   {
-    if(m_logger)
-      *m_logger << sv::log::sender(m_config.name)
-                << sv::log::Level(level)
-                << sv::log::MessageTypes(type)
-                << sv::log::TimeZZZ
-                << msg
-                << sv::log::endl;
+    if(!m_logger)
+      return;
+
+    *m_logger << sv::log::sender(m_config.name)
+              << sv::log::Level(level)
+              << sv::log::MessageTypes(type)
+              << msg
+              << sv::log::endl;
+
   }
+
 };
 
 #endif // SV_PROTOCOL_ADAPTOR_H

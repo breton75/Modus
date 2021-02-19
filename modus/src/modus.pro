@@ -54,6 +54,7 @@ HEADERS += \
     ../../global/sv_config.h \
     ../../global/misc/sv_dbus.h \
     ../../global/modus.h \
-    ../../global/misc/sv_config.h
+    ../../global/misc/sv_config.h \
+    ../../global/global_defs.h
 #    sv_dbus.h
 

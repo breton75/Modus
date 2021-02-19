@@ -21,7 +21,11 @@ namespace modus {
       data = (char*)malloc(size);
     }
 
-    ~BUFF() { free(data); }
+    ~BUFF()
+    {
+      if(data)
+        free(data);
+    }
 
     char *data = nullptr;
 //    char  buf[MAX_BUF_SIZE];
@@ -29,7 +33,7 @@ namespace modus {
     quint64 offset = 0;
 
     quint16 size;
-    QMutex mutex, mutex2;
+    QMutex mutex;
 
     void reset() { offset = 0; }
     bool ready() { return offset > 0; }

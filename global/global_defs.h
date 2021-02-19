@@ -126,4 +126,19 @@ struct AppConfig {
     sv::log::Options log_options;
 };
 
+//int llerr  = sv::log::llError;
+//int llinf  = sv::log::llInfo;
+//int lldbg  = sv::log::llDebug;
+//int lldbg2 = sv::log::llDebug2;
+//int llall  = sv::log::llAll;
+//int mtdbg  = sv::log::mtDebug;
+//int mtdbg2 = sv::log::mtDebug2;
+//int mterr  = sv::log::mtError;
+//int mtinf  = sv::log::mtInfo;
+//int mtdat  = sv::log::mtData;
+//int mtscc  = sv::log::mtSuccess;
+//int mtfal  = sv::log::mtFail;
+//int mtinc  = sv::log::mtIncome;
+//int mtout  = sv::log::mtOutcome;
+
 #endif // GLOBAL_DEFS_H

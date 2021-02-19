@@ -27,8 +27,11 @@ namespace sv
       mtNewData,
       mtFail,
       mtDebug,
+      mtDebug2,
       mtSuccess,
-      mtCritical
+      mtCritical,
+      mtIncome,
+      mtOutcome
     };
 
     enum Level {
