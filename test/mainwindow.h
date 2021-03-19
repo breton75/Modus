@@ -8,6 +8,7 @@
 #include <QDataStream>
 #include <QDateTime>
 #include <QFileDialog>
+#include <QHttpPart>
 
 namespace Ui {
 class MainWindow;
@@ -27,6 +28,8 @@ private slots:
   void on_bnTextReal_clicked();
 
   void on_pushButton_clicked();
+
+  void on_pushButton_2_clicked();
 
 private:
   Ui::MainWindow *ui;

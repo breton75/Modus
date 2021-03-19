@@ -1,9 +1,11 @@
 ﻿#include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "ui_filter.h"
 
 MainWindow::MainWindow(const AppConfig &cfg, QWidget *parent) :
   QMainWindow(parent),
-  ui(new Ui::MainWindow)
+  ui(new Ui::MainWindow),
+  frame(new Ui::Frame)
 {
   ui->setupUi(this);
 
@@ -19,12 +21,21 @@ MainWindow::MainWindow(const AppConfig &cfg, QWidget *parent) :
 
   bool b = QDBusConnection::sessionBus().connect(QString(), QString(), DBUS_SERVER_NAME, "message", this, SLOT(messageSlot(const QString&,const QString&,const QString&)));
 
-  _enable = true;
+  _enable = false;
+  ui->bnSave->setEnabled(_enable);
+
+  // читаем файл конфигурации
+  frame->setupUi(ui->frameSettings);
+
+  AppParams::loadLayout(this);
 
 }
 
 MainWindow::~MainWindow()
 {
+  AppParams::saveLayout(this);
+
+  delete frame;
   delete ui;
 }
 
@@ -68,15 +79,17 @@ void MainWindow::on_bnStartStop_clicked()
   log.setEnable(_enable);
 
   if(_enable)
-    ui->bnStartStop->setIcon(QIcon(":/my_icons/icons/023-stop.png"));
+    ui->bnStartStop->setIcon(QIcon(":/iconixar/icons/iconixar/stop.png"));
 
   else
-    ui->bnStartStop->setIcon(QIcon(":/my_icons/icons/024-play.png"));
+    ui->bnStartStop->setIcon(QIcon(":/iconixar/icons/iconixar/play.png"));
 
-  ui->bnSave->setEnabled(!_enable);
 
-  ui->textLog->append("\n");
+  if(!ui->textLog->document()->toPlainText().trimmed().isEmpty()) {
 
+    ui->bnSave->setEnabled(!_enable);
+    ui->textLog->append("\n");
+  }
 }
 
 void MainWindow::on_bnClear_clicked()

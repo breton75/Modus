@@ -886,7 +886,7 @@ bool readInteracts(const AppConfig& appcfg)
         if(appcfg.log_options.logging)
           LOGGERS.insert(config.id, new sv::SvDBus(appcfg.log_options));
 
-        /** создаем объект хранилища **/
+        /** создаем объект **/
         modus::SvInteractAdaptor* newinteract = new modus::SvInteractAdaptor(LOGGERS.value(config.id)); // c reate_server(interact_cfg);
 
         config.libpaths = JSON.contains(P_LIBPATH) ? QString(QJsonDocument(JSON.value(P_LIBPATH).toObject()).toJson(QJsonDocument::Compact)) : DEFAULT_LIBPATHS;
@@ -993,31 +993,33 @@ bool readSignals(const AppConfig& appcfg)
           if(max_dev < device->config()->name.length())
             max_dev = device->config()->name.length();
 
-          // раскидываем сигналы по хранилищам
-          for(int storage_id: newsig->config()->storages)
-          {
-            if(STORAGES.contains(storage_id)) {
-
-              modus::SvStorageAdaptor* storage = STORAGES.value(storage_id);
-
-              storage->bindSignal(newsig);
-
-              if(max_str < device->config()->name.length())
-                max_str = device->config()->name.length();
-
-            }
-          }
-
-          // привязываем сигнал к серверам
-          for(modus::SvInteractAdaptor* server: INTERACTS)
-            server->bindSignal(newsig);
-
         }
         else
           dbus << llerr << me << mterr << QString("Сигнал '%1' не привязан ни к одному устройству!").arg(newsig->config()->name) << sv::log::endl;
 
-        counter++;
+        // раскидываем сигналы по хранилищам
+        for(int storage_id: newsig->config()->storages)
+        {
+          if(STORAGES.contains(storage_id)) {
 
+            modus::SvStorageAdaptor* storage = STORAGES.value(storage_id);
+
+            storage->bindSignal(newsig);
+
+            if(max_str < max_dev)
+              max_str = max_dev;
+
+          }
+        }
+
+        // привязываем сигнал к интерактивам
+        for(modus::SvInteractAdaptor* server: INTERACTS) {
+
+          server->bindSignal(newsig);
+
+        }
+
+        counter++;
       }
     }
 

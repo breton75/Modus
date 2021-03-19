@@ -38,7 +38,7 @@ namespace modus {
 
     void setLogger(sv::SvAbstractLogger* logger) { m_logger = logger; }
 
-    const InteractConfig* config() const         { return &m_config; }
+    const modus::InteractConfig* config() const  { return &m_config; }
     const QList<modus::SvSignal*>* Signals()     { return &m_signals; }
     const QString &lastError()             const { return m_last_error; }
 
@@ -64,10 +64,8 @@ namespace modus {
     {
       if(m_logger)
         *m_logger << sv::log::sender(m_config.name)
-                  << sv::log::TimeZZZ
                   << sv::log::Level(level)
                   << sv::log::MessageTypes(type)
-                  << sv::log::TimeZZZ
                   << msg
                   << sv::log::endl;
     }

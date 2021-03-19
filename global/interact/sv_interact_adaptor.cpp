@@ -106,12 +106,8 @@ bool modus::SvInteractAdaptor::start()
     if(!m_interact)
       throw SvException("Запуск невозможен. Объект не определен.");
 
-    if(!m_interact->setSignalCollection(&m_signals)) {
-
-      m_last_error = m_interact->lastError();
-      delete m_interact;
-      return false;
-    }
+    if(!m_interact->setSignalCollection(&m_signals))
+      throw SvException(m_interact->lastError());
 
     connect(m_interact, &QThread::finished,                  m_interact, &QThread::deleteLater);
     connect(m_interact, &modus::SvAbstractInteract::message, this,       &modus::SvInteractAdaptor::log);
@@ -122,6 +118,9 @@ bool modus::SvInteractAdaptor::start()
     return true;
 
   } catch (SvException& e) {
+
+    if(m_interact)
+      delete m_interact;
 
     m_last_error = e.error;
     return  false;

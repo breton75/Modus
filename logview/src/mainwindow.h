@@ -11,8 +11,11 @@
 #include "../../global/global_defs.h"
 #include "../../global/misc/sv_dbus.h"
 
+#include "../../../svlib/sv_settings.h"
+
 namespace Ui {
 class MainWindow;
+class Frame;
 }
 
 class MainWindow : public QMainWindow
@@ -44,6 +47,7 @@ private slots:
 
 private:
   Ui::MainWindow *ui;
+  Ui::Frame *frame;
 
   SvException p_exception;
   bool _enable;

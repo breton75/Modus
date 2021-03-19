@@ -117,3 +117,13 @@ void MainWindow::on_pushButton_clicked()
 
 }
 
+
+void MainWindow::on_pushButton_2_clicked()
+{
+  QHttpPart textPart;
+  textPart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("text/plain"));
+  textPart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"text\""));
+  textPart.setBody("here goes the body");
+
+  ui->textEdit->append(textPart.);
+}

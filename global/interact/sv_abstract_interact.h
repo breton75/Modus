@@ -5,6 +5,7 @@
 #include <QObject>
 #include <QThread>
 #include <QList>
+#include <QDebug>
 
 #include "interact_config.h"
 #include "../signal/sv_signal.h"
@@ -20,7 +21,8 @@ class modus::SvAbstractInteract: public QThread
     Q_OBJECT
 
 public:
-  SvAbstractInteract()
+  SvAbstractInteract():
+    p_config   (nullptr)
   {   }
 
   virtual ~SvAbstractInteract()
@@ -28,14 +30,12 @@ public:
 
   virtual bool configure(modus::InteractConfig* config) = 0;
 
-  virtual bool setSignalCollection(QList<SvSignal*>* signalList)
+  virtual bool setSignalCollection(QList<modus::SvSignal*>* signalList)
   {
-    p_signals = signalList;
+    for(modus::SvSignal* signal: *signalList) {
 
-    for(modus::SvSignal* signal: *p_signals) {
       if(!bindSignal(signal))
         return false;
-
     }
 
     return true;
@@ -45,10 +45,8 @@ public:
   {
     try {
 
-      if(p_signals->contains(signal))
-        throw SvException(QString("Повторяющийся сигнал %1").arg(signal->config()->name));
-
-      p_signals->append(signal);
+      if(!p_signals.contains(signal))
+        p_signals.append(signal);
 
       return true;
 
@@ -62,8 +60,8 @@ public:
   const QString &lastError() const            { return p_last_error; }
 
 protected:
-  modus::InteractConfig*    p_config     = nullptr;
-  QList<SvSignal*>*         p_signals    = nullptr;;
+  modus::InteractConfig*    p_config;
+  QList<modus::SvSignal*>   p_signals;
 
   QString                   p_last_error = "";
 
