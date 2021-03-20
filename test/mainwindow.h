@@ -9,6 +9,9 @@
 #include <QDateTime>
 #include <QFileDialog>
 #include <QHttpPart>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
 
 namespace Ui {
 class MainWindow;
@@ -30,6 +33,8 @@ private slots:
   void on_pushButton_clicked();
 
   void on_pushButton_2_clicked();
+
+  void redyRead();
 
 private:
   Ui::MainWindow *ui;

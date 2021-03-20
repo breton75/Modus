@@ -16,7 +16,7 @@ namespace modus {
 
 }
 
-class modus::SvAbstractInteract: public QThread
+class modus::SvAbstractInteract: public QObject //QThread
 {
     Q_OBJECT
 
@@ -29,6 +29,8 @@ public:
   {   }  
 
   virtual bool configure(modus::InteractConfig* config) = 0;
+
+  virtual void start() = 0;
 
   virtual bool setSignalCollection(QList<modus::SvSignal*>* signalList)
   {
@@ -67,24 +69,25 @@ protected:
 
   bool                      p_is_active  = false;
 
-  virtual void processRequests() = 0;
+//  virtual void processRequests() = 0;
 
-  virtual void run() override
-  {
-    p_is_active = true;
+//  virtual void run() override
+//  {
+////    p_is_active = true;
 
-    while (p_is_active) {
+////    while (p_is_active) {
 
-      processRequests();
+////      processRequests();
 
-    }
-  }
+////    }
+//  }
 
 public slots:
-  virtual void stop()
-  {
-    p_is_active = false;
-  }
+  virtual void stop()  = 0;
+//  virtual void stop()
+//  {
+//    p_is_active = false;
+//  }
 
 signals:
   void message(const QString msg, int level = sv::log::llDebug, int type  = sv::log::mtDebug);

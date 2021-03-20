@@ -109,7 +109,7 @@ bool modus::SvInteractAdaptor::start()
     if(!m_interact->setSignalCollection(&m_signals))
       throw SvException(m_interact->lastError());
 
-    connect(m_interact, &QThread::finished,                  m_interact, &QThread::deleteLater);
+//    connect(m_interact, &QThread::finished,                  m_interact, &QThread::deleteLater);
     connect(m_interact, &modus::SvAbstractInteract::message, this,       &modus::SvInteractAdaptor::log);
     connect(this,       &modus::SvInteractAdaptor::stopAll,  m_interact, &modus::SvAbstractInteract::stop);
 

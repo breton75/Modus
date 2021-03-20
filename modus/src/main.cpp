@@ -1398,7 +1398,7 @@ bool initInteracts()
    dbus << llinf << me << mtinf << "Инициализируем серверы приложений:" <<  sv::log::endl;
 
    try {
-
+qDebug() << QThread::currentThread();
      foreach(modus::SvInteractAdaptor* interact, INTERACTS.values()) {
 
        if(!interact->start())

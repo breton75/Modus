@@ -125,5 +125,19 @@ void MainWindow::on_pushButton_2_clicked()
   textPart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"text\""));
   textPart.setBody("here goes the body");
 
-  ui->textEdit->append(textPart.);
+  QNetworkRequest nreq(QUrl("localhost:8080"));
+qDebug() << 1;
+  QNetworkAccessManager nam(this);
+qDebug() << 2;
+  nam.connectToHost("172.16.4.11", 8080);
+  qDebug() << 3;
+  QNetworkReply * nrep = nam.get(nreq);
+  connect(rep, &QNetworkReply::error, this, &MainWindow::redyRead);
+qDebug() << 4;
+  ui->textEdit->append(QString(nrep->readAll()));
+}
+
+void MainWindow::redyRead()
+{
+
 }
