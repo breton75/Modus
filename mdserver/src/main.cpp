@@ -313,7 +313,7 @@ int server_operate(const QStringList& args, AppConfig& cfg)
     /** разбираем операцию **/
     SvCommandLineParser op_parser;
 
-    op_parser.addPositionalArgument(APP_OPERATION, "Команда управления сервером", "operation (start|stop|status|restart)");
+    op_parser.addPositionalArgument(APP_OPERATION, "Команда управления сервером start|stop|status|restart", "operation (start|stop|status|restart)");
 
     op_parser.addOptionStructList(AppOptions);
     op_parser.setSingleDashWordOptionMode(QCommandLineParser::ParseAsLongOptions);
@@ -321,13 +321,13 @@ int server_operate(const QStringList& args, AppConfig& cfg)
     op_parser.addVersionOption();
 
     if (!op_parser.parse(args))
-      throw SvException(QString("Ошибка разбора командной строки:\n\%1\n\n%2").arg(op_parser.errorText()).arg(op_parser.helpText()));
+      throw SvException(SvException::SomeError, QString("Ошибка разбора командной строки:\n\%1\n\n%2").arg(op_parser.errorText()).arg(op_parser.helpText()), -1);
 
     if (op_parser.isSetVersionOption())
-      throw SvException(SvException::NoError, QString("Сервер сбора и обработки данных Modus v.%1\n").arg(APP_VERSION));
+      throw SvException(SvException::NoError, QString("Сервер сбора и обработки данных Modus v.%1\n").arg(APP_VERSION), 1);
 
     if (op_parser.isSetHelpOption())
-      throw SvException(op_parser.helpText());
+      throw SvException(SvException::NoError, op_parser.helpText(), 2);
 
 
     if(op_parser.positionalArguments().count())
@@ -341,7 +341,7 @@ int server_operate(const QStringList& args, AppConfig& cfg)
       cfg.twin =    op == QString(OPERATION_TWIN);
     }
     else
-      throw SvException("Не указана операция.\n\n" + op_parser.helpText());
+      throw SvException("Не указана операция.\n\n" + op_parser.helpText(), -1);
 
     cfg.debug = op_parser.isSet(OPTION_DEBUG);
     cfg.config_file_name = op_parser.isSet(OPTION_CONFIG_FILE) ? op_parser.value(OPTION_CONFIG_FILE) : "config.json";
@@ -361,7 +361,7 @@ int server_operate(const QStringList& args, AppConfig& cfg)
         for(pid_t pid: pids)
           std::cout << QString("%1\n").arg(pid).toStdString();
 
-        return 1;
+        return 3;
 
       }
 
@@ -379,7 +379,7 @@ int server_operate(const QStringList& args, AppConfig& cfg)
         for(pid_t pid: pids)
           std::cout << QString("%1\n").arg(pid).toStdString();
 
-        return 1;
+        return 4;
 
       }
 
@@ -529,8 +529,6 @@ int main(int argc, char *argv[])
   signal(SIGINT, signal_handler);
   signal(SIGTERM, signal_handler);
 
-
-
   int result = 0;
 
   try {
@@ -576,7 +574,7 @@ int main(int argc, char *argv[])
 
   }
   else {
-
+    printf("Ошибка при запуске службы сервера. Код ошибки %d\n", result);
     return result;
   }
 
@@ -631,6 +629,7 @@ bool initConfig(AppConfig& appcfg)
     /* загружаем json конфигурацию в QJSonDocument */
     QJsonParseError parse_error;
     QJsonDocument jdoc = QJsonDocument::fromJson(json_file.readAll(), &parse_error);
+
     if(parse_error.error != QJsonParseError::NoError)
       throw SvException(parse_error.errorString());
 
@@ -678,7 +677,7 @@ bool initConfig(AppConfig& appcfg)
   }
 
   catch(SvException& e) {
-
+qDebug() << 3;
     dbus << llerr << mterr << me << QString("Ошибка: %1\n").arg(e.error) << sv::log::endl;
     return false;
   }
@@ -1174,7 +1173,6 @@ void parse_signal_list(QString json_file, QJsonArray* signals_array, modus::Sign
 //  return r;
 }
 
-
 /*modus::SvDeviceAdaptor* create_device(const modus::DeviceConfig &config) throw(SvException)
 {
   modus::SvDeviceAdaptor* newdev = nullptr;
@@ -1398,7 +1396,7 @@ bool initInteracts()
    dbus << llinf << me << mtinf << "Инициализируем серверы приложений:" <<  sv::log::endl;
 
    try {
-qDebug() << QThread::currentThread();
+
      foreach(modus::SvInteractAdaptor* interact, INTERACTS.values()) {
 
        if(!interact->start())

@@ -26,12 +26,19 @@ class modus::SvDeviceAdaptor: public QObject
 
 public:
   SvDeviceAdaptor(sv::SvAbstractLogger* logger = nullptr):
+    m_protocol(nullptr),
+    m_interface(nullptr),
+    m_io_buffer(nullptr),
     m_logger(logger)
   {  }
 
   ~SvDeviceAdaptor()
   {
     emit stopAll();
+
+    delete m_interface;
+    delete m_protocol;
+    delete m_io_buffer;
 
     deleteLater();
   }
@@ -42,16 +49,18 @@ public:
 
       m_config = config;
 
+      m_io_buffer = new modus::IOBuffer(m_config.bufsize);
+
       /* interface */
       m_interface = new modus::SvInterfaceAdaptor(m_logger);
 
-      if(!m_interface->init(m_config, &m_io_buffer))
+      if(!m_interface->init(m_config, m_io_buffer))
         throw SvException(m_interface->lastError());
 
       /* protocol */
       m_protocol = new modus::SvProtocolAdaptor(m_logger);
 
-      if(!m_protocol->init(m_config, &m_io_buffer))
+      if(!m_protocol->init(m_config, m_io_buffer))
         throw SvException(m_protocol->lastError());
 
       return  true;
@@ -129,10 +138,10 @@ private:
   modus::DeviceConfig        m_config;
   QList<modus::SvSignal*>    m_signals;
 
-  modus::SvProtocolAdaptor*  m_protocol  = nullptr;
-  modus::SvInterfaceAdaptor* m_interface = nullptr;
+  modus::SvProtocolAdaptor*  m_protocol;
+  modus::SvInterfaceAdaptor* m_interface;
 
-  modus::IOBuffer            m_io_buffer;
+  modus::IOBuffer*           m_io_buffer;
 
   QString                    m_last_error;
 

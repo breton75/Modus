@@ -2,17 +2,19 @@
 
 QMutex sv::SvDBus::mutex;
 
-sv::SvDBus::SvDBus(const sv::log::Options options, const sv::log::Flags flags, QObject *parent):
+sv::SvDBus::SvDBus(const sv::log::Options options, const sv::log::Flags flags, const QString &branch, QObject *parent):
   sv::SvAbstractLogger(options, flags, parent)
 {
-
+  m_branch = branch;
 }
 
-void sv::SvDBus::init()
+void sv::SvDBus::init(const QString& branch)
 {
-  QDBusConnection::sessionBus().registerObject("/", this);
+  m_branch = branch;
 
-  new org::ame::modus(DBUS_SERVER_NAME, "/", QDBusConnection::sessionBus(), this);
+  QDBusConnection::sessionBus().registerObject(m_branch, this);
+
+  new org::niirpi::modus(DBUS_SERVER_NAME, m_branch, QDBusConnection::sessionBus(), this);
 
 //  ModusDBusAdaptor *mdba = new ModusDBusAdaptor(this);
 
@@ -27,7 +29,7 @@ void sv::SvDBus::log(sv::log::Level level, sv::log::MessageTypes type, const QSt
   {
 
     QString msg = QString("%1").arg(text); //.arg(newline ? "\n" : "");
-    sendmsg(sender.name, msg, sv::log::typeToString(type));
+    sendmsg(sender.name, msg, sv::log::typeToString(type), m_branch);
 
     if(newline)
       p_current_line_num++;
@@ -39,12 +41,12 @@ void sv::SvDBus::log(sv::log::Level level, sv::log::MessageTypes type, const QSt
 //  mutex.unlock();
 }
 
-void sv::SvDBus::sendmsg(const QString &sender, const QString& message, const QString &type)
+void sv::SvDBus::sendmsg(const QString &sender, const QString& message, const QString &type, const QString &branch)
 {
   // при создании лочится, при завершении функции - locker удаляется, и разлочивается
   QMutexLocker locker(&mutex);
 
-  QDBusMessage msg = QDBusMessage::createSignal("/", DBUS_SERVER_NAME, "message");
+  QDBusMessage msg = QDBusMessage::createSignal(branch, DBUS_SERVER_NAME, "message");
   msg << sender << message << type;
   QDBusConnection::sessionBus().send(msg);
 }

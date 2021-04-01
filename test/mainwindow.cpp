@@ -120,7 +120,7 @@ void MainWindow::on_pushButton_clicked()
 
 void MainWindow::on_pushButton_2_clicked()
 {
-  QHttpPart textPart;
+/*  QHttpPart textPart;
   textPart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("text/plain"));
   textPart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"text\""));
   textPart.setBody("here goes the body");
@@ -135,6 +135,14 @@ qDebug() << 2;
   connect(rep, &QNetworkReply::error, this, &MainWindow::redyRead);
 qDebug() << 4;
   ui->textEdit->append(QString(nrep->readAll()));
+  */
+
+  QString key = QString("dGhlIHNhbXBsZSBub25jZQ==").append("258EAFA5-E914-47DA-95CA-C5AB0DC85B11");
+  QByteArray b = QCryptographicHash::hash(key.toUtf8(), QCryptographicHash::Sha1).toBase64();
+
+  ui->textEdit->append(QString(b));
+
+
 }
 
 void MainWindow::redyRead()

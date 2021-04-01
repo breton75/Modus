@@ -4,7 +4,7 @@ QT += network dbus serialport
 CONFIG += c++11 console
 CONFIG -= app_bundle
 
-TARGET = /home/user/Modus/modus
+TARGET = /home/user/Modus/mdserver
 
 VERSION = 1.0.0    # major.minor.patch
 DEFINES += APP_VERSION=\\\"$$VERSION\\\"
@@ -57,4 +57,6 @@ HEADERS += \
     ../../global/misc/sv_config.h \
     ../../global/global_defs.h
 #    sv_dbus.h
+
+DISTFILES +=
 

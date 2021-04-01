@@ -54,7 +54,7 @@
 
 // loader options
 #define OPTION_DEBUG                     "debug"
-#define OPTION_CONFIG_FILE               "config_file"
+#define OPTION_CONFIG_FILE               "config"
 #define OPTION_DB_HOST                   "db_host"
 #define OPTION_DB_PORT                   "db_port"
 #define OPTION_DB_NAME                   "db_name"
