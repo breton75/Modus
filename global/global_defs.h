@@ -35,6 +35,7 @@
 #define P_STORAGES    "storages"
 #define P_FILE        "file"
 #define P_TAG         "tag"
+#define P_PACKID      "packid"
 
 // interfaces
 #define DEFAULT_TIMEOUT 3000

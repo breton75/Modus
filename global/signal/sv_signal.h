@@ -49,6 +49,7 @@ struct modus::SignalGroupParams
     device_id          = gp->device_id;
     storages           = gp->storages;
     params             = gp->params;
+    packet_id          = gp->packet_id;
     type               = gp->type;
     tag                = gp->tag;
     enable             = gp->enable;
@@ -60,6 +61,7 @@ struct modus::SignalGroupParams
   QVariant device_id   = QVariant();
   QVariant storages    = QVariant();
   QVariant params      = QVariant();
+  QVariant packet_id   = QVariant();
   QVariant type        = QVariant();
   QVariant tag         = QVariant();
   QVariant enable      = QVariant();
@@ -138,6 +140,10 @@ struct modus::SignalGroupParams
 
     }
 
+    P = P_PACKET;
+    if(object.contains(P))
+      packet_id = object.value(P).toString();
+
     P = P_TYPE;
     if(object.contains(P))
       type = object.value(P).toString();
@@ -162,6 +168,7 @@ struct modus::SignalConfig
   int         device_id   = -1;
   QList<int>  storages;
   QString     params      = "";
+  QString     packid      = "";
   QString     type        = "";
   QString     tag         = "";
   bool        enable      = false;
@@ -333,6 +340,17 @@ struct modus::SignalConfig
     else
       p.storages = QList<int>();
 
+    /* packet_id */ // может применяться групповая политика
+    P = P_PACKID;
+    if(object.contains(P))
+      p.packid = object.value(P).toString("");
+
+    else if(gp && gp->packet_id.isValid())
+      p.packid = gp->packet_id.toString();
+
+    else
+      p.packid = "";
+
     /* type */ // может применяться групповая политика
     P = P_TYPE;
     if(object.contains(P)) {
@@ -419,16 +437,17 @@ struct modus::SignalConfig
     for(int v: storages)
       a << QJsonValue(v);
 
-    j.insert(P_ID, QJsonValue(static_cast<int>(id)).toInt());
-    j.insert(P_NAME, QJsonValue(name).toString());
-    j.insert(P_ENABLE, QJsonValue(enable).toBool());
-    j.insert(P_DEVICE, QJsonValue(device_id).toInt());
-    j.insert(P_STORAGES, QJsonValue(a));
-    j.insert(P_TYPE, QJsonValue(type).toString());
-    j.insert(P_PARAMS, QJsonValue(params).toString());
-    j.insert(P_TIMEOUT, QJsonValue(timeout).toInt());
+    j.insert(P_ID,          QJsonValue(static_cast<int>(id)).toInt());
+    j.insert(P_NAME,        QJsonValue(name).toString());
+    j.insert(P_ENABLE,      QJsonValue(enable).toBool());
+    j.insert(P_DEVICE,      QJsonValue(device_id).toInt());
+    j.insert(P_STORAGES,    QJsonValue(a));
+    j.insert(P_PACKET,      QJsonValue(packid).toString());
+    j.insert(P_TYPE,        QJsonValue(type).toString());
+    j.insert(P_PARAMS,      QJsonValue(params).toString());
+    j.insert(P_TIMEOUT,     QJsonValue(timeout).toInt());
     j.insert(P_DESCRIPTION, QJsonValue(description).toString());
-    j.insert(P_COMMENT, QJsonValue(comment).toString());
+    j.insert(P_COMMENT,     QJsonValue(comment).toString());
 
     return j;
 
