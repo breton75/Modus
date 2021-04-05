@@ -140,7 +140,7 @@ struct modus::SignalGroupParams
 
     }
 
-    P = P_PACKET;
+    P = P_PACKID;
     if(object.contains(P))
       packet_id = object.value(P).toString();
 
@@ -442,7 +442,7 @@ struct modus::SignalConfig
     j.insert(P_ENABLE,      QJsonValue(enable).toBool());
     j.insert(P_DEVICE,      QJsonValue(device_id).toInt());
     j.insert(P_STORAGES,    QJsonValue(a));
-    j.insert(P_PACKET,      QJsonValue(packid).toString());
+    j.insert(P_PACKID,      QJsonValue(packid).toString());
     j.insert(P_TYPE,        QJsonValue(type).toString());
     j.insert(P_PARAMS,      QJsonValue(params).toString());
     j.insert(P_TIMEOUT,     QJsonValue(timeout).toInt());
