@@ -677,7 +677,7 @@ bool initConfig(AppConfig& appcfg)
   }
 
   catch(SvException& e) {
-qDebug() << 3;
+
     dbus << llerr << mterr << me << QString("Ошибка: %1\n").arg(e.error) << sv::log::endl;
     return false;
   }
