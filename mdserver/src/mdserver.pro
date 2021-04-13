@@ -51,11 +51,11 @@ HEADERS += \
     ../../global/misc/sv_abstract_logger.h \
     ../../global/storage/sv_storage_adaptor.h \
     ../../global/storage/sv_abstract_storage.h \
-    ../../global/sv_config.h \
     ../../global/misc/sv_dbus.h \
     ../../global/modus.h \
     ../../global/misc/sv_config.h \
-    ../../global/global_defs.h
+    ../../global/global_defs.h \
+    ../../global/configuration.h
 #    sv_dbus.h
 
 DISTFILES +=

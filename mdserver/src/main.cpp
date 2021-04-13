@@ -20,6 +20,8 @@
 #include <QJsonObject>
 #include <QJsonValue>
 
+#include "../../global/configuration.h"
+
 #include "../../global/device/sv_device_adaptor.h"
 #include "../../global/storage/sv_storage_adaptor.h"
 #include "../../global/interact/sv_interact_adaptor.h"
@@ -35,6 +37,8 @@ QMap<int, modus::SvDeviceAdaptor*>    DEVICES;
 QMap<int, modus::SvStorageAdaptor*>   STORAGES;
 QMap<int, modus::SvInteractAdaptor*>  INTERACTS;
 QMap<int, modus::SvSignal*>           SIGNALS;
+
+modus::Configuration JSON;
 
 QMap<int, sv::SvAbstractLogger*> LOGGERS;
 
@@ -85,7 +89,7 @@ modus::SvInteractAdaptor* create_interact(const modus::InteractConfig&  config);
 
 //sv::SvAbstractLogger* create_logger(const sv::log::Options& options, const QString& sender);
 
-QJsonObject JSON;
+//QJsonObject JSON;
 
 bool openDevices();
 bool initStorages();
@@ -622,23 +626,27 @@ bool initConfig(AppConfig& appcfg)
 
 //    dbus << llinf << mtinf << me << QString("Читаем файл конфигурации %1: ").arg(appcfg.config_file_name) << sv::log::endl;
 
-    QFile json_file(appcfg.config_file_name);
-    if(!json_file.open(QIODevice::ReadWrite))
-      throw SvException(json_file.errorString());
+    if(!JSON.load(appcfg.config_file_name))
+      throw SvException(JSON.lastError());
 
-    /* загружаем json конфигурацию в QJSonDocument */
-    QJsonParseError parse_error;
-    QJsonDocument jdoc = QJsonDocument::fromJson(json_file.readAll(), &parse_error);
+//    QFile json_file(appcfg.config_file_name);
+//    if(!json_file.open(QIODevice::ReadWrite))
+//      throw SvException(json_file.errorString());
 
-    if(parse_error.error != QJsonParseError::NoError)
-      throw SvException(parse_error.errorString());
+//    /* загружаем json конфигурацию в QJSonDocument */
+//    QJsonParseError parse_error;
 
-    JSON = jdoc.object();
+//    QJsonDocument jdoc = QJsonDocument::fromJson(json_file.readAll(), &parse_error);
+
+//    if(parse_error.error != QJsonParseError::NoError)
+//      throw SvException(parse_error.errorString());
+
+//    JSON = jdoc.object();
 
     // читаем параметры логирования
-    if(JSON.contains("log")) {
+    if(JSON.json()->contains("log")) {
 
-      QJsonObject jl = JSON.value("log").toObject();
+      QJsonObject jl = JSON.json()->value("log").toObject();
 
       appcfg.log_options.logging = jl.contains(P_ENABLE) ? jl.value(P_ENABLE).toBool(true) : true;
 
@@ -664,11 +672,11 @@ bool initConfig(AppConfig& appcfg)
     dbus << llinf << mtscc << me << QString("Сервер сбора и обработки данных Modus v.%1").arg(APP_VERSION)
            << sv::log::endl;
 
-    if(JSON.contains("info"))
-      dbus << llinf << mtdat << me << JSON.value("info").toString() << sv::log::endl;
+    if(JSON.json()->contains("info"))
+      dbus << llinf << mtdat << me << JSON.json()->value("info").toString() << sv::log::endl;
 
-    if(JSON.contains("version"))
-      dbus << llinf << mtdat << me << QString("Версия конфигурации %1\n").arg(JSON.value("version").toString()) << sv::log::endl;
+    if(JSON.json()->contains("version"))
+      dbus << llinf << mtdat << me << QString("Версия конфигурации %1\n").arg(JSON.json()->value("version").toString()) << sv::log::endl;
 
 //    dbus << llinf << mtscc << me << "OK\n" << sv::log::endl;
 
@@ -691,10 +699,10 @@ bool readDevices(const AppConfig& appcfg)
 
     int counter = 0;
 
-    if(!JSON.contains("devices"))
+    if(!JSON.json()->contains("devices"))
       throw SvException("Неверный файл конфигурации. Отсутствует раздел 'devices'.");
 
-    QJsonArray device_list = JSON.value("devices").toArray();
+    QJsonArray device_list = JSON.json()->value("devices").toArray();
 
     for(QJsonValue v: device_list) {
 
@@ -720,7 +728,7 @@ bool readDevices(const AppConfig& appcfg)
       /** создаем объект устройство **/
       modus::SvDeviceAdaptor* newdev = new modus::SvDeviceAdaptor(LOGGERS.value(config.id)); //create_device(devcfg);
 
-      config.libpaths = JSON.contains(P_LIBPATH) ? QString(QJsonDocument(JSON.value(P_LIBPATH).toObject()).toJson(QJsonDocument::Compact)) : DEFAULT_LIBPATHS;
+      config.libpaths = JSON.json()->contains(P_LIBPATH) ? QString(QJsonDocument(JSON.json()->value(P_LIBPATH).toObject()).toJson(QJsonDocument::Compact)) : DEFAULT_LIBPATHS;
 
       if(newdev->init(config)) {
 
@@ -773,7 +781,7 @@ bool readStorages(const AppConfig& appcfg)
 
     int counter = 0;
 
-    if(!JSON.contains("storages"))
+    if(!JSON.json()->contains("storages"))
     {
 
       dbus << llinf << me << mtinf << QString("  Раздел 'storages' отсутствует.");
@@ -783,7 +791,7 @@ bool readStorages(const AppConfig& appcfg)
 
     else
     {
-      QJsonArray storage_list = JSON.value("storages").toArray();
+      QJsonArray storage_list = JSON.json()->value("storages").toArray();
 
       for(QJsonValue v: storage_list) {
 
@@ -806,7 +814,7 @@ bool readStorages(const AppConfig& appcfg)
         /** создаем объект хранилища **/
         modus::SvStorageAdaptor* newstorage = new modus::SvStorageAdaptor(LOGGERS.value(config.id));
 
-        config.libpaths = JSON.contains(P_LIBPATH) ? QString(QJsonDocument(JSON.value(P_LIBPATH).toObject()).toJson(QJsonDocument::Compact)) : DEFAULT_LIBPATHS;
+        config.libpaths = JSON.json()->contains(P_LIBPATH) ? QString(QJsonDocument(JSON.json()->value(P_LIBPATH).toObject()).toJson(QJsonDocument::Compact)) : DEFAULT_LIBPATHS;
 
         if(appcfg.log_options.logging) {
 
@@ -856,7 +864,7 @@ bool readInteracts(const AppConfig& appcfg)
 
     int counter = 0;
 
-    if(!JSON.contains("interacts"))
+    if(!JSON.json()->contains("interacts"))
     {
 
       dbus << llinf << me << mtinf << QString("Раздел 'interacts' отсутствует.");
@@ -865,7 +873,7 @@ bool readInteracts(const AppConfig& appcfg)
 
     else
     {
-      QJsonArray server_list = JSON.value("interacts").toArray();
+      QJsonArray server_list = JSON.json()->value("interacts").toArray();
 
       for(QJsonValue v: server_list) {
 
@@ -888,7 +896,7 @@ bool readInteracts(const AppConfig& appcfg)
         /** создаем объект **/
         modus::SvInteractAdaptor* newinteract = new modus::SvInteractAdaptor(LOGGERS.value(config.id)); // c reate_server(interact_cfg);
 
-        config.libpaths = JSON.contains(P_LIBPATH) ? QString(QJsonDocument(JSON.value(P_LIBPATH).toObject()).toJson(QJsonDocument::Compact)) : DEFAULT_LIBPATHS;
+        config.libpaths = JSON.json()->contains(P_LIBPATH) ? QString(QJsonDocument(JSON.json()->value(P_LIBPATH).toObject()).toJson(QJsonDocument::Compact)) : DEFAULT_LIBPATHS;
 
         if(appcfg.log_options.logging) {
 
@@ -938,7 +946,7 @@ bool readSignals(const AppConfig& appcfg)
 
     int counter = 0;
 
-    if(!JSON.contains("signals"))
+    if(!JSON.json()->contains("signals"))
       throw SvException("Неверный файл конфигурации. Отсутствует раздел 'signals'.");
 
     /// парсим список сигналов. в списке сигналов могут содержаться ссылки на другие файлы. для удобства

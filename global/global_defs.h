@@ -111,35 +111,11 @@ struct AppConfig {
   bool twin     = false;
   bool debug    = false;
 
-    QString config_file_name;
-//    QString db_name;
-//    QString db_host;
-//    quint16 db_port;
-//    QString db_user;
-//    QString db_pass;
-//    quint16 soeg_port;
-////    bool    single_device_mode;
-//    int     device_index;
-//    QString autorun_cfg_file;
-//    QString templates_dir;
-//    QString postgres_bin_path;
+  QString config_file_name;
 
-    sv::log::Options log_options;
+  sv::log::Options log_options;
+
 };
 
-//int llerr  = sv::log::llError;
-//int llinf  = sv::log::llInfo;
-//int lldbg  = sv::log::llDebug;
-//int lldbg2 = sv::log::llDebug2;
-//int llall  = sv::log::llAll;
-//int mtdbg  = sv::log::mtDebug;
-//int mtdbg2 = sv::log::mtDebug2;
-//int mterr  = sv::log::mtError;
-//int mtinf  = sv::log::mtInfo;
-//int mtdat  = sv::log::mtData;
-//int mtscc  = sv::log::mtSuccess;
-//int mtfal  = sv::log::mtFail;
-//int mtinc  = sv::log::mtIncome;
-//int mtout  = sv::log::mtOutcome;
 
 #endif // GLOBAL_DEFS_H
