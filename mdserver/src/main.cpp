@@ -33,10 +33,10 @@
 #include "../../global/misc/sv_exception.h"
 #include "../../global/misc/sv_config.h"
 
-QMap<int, modus::SvDeviceAdaptor*>    DEVICES;
-QMap<int, modus::SvStorageAdaptor*>   STORAGES;
-QMap<int, modus::SvInteractAdaptor*>  INTERACTS;
-QMap<int, modus::SvSignal*>           SIGNALS;
+//QMap<int, modus::SvDeviceAdaptor*>    DEVICES;
+//QMap<int, modus::SvStorageAdaptor*>   STORAGES;
+//QMap<int, modus::SvInteractAdaptor*>  INTERACTS;
+//QMap<int, modus::SvSignal*>           SIGNALS;
 
 modus::Configuration JSON;
 
@@ -718,7 +718,7 @@ bool readDevices(const AppConfig& appcfg)
       dbus << lldbg << mtdbg << me
            << QString("  параметры прочитаны") << sv::log::endl;
 
-      if(DEVICES.contains(config.id))
+      if(JSON.Devices()->contains(config.id))
         throw SvException(QString("Устройство %1. Повторяющийся идентификатор %2!").arg(config.name).arg(config.id));
 
 
@@ -732,7 +732,8 @@ bool readDevices(const AppConfig& appcfg)
 
       if(newdev->init(config)) {
 
-        DEVICES.insert(newdev->config()->id, newdev);
+        if(!JSON.addDevice(newdev))
+          throw SvException(JSON.lastError());
 
         dbus << lldbg2 << mtdbg << me
              << QString("  %1 [id %2]\n  Протокол: %3\n  Интерфейс: %4").
@@ -804,7 +805,7 @@ bool readStorages(const AppConfig& appcfg)
         dbus << lldbg << mtdbg << me
              << QString("  %1: параметры прочитаны").arg(config.name) << sv::log::endl;
 
-        if(STORAGES.contains(config.id))
+        if(JSON.Storages()->contains(config.id))
           throw SvException(QString("Хранилище %1. Повторяющийся идентификатор %2!")
                           .arg(config.name).arg(config.id));
 
@@ -824,7 +825,8 @@ bool readStorages(const AppConfig& appcfg)
 
         if(newstorage->init(config)) {
 
-          STORAGES.insert(newstorage->config()->id, newstorage);
+          if(!JSON.addStorage(newstorage))
+            throw SvException(JSON.lastError());
 
           dbus << lldbg << me << mtdbg << QString("  %1 (ID: %2, Тип: %3, Параметры: %4)").arg(newstorage->config()->name)
                   .arg(newstorage->config()->id).arg(newstorage->config()->type).arg(newstorage->config()->params) << sv::log::endl;
@@ -886,7 +888,7 @@ bool readInteracts(const AppConfig& appcfg)
         dbus << lldbg << mtdbg << me
              << QString("  %1: параметры прочитаны").arg(config.name) << sv::log::endl;
 
-        if(INTERACTS.contains(config.id))
+        if(JSON.Interacts()->contains(config.id))
           throw SvException(QString("Сервер приложения %1. Повторяющийся идентификатор %2!")
                           .arg(config.name).arg(config.id));
 
@@ -904,9 +906,10 @@ bool readInteracts(const AppConfig& appcfg)
           newinteract->setLogger(LOGGERS.value(newinteract->config()->id));
         }
 
-        if(newinteract->init(config)) {
+        if(newinteract->init(config, &JSON)) {
 
-          INTERACTS.insert(newinteract->config()->id, newinteract);
+          if(!JSON.addInteract(newinteract))
+            throw SvException(JSON.lastError());
 
           dbus << lldbg << me << mtdbg << QString("  %1 (ID: %2, Тип: %3, Параметры: %4)").arg(newinteract->config()->name)
                   .arg(newinteract->config()->id).arg(newinteract->config()->type).arg(newinteract->config()->params) << sv::log::endl;
@@ -975,7 +978,7 @@ bool readSignals(const AppConfig& appcfg)
 //      qDebug() << signal_cfg.name << signal_cfg.device_id << signal_cfg.timeout << signal_cfg.id;
       dbus << lldbg2 << mtdbg << me << QString("  %1: параметры прочитаны").arg(config.name) << sv::log::endl;
 
-      if(SIGNALS.contains(config.id))
+      if(JSON.Signals()->contains(config.id))
         throw SvException(QString("Сигнал %1. Повторяющийся идентификатор %2!").arg(config.name).arg(config.id));
 
       /* создаем объект */
@@ -983,7 +986,8 @@ bool readSignals(const AppConfig& appcfg)
 
       if(newsig) {
 
-        SIGNALS.insert(newsig->id(), newsig);
+        if(!JSON.addSignal(newsig))
+          throw SvException(JSON.lastError());
 
         if(newsig->config()->name.length() > max_sig)
           max_sig = newsig->config()->name.length();
@@ -991,9 +995,9 @@ bool readSignals(const AppConfig& appcfg)
         if(newsig->id() > max_sig_id) max_sig_id = newsig->id();
 
         // раскидываем сигналы по устройствам
-        if(DEVICES.contains(newsig->config()->device_id)) {
+        if(JSON.Devices()->contains(newsig->config()->device_id)) {
 
-          modus::SvDeviceAdaptor* device = DEVICES.value(newsig->config()->device_id);
+          modus::SvDeviceAdaptor* device = JSON.Devices()->entity(newsig->config()->device_id);
 
           device->bindSignal(newsig);
 
@@ -1007,9 +1011,9 @@ bool readSignals(const AppConfig& appcfg)
         // раскидываем сигналы по хранилищам
         for(int storage_id: newsig->config()->storages)
         {
-          if(STORAGES.contains(storage_id)) {
+          if(JSON.Storages()->contains(storage_id)) {
 
-            modus::SvStorageAdaptor* storage = STORAGES.value(storage_id);
+            modus::SvStorageAdaptor* storage = JSON.Storages()->entity(storage_id);
 
             storage->bindSignal(newsig);
 
@@ -1019,12 +1023,12 @@ bool readSignals(const AppConfig& appcfg)
           }
         }
 
-        // привязываем сигнал к интерактивам
-        for(modus::SvInteractAdaptor* server: INTERACTS) {
+//        // привязываем сигнал к интерактивам
+//        for(modus::SvInteractAdaptor* server: INTERACTS) {
 
-          server->bindSignal(newsig);
+//          server->bindSignal(newsig);
 
-        }
+//        }
 
         counter++;
       }
@@ -1033,7 +1037,7 @@ bool readSignals(const AppConfig& appcfg)
     /* выводим на экран для отладки */
     if(dbus.options().log_level >= sv::log::llDebug2)
     {
-      for(modus::SvSignal* s: SIGNALS)
+      foreach(modus::SvSignal* s, *(JSON.Signals()->list()))
       {
         QString result = "";
 
@@ -1044,16 +1048,16 @@ bool readSignals(const AppConfig& appcfg)
         result.append(s->config()->name).append(line1);
 
         QString line2 = QString(max_dev, '-');
-        if(DEVICES.contains(s->config()->device_id)) {
-          line2 = QString(max_dev - DEVICES.value(s->config()->device_id)->config()->name.length() + 3, '-');
-          result.append(DEVICES.value(s->config()->device_id)->config()->name).append(line2);
+        if(JSON.Devices()->contains(s->config()->device_id)) {
+          line2 = QString(max_dev - JSON.Devices()->entity(s->config()->device_id)->config()->name.length() + 3, '-');
+          result.append(JSON.Devices()->entity(s->config()->device_id)->config()->name).append(line2);
         }
         else result.append(line2);
 
         for(int i: s->config()->storages)
         {
-          if(STORAGES.contains(i))
-            result.append(STORAGES.value(i)->config()->name).append(QString(max_str - STORAGES.value(i)->config()->name.length() + 3, '-'));
+          if(JSON.Storages()->contains(i))
+            result.append(JSON.Storages()->entity(i)->config()->name).append(QString(max_str - JSON.Storages()->entity(i)->config()->name.length() + 3, '-'));
         }
 
         dbus << lldbg2 << me << mtdbg << result << sv::log::endl;
@@ -1336,9 +1340,9 @@ bool openDevices()
 
   try {
 
-    for(int key: DEVICES.keys()) {
+    foreach(modus::SvDeviceAdaptor* device, *(JSON.Devices()->list())) {
 
-      modus::SvDeviceAdaptor* device = DEVICES.value(key);
+//      modus::SvDeviceAdaptor* device = DEVICES.value(key);
 
       if(!device->start())
         throw SvException(QString("%1 [Индекс %2]: %3")
@@ -1371,7 +1375,7 @@ bool initStorages()
 
    try {
 
-     foreach(modus::SvStorageAdaptor* storage, STORAGES.values()) {
+     foreach(modus::SvStorageAdaptor* storage, *(JSON.Storages()->list())) {
 
        if(storage->Signals()->count()) {
 
@@ -1405,7 +1409,7 @@ bool initInteracts()
 
    try {
 
-     foreach(modus::SvInteractAdaptor* interact, INTERACTS.values()) {
+     foreach(modus::SvInteractAdaptor* interact, *(JSON.Interacts()->list())) {
 
        if(!interact->start())
          throw SvException(QString("%1: %2").arg(interact->config()->name)
@@ -1438,22 +1442,22 @@ void closeDevices()
 
   try {
 
-    int counter = 0;
+    int count = JSON.Devices()->clear();
 
-    foreach (int key, DEVICES.keys())
-    {
-      modus::SvDeviceAdaptor* device = DEVICES.value(key);
+//    foreach (modus::SvDeviceAdaptor* device, JSON.Devices())
+//    {
+////      modus::SvDeviceAdaptor* device = DEVICES.value(key);
 
-      dbus << llinf << me << mtinf << QString("  %1").arg(device->config()->name) << sv::log::endl;
+//      dbus << llinf << me << mtinf << QString("  %1").arg(device->config()->name) << sv::log::endl;
 
-//      device->stop();
-      delete DEVICES.take(key);
+////      device->stop();
+//      delete device; //DEVICES.take(key);
 
-      counter++;
+//      counter++;
 
-    }
+//    }
 
-    dbus << llinf << me << mtinf << QString("OK [Закрыто %1]\n").arg(counter)  << sv::log::endl;
+    dbus << llinf << me << mtinf << QString("OK [Закрыто %1]\n").arg(count)  << sv::log::endl;
 
   }
 
@@ -1470,25 +1474,26 @@ void deinitStorages()
 
   dbus << llinf << me << mtinf << "Закрываем хранилища:" << sv::log::endl;
 
-  int counter = 0;
-  foreach (int key, STORAGES.keys()) {
+  int count = JSON.Storages()->clear();
 
-//    modus::SvStorageAdaptor* storage = STORAGES.value(key);
+//  foreach (modus::SvStorageAdaptor* storage, JSON.Storages()) {
 
-//    if(detiled)
-//      lout << QString("  %1\t%2:%3:").arg(storage->params()->name).arg(storage->params()->host).arg(storage->params()->port) << sv::log::endi;
+////    modus::SvStorageAdaptor* storage = STORAGES.value(key);
 
-//    storage->stop();
-    delete STORAGES.take(key);
+////    if(detiled)
+////      lout << QString("  %1\t%2:%3:").arg(storage->params()->name).arg(storage->params()->host).arg(storage->params()->port) << sv::log::endi;
 
-//    lout << llinf << "\tOK" << sv::log::endl;
+////    storage->stop();
+//    delete storage; // STORAGES.take(key);
 
-    counter++;
+////    lout << llinf << "\tOK" << sv::log::endl;
 
-  }
+//    counter++;
+
+//  }
 
 //  lout << llinf << QString("OK\n") << sv::log::endl;
-  dbus << llinf << me << mtinf << QString("OK [Закрыто %1]\n").arg(counter)  << sv::log::endl;
+  dbus << llinf << me << mtinf << QString("OK [Закрыто %1]\n").arg(count)  << sv::log::endl;
 
 }
 
@@ -1496,22 +1501,23 @@ void deleteSignals()
 {
   dbus << llinf << me << mtinf << "Удаляем сигналы:" << sv::log::endl;
 
-  int counter = 0;
-  foreach (int key, SIGNALS.keys()) {
+  int count = JSON.Signals()->clear();
 
-//    SvSignal* signal = SIGNALS.value(key);
+//  foreach (modus::SvSignal* signal, JSON.Signals()) {
 
-//    if(detiled)
-//      lout << QString("  %1 [index %2]:").arg(signal->params()->name).arg(signal->params()->index) << sv::log::endi;
+////    SvSignal* signal = SIGNALS.value(key);
 
-    delete SIGNALS.take(key);
+////    if(detiled)
+////      lout << QString("  %1 [index %2]:").arg(signal->params()->name).arg(signal->params()->index) << sv::log::endi;
 
-    counter++;
-//    lout << llinf << "\tOK" << sv::log::endl;
+//    delete signal; //SIGNALS.take(key);
 
-  }
+//    counter++;
+////    lout << llinf << "\tOK" << sv::log::endl;
 
-  dbus << llinf << me << mtinf << QString("OK [Удалено %1]\n").arg(counter)  << sv::log::endl;
+//  }
+
+  dbus << llinf << me << mtinf << QString("OK [Удалено %1]\n").arg(count)  << sv::log::endl;
 
 }
 

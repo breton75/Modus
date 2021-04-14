@@ -8,7 +8,8 @@
 #include <QDebug>
 
 #include "interact_config.h"
-#include "../signal/sv_signal.h"
+#include "../../../Modus/global/configuration.h"
+//#include "../signal/sv_signal.h"
 
 namespace modus {
 
@@ -28,42 +29,43 @@ public:
   virtual ~SvAbstractInteract()
   {   }  
 
-  virtual bool configure(modus::InteractConfig* config) = 0;
+  virtual bool configure(modus::InteractConfig* config, const modus::Configuration* configuration) = 0;
 
   virtual void start() = 0;
 
-  virtual bool setSignalCollection(QList<modus::SvSignal*>* signalList)
-  {
-    for(modus::SvSignal* signal: *signalList) {
+//  virtual bool setSignalCollection(QList<modus::SvSignal*>* signalList)
+//  {
+//    for(modus::SvSignal* signal: *signalList) {
 
-      if(!bindSignal(signal))
-        return false;
-    }
+//      if(!bindSignal(signal))
+//        return false;
+//    }
 
-    return true;
-  }
+//    return true;
+//  }
 
-  virtual bool bindSignal(modus::SvSignal* signal)
-  {
-    try {
+//  virtual bool bindSignal(modus::SvSignal* signal)
+//  {
+//    try {
 
-      if(!p_signals.contains(signal))
-        p_signals.append(signal);
+//      if(!p_signals.contains(signal))
+//        p_signals.append(signal);
 
-      return true;
+//      return true;
 
-    } catch (SvException& e) {
+//    } catch (SvException& e) {
 
-      p_last_error = e.error;
-      return false;
-    }
-  }
+//      p_last_error = e.error;
+//      return false;
+//    }
+//  }
 
   const QString &lastError() const            { return p_last_error; }
 
 protected:
   modus::InteractConfig*    p_config;
-  QList<modus::SvSignal*>   p_signals;
+  modus::Configuration*     p_modus_configiration;
+//  QList<modus::SvSignal*>   p_signals;
 
   QString                   p_last_error = "";
 

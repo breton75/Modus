@@ -18,18 +18,19 @@ void modus::SvInteractAdaptor::bindSignal(modus::SvSignal* signal)
   m_signals.append(signal);
 }
 
-bool modus::SvInteractAdaptor::init(const InteractConfig& config)
+bool modus::SvInteractAdaptor::init(const InteractConfig& config, const modus::Configuration *configuration)
 {
   try {
 
     m_config = config;
+    m_modus_configuration = configuration;
 
     m_interact = create_interact();
 
     if(!m_interact)
       return false;
 
-    if(!m_interact->configure(&m_config))
+    if(!m_interact->configure(&m_config, m_modus_configuration))
       throw SvException(m_interact->lastError());
 
     return true;

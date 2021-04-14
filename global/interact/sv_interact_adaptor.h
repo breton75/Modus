@@ -33,13 +33,13 @@ namespace modus {
 
     ~SvInteractAdaptor();
 
-    bool init(const InteractConfig &config);
-    void bindSignal(SvSignal* signal);
+    bool init(const InteractConfig &config, const modus::Configuration* configuration);
+//    void bindSignal(SvSignal* signal);
 
     void setLogger(sv::SvAbstractLogger* logger) { m_logger = logger; }
 
     const modus::InteractConfig* config() const  { return &m_config; }
-    const QList<modus::SvSignal*>* Signals()     { return &m_signals; }
+//    const QList<modus::SvSignal*>* Signals()     { return &m_signals; }
     const QString &lastError()             const { return m_last_error; }
 
     bool start();
@@ -47,11 +47,12 @@ namespace modus {
 
   private:
     modus::InteractConfig      m_config;
+    modus::Configuration*      m_modus_configuration;
 
     modus::SvAbstractInteract* m_interact = nullptr;
     sv::SvAbstractLogger*      m_logger   = nullptr;
 
-    QList<modus::SvSignal*>    m_signals;
+//    QList<modus::SvSignal*>    m_signals;
     QString m_last_error;
 
     modus::SvAbstractInteract* create_interact();
