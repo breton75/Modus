@@ -55,7 +55,8 @@ HEADERS += \
     ../../global/modus.h \
     ../../global/misc/sv_config.h \
     ../../global/global_defs.h \
-    ../../global/configuration.h
+    ../../global/configuration.h \
+    entities.h
 #    sv_dbus.h
 
 DISTFILES +=

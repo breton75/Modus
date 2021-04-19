@@ -113,6 +113,8 @@ struct AppConfig {
 
   QString config_file_name;
 
+  QDateTime start_date_time;
+
   sv::log::Options log_options;
 
 };
