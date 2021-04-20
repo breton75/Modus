@@ -44,7 +44,9 @@ public:
     }
 
     m_map_by_id.clear();
-    m_map_by_name.clear();;
+    m_map_by_name.clear();
+
+    return counter;
   }
 
   const QString& lastError() const
@@ -180,17 +182,12 @@ public:
     return true;
   }
 
-  bool removeAll()
+  void removeAll()
   {
     m_devices.clear();
     m_storages.clear();
     m_interacts.clear();
     m_signals.clear();
-  }
-
-  QByteArray getSignalParams(const QString& option, const QString& list, const char separator = ',')
-  {
-
   }
 
 private:

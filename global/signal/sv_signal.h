@@ -22,9 +22,9 @@ namespace modus {
     dtFloat
   };
 
-  enum UseCase { UNDEFINED, IN, OUT, CALC };
+  enum UseCase { UNDEFINED, IN, OUT, CALC, VAR };
 
-  const QMap<QString, UseCase> usecaseMap = {{"IN", UseCase::IN}, {"OUT", UseCase::OUT}, {"CALC", UseCase::CALC}};
+  const QMap<QString, UseCase> usecaseMap = {{"IN", UseCase::IN}, {"OUT", UseCase::OUT}, {"CALC", UseCase::CALC}, {"VAR", UseCase::VAR}};
 
   struct SignalGroupParams;
   struct SignalConfig;

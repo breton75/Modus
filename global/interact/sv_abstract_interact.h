@@ -29,7 +29,7 @@ public:
   virtual ~SvAbstractInteract()
   {   }  
 
-  virtual bool configure(modus::InteractConfig* config, const modus::Configuration* configuration) = 0;
+  virtual bool configure(modus::InteractConfig* config, modus::Configuration* configuration) = 0;
 
   virtual void start() = 0;
 

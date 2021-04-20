@@ -867,9 +867,9 @@ bool readInteracts(const AppConfig& appcfg)
 
     else
     {
-      QJsonArray server_list = JSON.json()->value("interacts").toArray();
+      QJsonArray interacts = JSON.json()->value("interacts").toArray();
 
-      for(QJsonValue v: server_list) {
+      for(QJsonValue v: interacts) {
 
         /** поторошим параметры сервера **/
         modus::InteractConfig config = modus::InteractConfig::fromJsonObject(v.toObject());

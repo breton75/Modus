@@ -54,6 +54,7 @@ modus::SvAbstractInteract* modus::SvInteractAdaptor::create_interact()
 
     QJsonParseError parse_error;
     QJsonDocument jdoc = QJsonDocument::fromJson(m_config.libpaths.toUtf8(), &parse_error);
+
     if(parse_error.error != QJsonParseError::NoError)
       throw SvException(parse_error.errorString());
 
