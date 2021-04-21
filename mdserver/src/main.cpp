@@ -46,28 +46,10 @@ sv::SvDBus dbus;
 const OptionStructList AppOptions = {
     {{OPTION_DEBUG},  "Режим отладки","", "", ""},
     {{OPTION_CONFIG_FILE}, "Файл конфигурации сервера","config.json", "", ""}
-//    {{OPTION_DB_HOST}, "Адрес сервера базы данных.","localhost", "", ""},
-//    {{OPTION_DB_PORT}, "Порт сервера базы данных.", "5432", "", ""},
-//    {{OPTION_DB_NAME}, "Имя базы данных для подключения.", "db", "", ""},
-//    {{OPTION_DB_USER}, "Имя пользователя базы данных.", "postgres", "", ""},
-//    {{OPTION_DB_PASS}, "Пароль для подключения к базе данных.", "postgres", "", ""},
-//    {{OPTION_DEVICE_INDEX}, "Индекс устройства'.", "-1", "", ""},
-//    {{OPTION_LOGGING}, "Включить/выключить логирование.", "off", "", ""},
-//    {{OPTION_LOG_LEVEL}, "Уровень логирования.", "warning", "", ""},
-//    {{OPTION_LOG_DEVICE}, "Устройство записи логов.", "file", "", ""},
-//    {{OPTION_LOG_DIRECTORY}, "Каталог для хранения файлов логов.", "log", "", ""},
-//    {{OPTION_LOG_FILENAME}, "Шаблон имени файла логов.", "%p_%d%M%y_%h.log", "", ""},
-//    {{OPTION_LOG_TRUNCATE_ON_ROTATION}, "Переписывать лог файл при ротации.", "on", "", ""},
-//    {{OPTION_LOG_ROTATION_AGE}, "Максимальное время записи одного файла логов.", "1h", "", ""},
-//    {{OPTION_LOG_ROTATION_SIZE}, "Максимальный размер одного файла логов.", "10MB", "", ""},
-//    {{OPTION_LOG_SENDER_NAME_FORMAT}, "Формат имени отправителя для логирования.", "", "", ""}
-
 };
 
-bool parse_params(const QStringList &args, AppConfig& cfg, const QString& file_name);
-
 bool initConfig(AppConfig &appcfg);
-void close_db();
+
 bool readDevices(const AppConfig& appcfg);
 bool readStorages(const AppConfig& appcfg);
 bool readSignals(const AppConfig& appcfg);
@@ -78,10 +60,6 @@ void parse_signal_list(QString json_file, QJsonArray* array, modus::SignalGroupP
 modus::SvDeviceAdaptor*   create_device  (const modus::DeviceConfig&    config); //throw(SvException);
 modus::SvStorageAdaptor*  create_storage (const modus::StorageConfig&   config); //throw(SvException);
 modus::SvInteractAdaptor* create_interact(const modus::InteractConfig&  config); //throw(SvException);
-
-//sv::SvAbstractLogger* create_logger(const sv::log::Options& options, const QString& sender);
-
-//QJsonObject JSON;
 
 bool openDevices();
 bool initStorages();
@@ -155,152 +133,6 @@ sv::log::MessageTypes mtdat = sv::log::mtData;
 sv::log::MessageTypes mtscc = sv::log::mtSuccess;
 sv::log::MessageTypes mtfal = sv::log::mtFail;
 
-
-bool parse_params(const QStringList& args, AppConfig &cfg, const QString& file_name)
-{
-  try {
-
-//    /** читаем параметры конфигурации из файла .cfg **/
-    SvConfigFileParser cfg_parser(AppOptions);
-    if(!cfg_parser.parse(file_name))
-        throw SvException(cfg_parser.lastError());
-
-    /** разбираем параметры командной строки **/
-    SvCommandLineParser cmd_parser(AppOptions);
-
-    cmd_parser.addPositionalArgument(APP_OPERATION, "Команда управления сервером", "operation start|stop|status|restart");
-    cmd_parser.setSingleDashWordOptionMode(QCommandLineParser::ParseAsLongOptions);
-    cmd_parser.setApplicationDescription(QString("\nСервер сбора и обработки данных Modus v.%1").arg(APP_VERSION));
-    cmd_parser.addHelpOption();
-    cmd_parser.addVersionOption();
-
-    if (!cmd_parser.parse(args))
-      throw SvException(QString("%1\n\n%2").arg(cmd_parser.errorText()).arg(cmd_parser.helpText()));
-
-    if (cmd_parser.isSetVersionOption())
-      throw SvException(QString("Сервер сбора и обработки данных Modus v.%1").arg(APP_VERSION));
-
-    if (cmd_parser.isSetHelpOption())
-      throw SvException(cmd_parser.helpText());
-
-
-
-    /** назначаем значения параметров */
-//    bool ok;
-//    QString val;
-
-    // config_file_name
-    cfg.config_file_name = cmd_parser.isSet(OPTION_CONFIG_FILE) ? cmd_parser.value(OPTION_CONFIG_FILE) :
-                                                     cfg_parser.value(OPTION_CONFIG_FILE);
-
-    // db_host
-//    cfg.db_host = cmd_parser.isSet(OPTION_DB_HOST) ? cmd_parser.value(OPTION_DB_HOST) :
-//                                                     cfg_parser.value(OPTION_DB_HOST);
-//    if ((cfg.db_host != "localhost") && QHostAddress(cfg.db_host).isNull())
-//      throw SvException(QString("Неверный адрес сервера баз данных: %1").arg(cfg.db_host));
-
-//    // db_port
-//    val = cmd_parser.isSet(OPTION_DB_PORT) ? cmd_parser.value(OPTION_DB_PORT) :
-//                                             cfg_parser.value(OPTION_DB_PORT);
-//    cfg.db_port = val.toUInt(&ok);
-//    if(!ok) throw SvException(QString("Неверный порт: %1").arg(val));
-
-    // soeg_port
-//    val = cmd_parser.isSet(OPTION_SOEG_PORT) ? cmd_parser.value(OPTION_SOEG_PORT) :
-//                                               cfg_parser.value(OPTION_SOEG_PORT);
-//    cfg.soeg_port = val.toUInt(&ok);
-//    if(!ok) throw SvException(QString("Неверный порт СОЭЖ: %1").arg(val));
-
-    // db_name
-//    cfg.db_name = cmd_parser.isSet(OPTION_DB_NAME) ? cmd_parser.value(OPTION_DB_NAME) :
-//                                                     cfg_parser.value(OPTION_DB_NAME);
-
-//    // db_user
-//    cfg.db_user = cmd_parser.isSet(OPTION_DB_USER) ? cmd_parser.value(OPTION_DB_USER) :
-//                                                     cfg_parser.value(OPTION_DB_USER);
-
-//    // db_pass
-//    cfg.db_pass = cmd_parser.isSet(OPTION_DB_PASS) ? cmd_parser.value(OPTION_DB_PASS) :
-//                                                     cfg_parser.value(OPTION_DB_PASS);
-
-//    // single device mode
-//    val = cmd_parser.isSet(OPTION_SINGLE_DEVICE_MODE) ? cmd_parser.value(OPTION_SINGLE_DEVICE_MODE) :
-//                                                        cfg_parser.value(OPTION_SINGLE_DEVICE_MODE);
-//    cfg.single_device_mode = sv::log::stringToBool(val);
-
-    // device index
-    // !!! ЭТОТ ПАРАМЕТР МОЖЕТ БЫТЬ ЗАДАН ТОЛЬКО В КОМАНДНОЙ СТРОКЕ
-//    val = cmd_parser.isSet(OPTION_DEVICE_INDEX) ? cmd_parser.value(OPTION_DEVICE_INDEX) : "-1";
-
-//    cfg.device_index = val.toInt(&ok);
-//    if(!ok) throw SvException(QString("Неверный индекс устройства: %1").arg(val));
-
-
-    // logging
-//    val = cmd_parser.isSet(OPTION_LOGGING) ? cmd_parser.value(OPTION_LOGGING) :
-//                                             cfg_parser.value(OPTION_LOGGING);
-//    cfg.log_options.logging = sv::log::stringToBool(val);
-
-//    // log_level
-//    val = cmd_parser.isSet(OPTION_LOG_LEVEL) ? cmd_parser.value(OPTION_LOG_LEVEL) :
-//                                               cfg_parser.value(OPTION_LOG_LEVEL);
-//    cfg.log_options.log_level = sv::log::stringToLevel(val, &ok);
-//    if(!ok) throw SvException(QString("Неверный уровень логирования: %1").arg(val));
-
-    // log_device
-//    val = cmd_parser.isSet(OPTION_LOG_DEVICE) ? cmd_parser.value(OPTION_LOG_DEVICE) :
-//                                                cfg_parser.value(OPTION_LOG_DEVICE);
-//    QStringList vals = val.split(',');
-//    cfg.log_options.log_devices.clear(); // обязательно
-//    for (int i = 0; i < vals.count(); ++i) {
-
-//        cfg.log_options.log_devices.append(sv::log::stringToDevice(vals.at(i), &ok));
-//        if(!ok) throw SvException(QString("Неверное устройство логирования: %1").arg(val));
-//    }
-
-
-    // log_directory
-//    cfg.log_options.log_directory = cmd_parser.isSet(OPTION_LOG_DIRECTORY) ? cmd_parser.value(OPTION_LOG_DIRECTORY) :
-//                                                                 cfg_parser.value(OPTION_LOG_DIRECTORY);
-
-//    // log_filename
-//    cfg.log_options.log_filename = cmd_parser.isSet(OPTION_LOG_FILENAME) ? cmd_parser.value(OPTION_LOG_FILENAME) :
-//                                                               cfg_parser.value(OPTION_LOG_FILENAME);
-
-    // log_truncate_on_rotation
-//    val = cmd_parser.isSet(OPTION_LOG_TRUNCATE_ON_ROTATION) ? cmd_parser.value(OPTION_LOG_TRUNCATE_ON_ROTATION) :
-//                                                              cfg_parser.value(OPTION_LOG_TRUNCATE_ON_ROTATION);
-//    cfg.log_options.log_truncate_on_rotation = sv::log::stringToBool(val);
-
-//    // log_rotation_age
-//    val = cmd_parser.isSet(OPTION_LOG_ROTATION_AGE) ? cmd_parser.value(OPTION_LOG_ROTATION_AGE) :
-//                                                      cfg_parser.value(OPTION_LOG_ROTATION_AGE);
-//    cfg.log_options.log_rotation_age = sv::log::stringToSeconds(val, &ok);
-//    if(!ok) throw SvException(QString("Неверный формат времени: %1").arg(val));
-
-
-//    // log_rotation_size
-//    val = cmd_parser.isSet(OPTION_LOG_ROTATION_SIZE) ? cmd_parser.value(OPTION_LOG_ROTATION_SIZE) :
-//                                                       cfg_parser.value(OPTION_LOG_ROTATION_SIZE);
-//    cfg.log_options.log_rotation_size = sv::log::stringToSize(val, &ok);
-//    if(!ok) throw SvException(QString("Неверный формат размера файла: %1").arg(val));
-
-//    // шаблон имени отправителя по dbus
-//    cfg.log_options.log_sender_name_format = cmd_parser.isSet(OPTION_LOG_SENDER_NAME_FORMAT) ? cmd_parser.value(OPTION_LOG_SENDER_NAME_FORMAT) :
-//                                                                                               cfg_parser.value(OPTION_LOG_SENDER_NAME_FORMAT);
-
-    //    QString(DBUS_SENDER_NAME);
-
-    return true;
-
-  }
-
-  catch(SvException &e) {
-
-    dbus << llerr << me << mterr << QString("%1\n").arg(e.error) << sv::log::endl;
-    return false;
-  }
-}
 
 int server_operate(const QStringList& args, AppConfig& cfg)
 {
@@ -518,6 +350,7 @@ int main(int argc, char *argv[])
 //  modus_dbus_ifc = new org::ame::modus(org::ame::modus::staticInterfaceName(), "/", QDBusConnection::sessionBus(), 0);
 
   dbus.init();
+  dbus.setDebugMode(cfg.debug);
 
   QDir::setCurrent(qApp->applicationDirPath());
 
@@ -1176,155 +1009,6 @@ void parse_signal_list(QString json_file, QJsonArray* signals_array, modus::Sign
 
 //  return r;
 }
-
-/*modus::SvDeviceAdaptor* create_device(const modus::DeviceConfig &config) throw(SvException)
-{
-  modus::SvDeviceAdaptor* newdev = nullptr;
-
-  try {
-
-    QLibrary devlib(config.driver_lib_name); // "/home/user/nmea/lib/libtestlib.so.1.0.0"); //
-
-    if(!devlib.load())
-      throw SvException(devlib.errorString());
-
-    dbus << lldbg << mtdbg << me
-         << QString("    драйвер загружен") << sv::log::endl;
-
-    typedef modus::SvDeviceAdaptor *(*create_device_func)(void);
-    create_device_func create = (create_device_func)devlib.resolve("create");
-
-    if (create)
-      newdev = create();
-
-    else
-      throw SvException(devlib.errorString());
-
-    if(!newdev)
-      throw SvException("Неизвестная ошибка при создании объекта устройства");
-
-    if(!newdev->configure(config))
-      throw SvException(newdev->lastError());
-
-    dbus << lldbg << mtdbg << me
-         << QString("    объект создан") << sv::log::endl;
-
-    return newdev;
-
-  }
-
-  catch(SvException& e) {
-
-//    dbus << llerr << me << mterr << QString("Ошибка: %1\n").arg(e.error) << sv::log::endl;
-    if(newdev)
-      delete newdev;
-
-    newdev = nullptr;
-
-    throw e;
-
-  }
-}
-*/
-
-/*modus::SvAbstractStorage* create_storage(const modus::StorageConfig& config) throw(SvException)
-{
-  modus::SvAbstractStorage* newstorage = nullptr;
-
-  try {
-
-    QLibrary storelib(config.driver_lib); // "/home/user/nmea/lib/libtestlib.so.1.0.0"); //
-
-    if(!storelib.load())
-      throw SvException(storelib.errorString());
-
-    dbus << lldbg << mtdbg << me
-         << QString("  %1: драйвер загружен").arg(config.name) << sv::log::endl;
-
-    typedef modus::SvAbstractStorage *(*create_storage_func)(void);
-    create_storage_func create = (create_storage_func)storelib.resolve("create");
-
-    if (create)
-      newstorage = create();
-
-    else
-      throw SvException(storelib.errorString());
-
-    if(!newstorage)
-      throw SvException("Неизвестная ошибка при создании объекта хранилища");
-
-    if(!newstorage->configure(config))
-      throw SvException(newstorage->lastError());
-
-    dbus << lldbg << mtdbg << me
-         << QString("  %1: объект создан").arg(config.name) << sv::log::endl;
-
-    return newstorage;
-
-  }
-
-  catch(SvException& e) {
-
-//    dbus << llerr << me << mterr << QString("Ошибка: %1\n").arg(e.error) << sv::log::endl;
-    if(newstorage)
-      delete newstorage;
-
-    newstorage = nullptr;
-
-    throw e;
-
-  }
-}
-*/
-
-/*modus::SvAbstractServer* create_server(const modus::ServerConfig& config) throw(SvException)
-{
-  modus::SvAbstractServer* newserver = nullptr;
-
-  try {
-
-    QLibrary serverlib(config.driver_lib); // "/home/user/nmea/lib/libtestlib.so.1.0.0"); //
-
-    if(!serverlib.load())
-      throw SvException(serverlib.errorString());
-
-    dbus << lldbg << mtdbg << me
-         << QString("  %1: драйвер загружен").arg(config.name) << sv::log::endl;
-
-    typedef modus::SvAbstractServer *(*create_server_func)(void);
-    create_server_func create = (create_server_func)serverlib.resolve("create");
-
-    if (create)
-      newserver = create();
-
-    else
-      throw SvException(serverlib.errorString());
-
-    if(!newserver)
-      throw SvException("Неизвестная ошибка при создании объекта сервера");
-
-    if(!newserver->configure(config))
-      throw SvException(newserver->lastError());
-
-    dbus << lldbg << mtdbg << me
-         << QString("  %1: объект создан").arg(config.name) << sv::log::endl;
-
-    return newserver;
-
-  }
-
-  catch(SvException& e) {
-
-    if(newserver)
-      delete newserver;
-
-    newserver = nullptr;
-
-    throw e;
-
-  }
-}
-*/
 
 bool openDevices()
 {

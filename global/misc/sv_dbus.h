@@ -96,6 +96,10 @@ namespace sv {
                     QObject *parent = nullptr);
 
     void init(const QString &branch = "/");
+    void setDebugMode(bool debug)
+    {
+      m_debug_mode = debug;
+    }
 
     void log(sv::log::Level level, log::MessageTypes type, const QString text, sv::log::sender sender, bool newline = true);
 
@@ -111,6 +115,7 @@ namespace sv {
 
   private:
     QString m_branch = "/";
+    bool    m_debug_mode = false;
 
   };
 }

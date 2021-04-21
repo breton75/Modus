@@ -34,6 +34,9 @@ void sv::SvDBus::log(sv::log::Level level, sv::log::MessageTypes type, const QSt
     if(newline)
       p_current_line_num++;
 
+    if(m_debug_mode)
+      qDebug() << msg;
+
   }
 
   resetCurrentData();
