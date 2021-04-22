@@ -86,7 +86,7 @@ struct modus::SignalGroupParams
       if(!usecaseMap.keys().contains(object.value(P).toString()))
         throw SvException(QString(IMPERMISSIBLE_VALUE)
                           .arg(P).arg(object.value(P).toVariant().toString())
-                          .arg(QString("Для сигнала должен быть задан один из вариантов использования [\"IN\", \"OUT\", \"CALC\"]")));
+                          .arg(QString("Для сигнала должен быть задан один из вариантов использования [\"IN\", \"OUT\", \"CALC\", \"VAR\"]")));
 
       usecase = object.value(P).toString();
 
@@ -183,6 +183,11 @@ struct modus::SignalConfig
 
     if(gp->params.isValid())
       params = gp->params.toString();
+qDebug() << "usecase";
+    if(gp->usecase.isValid()){
+      usecase = UseCase(gp->usecase.toInt());
+      qDebug() << usecase;
+    }
 
     if(gp->storages.isValid()) {
 
@@ -277,7 +282,6 @@ struct modus::SignalConfig
     else
       throw SvException(QString(MISSING_PARAM).arg("signals").arg(P));
 
-
     /* usecase */ // может применяться групповая политика
     P = P_USECASE;
     if(object.contains(P)) {
@@ -301,7 +305,7 @@ struct modus::SignalConfig
         throw SvException(QString(IMPERMISSIBLE_VALUE)
                           .arg(P)
                           .arg(object.value(P).toVariant().toString())
-                          .arg(QString("Для сигнала должен быть задан один из вариантов использования [\"IN\", \"OUT\", \"CALC\"]")));
+                          .arg(QString("Для сигнала должен быть задан один из вариантов использования [\"IN\", \"OUT\", \"CALC\", \"VAR\"]")));
 
       p.usecase = usecaseMap.value(v);
 

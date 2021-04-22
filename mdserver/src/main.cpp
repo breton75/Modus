@@ -848,12 +848,12 @@ bool readSignals(const AppConfig& appcfg)
           }
         }
 
-//        // привязываем сигнал к интерактивам
-//        for(modus::SvInteractAdaptor* server: INTERACTS) {
+        // привязываем сигнал к интерактивам
+        for(modus::SvInteractAdaptor* interact: *ENTITIES.Interacts()->list()) {
 
-//          server->bindSignal(newsig);
+          interact->bindSignal(newsig);
 
-//        }
+        }
 
         counter++;
       }

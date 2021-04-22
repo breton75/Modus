@@ -16,6 +16,9 @@ modus::SvInteractAdaptor::~SvInteractAdaptor()
 void modus::SvInteractAdaptor::bindSignal(modus::SvSignal* signal)
 {
   m_signals.append(signal);
+
+  if(m_interact)
+    m_interact->bindSignal(signal);
 }
 
 bool modus::SvInteractAdaptor::init(const InteractConfig& config, const Configuration &configuration)
@@ -80,7 +83,7 @@ modus::SvAbstractInteract* modus::SvInteractAdaptor::create_interact()
       throw SvException(lib.errorString());
 
     if(!newobject)
-      throw SvException("Неизвестная ошибка при создании объекта обмена");
+      throw SvException("Неизвестная ошибка при создании объекта обмена данными");
 
     log(QString("  %1: сконфигурирован").arg(m_config.name));
 
@@ -108,8 +111,8 @@ bool modus::SvInteractAdaptor::start()
     if(!m_interact)
       throw SvException("Запуск невозможен. Объект не определен.");
 
-    if(!m_interact->setSignalCollection(&m_signals))
-      throw SvException(m_interact->lastError());
+//    if(!m_interact->setSignalCollection(&m_signals))
+//      throw SvException(m_interact->lastError());
 
 //    connect(m_interact, &QThread::finished,                  m_interact, &QThread::deleteLater);
     connect(m_interact, &modus::SvAbstractInteract::message, this,       &modus::SvInteractAdaptor::log);

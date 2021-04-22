@@ -48,8 +48,10 @@ public:
   {
     try {
 
-      if(!p_signals.contains(signal))
+      if(!p_signals.contains(signal)) {
         p_signals.append(signal);
+//        qDebug() << "bind" << signal->config()->id;
+      }
 
       return true;
 
