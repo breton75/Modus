@@ -1,7 +1,7 @@
 ﻿#ifndef GLOBAL_DEFS_H
 #define GLOBAL_DEFS_H
 
-#include "../../svlib/sv_abstract_logger.h"
+#include "../../svlib/SvAbstractLogger/1.1/sv_abstract_logger.h"
 
 #define IMPERMISSIBLE_VALUE "Недопустимое значение параметра %1: %2.\n%3"
 #define MISSING_PARAM "Раздел \"%1\". Не задан обязательный параметр %2"
@@ -24,6 +24,7 @@
 #define P_INTERVAL    "interval"
 #define P_INTERFACE   "interface"
 #define P_PROTOCOL    "protocol"
+#define P_LOGGER      "logger"
 
 // имена полей для всех устройств
 #define P_BUFFER_SIZE "buffer_size"
@@ -102,6 +103,8 @@
   "\"interacts\": \""   DEFAULT_LIBPATH_INTERACTS   "\", "\
   "\"calculators\": \"" DEFAULT_LIBPATH_CALCULATORS "\" }"
 
+#define llerr sv::log::llError
+
 struct AppConfig {
 
   bool start    = false;
@@ -115,7 +118,7 @@ struct AppConfig {
 
   QDateTime start_date_time;
 
-  sv::log::Options log_options;
+//  sv::log::Options log_options;
 
 };
 

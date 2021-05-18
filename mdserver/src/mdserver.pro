@@ -24,18 +24,17 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += main.cpp \
-    ../../../svlib/sv_fnt.cpp \
     ../../global/device/interface/sv_interface_adaptor.cpp \
     ../../global/device/protocol/sv_protocol_adaptor.cpp \
     ../../global/interact/sv_interact_adaptor.cpp \
     ../../global/signal/sv_signal.cpp \
-    ../../global/misc/sv_abstract_logger.cpp \
-    ../../global/misc/sv_dbus.cpp \
     ../../global/storage/sv_storage_adaptor.cpp \
-    ../../global/misc/sv_config.cpp
+    ../../../svlib/SvFNT/1.0/sv_fnt.cpp \
+    ../../../svlib/SvAbstractLogger/1.1/sv_abstract_logger.cpp \
+    ../../../svlib/SvDBUS/1.0/sv_dbus.cpp \
+    ../../../svlib/SvConfig/1.1/sv_config.cpp
 
 HEADERS += \
-    ../../../svlib/sv_fnt.h \
     ../../global/device/device_defs.h \
     ../../global/device/interface/sv_abstract_interface.h \
     ../../global/device/protocol/sv_abstract_protocol.h \
@@ -47,15 +46,15 @@ HEADERS += \
     ../../global/interact/sv_abstract_interact.h \
     ../../global/signal/sv_signal.h \
     ../../global/storage/storage_config.h \
-    ../../global/misc/sv_exception.h \
-    ../../global/misc/sv_abstract_logger.h \
     ../../global/storage/sv_storage_adaptor.h \
     ../../global/storage/sv_abstract_storage.h \
-    ../../global/misc/sv_dbus.h \
-    ../../global/modus.h \
-    ../../global/misc/sv_config.h \
     ../../global/global_defs.h \
     ../../global/configuration.h \
+    ../../../svlib/SvFNT/1.0/sv_fnt.h \
+    ../../../svlib/SvException/1.1/sv_exception.h \
+    ../../../svlib/SvAbstractLogger/1.1/sv_abstract_logger.h \
+    ../../../svlib/SvConfig/1.1/sv_config.h \
+    ../../../svlib/SvDBUS/1.0/sv_dbus.h \
     entities.h
 #    sv_dbus.h
 

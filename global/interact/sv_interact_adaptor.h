@@ -1,5 +1,5 @@
-﻿#ifndef SV_ABSTRACT_SERVER
-#define SV_ABSTRACT_SERVER
+﻿#ifndef SV_ABSTRACT_INTERACT
+#define SV_ABSTRACT_INTERACT
 
 #include <QObject>
 #include <QThread>
@@ -11,8 +11,9 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-#include "../misc/sv_abstract_logger.h"
-#include "../misc/sv_exception.h"
+#include "../../../svlib/SvAbstractLogger/1.1/sv_abstract_logger.h"
+#include "../../../svlib/SvException/1.1/sv_exception.h"
+
 #include "../signal/sv_signal.h"
 #include "../global_defs.h"
 
@@ -75,5 +76,5 @@ namespace modus {
     }
   };
 
-#endif // SV_ABSTRACT_SERVER
+#endif // SV_ABSTRACT_INTERACT
 

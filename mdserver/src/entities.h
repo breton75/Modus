@@ -4,7 +4,7 @@
 #include <QObject>
 
 #include "../../global/modus.h"
-#include "../../global/misc/sv_exception.h"
+#include "../../../svlib/SvException/1.1/sv_exception.h"
 
 template <typename T>
 class EntityContainer

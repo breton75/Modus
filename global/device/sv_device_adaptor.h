@@ -4,8 +4,8 @@
 #include <QObject>
 #include <QDebug>
 
-#include "../misc/sv_exception.h"
-#include "../misc/sv_abstract_logger.h"
+#include "../../../svlib/SvException/1.1/sv_exception.h"
+#include "../../../svlib/SvAbstractLogger/1.1/sv_abstract_logger.h"
 
 #include "../signal/sv_signal.h"
 #include "interface/sv_interface_adaptor.h"

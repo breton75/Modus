@@ -24,9 +24,9 @@
 #include "../../global/configuration.h"
 #include "../../global/global_defs.h"
 
-#include "../../global/misc/sv_dbus.h"
-#include "../../global/misc/sv_exception.h"
-#include "../../global/misc/sv_config.h"
+#include "../../../svlib/SvDBUS/1.0/sv_dbus.h"
+#include "../../../svlib/SvException/1.1/sv_exception.h"
+#include "../../../svlib/SvConfig/1.1/sv_config.h"
 
 #include "entities.h"
 
@@ -121,7 +121,7 @@ QList<pid_t> get_pids_by_name(const QString& name, pid_t exclude = 0)
 }
 
 sv::log::sender me = sv::log::sender("main");
-sv::log::Level llerr  = sv::log::llError;
+
 sv::log::Level llinf  = sv::log::llInfo;
 sv::log::Level lldbg  = sv::log::llDebug;
 sv::log::Level lldbg2 = sv::log::llDebug2;
@@ -442,10 +442,11 @@ void signal_handler(int sig)
 bool initConfig(AppConfig& appcfg)
 {
   // задаем параметры логирования по-умолчанию, чтобы видеть ошибки
-  appcfg.log_options.logging = true;
-  appcfg.log_options.log_level = sv::log::llInfo;
+  sv::log::Options log_options;
+  log_options.logging = true;
+  log_options.log_level = sv::log::llInfo;
 
-  dbus.setOptions(appcfg.log_options);
+  dbus.setOptions(log_options);
 
   try {
 
@@ -469,28 +470,28 @@ bool initConfig(AppConfig& appcfg)
 //    JSON = jdoc.object();
 
     // читаем параметры логирования
-    if(JSON.json()->contains("log")) {
+    if(JSON.json()->contains("logger")) {
 
-      QJsonObject jl = JSON.json()->value("log").toObject();
+      QJsonObject jl = JSON.json()->value("logger").toObject();
 
-      appcfg.log_options.logging = jl.contains(P_ENABLE) ? jl.value(P_ENABLE).toBool(true) : true;
+      log_options.logging = jl.contains(P_ENABLE) ? jl.value(P_ENABLE).toBool(true) : true;
 
-      if(appcfg.log_options.logging) {
+      if(log_options.logging) {
 
         if(jl.contains(P_LOG_LEVEL) && jl.value(P_LOG_LEVEL).isString()) {
 
-          appcfg.log_options.log_level = sv::log::stringToLevel(jl.value(P_LOG_LEVEL).toString());
+          log_options.log_level = sv::log::stringToLevel(jl.value(P_LOG_LEVEL).toString());
 
-          if(appcfg.log_options.log_level == sv::log::llUndefined)
+          if(log_options.log_level == sv::log::llUndefined)
             throw SvException(QString(IMPERMISSIBLE_VALUE)
                               .arg(P_LOG_LEVEL).arg(jl.value(P_LOG_LEVEL).toString())
-                              .arg("Допустимы значения: none, error, warning, info, debug, debug2, all"));
+                              .arg("Допустимые значения: none, error, warning, info, debug, debug2, all"));
         }
       }
     }
 
     // задаем прочитанные параметры логирования
-    dbus.setOptions(appcfg.log_options);
+    dbus.setOptions(log_options);
 
     // выводим информация о конфигурации
     dbus << llinf << mtscc << me << QString(50, '-') << sv::log::endl;
@@ -642,11 +643,11 @@ bool readStorages(const AppConfig& appcfg)
 
         config.libpaths = JSON.json()->contains(P_LIBPATH) ? QString(QJsonDocument(JSON.json()->value(P_LIBPATH).toObject()).toJson(QJsonDocument::Compact)) : DEFAULT_LIBPATHS;
 
-        if(appcfg.log_options.logging) {
+//        if(appcfg.log_options.logging) {
 
-          LOGGERS.insert(newstorage->config()->id, new sv::SvDBus(appcfg.log_options));
-          newstorage->setLogger(LOGGERS.value(newstorage->config()->id));
-        }
+//          LOGGERS.insert(newstorage->config()->id, new sv::SvDBus(appcfg.log_options));
+//          newstorage->setLogger(LOGGERS.value(newstorage->config()->id));
+//        }
 
         if(newstorage->init(config)) {
 
@@ -725,11 +726,11 @@ bool readInteracts(const AppConfig& appcfg)
 
         config.libpaths = JSON.json()->contains(P_LIBPATH) ? QString(QJsonDocument(JSON.json()->value(P_LIBPATH).toObject()).toJson(QJsonDocument::Compact)) : DEFAULT_LIBPATHS;
 
-        if(appcfg.log_options.logging) {
+//        if(appcfg.log_options.logging) {
 
-          LOGGERS.insert(newinteract->config()->id, new sv::SvDBus(appcfg.log_options));
-          newinteract->setLogger(LOGGERS.value(newinteract->config()->id));
-        }
+//          LOGGERS.insert(newinteract->config()->id, new sv::SvDBus(appcfg.log_options));
+//          newinteract->setLogger(LOGGERS.value(newinteract->config()->id));
+//        }
 
         if(newinteract->init(config, JSON)) {
 

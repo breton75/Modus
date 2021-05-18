@@ -5,7 +5,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-#include "../misc/sv_exception.h"
+#include "../../../svlib/SvException/1.1/sv_exception.h"
 #include "../global_defs.h"
 
 #define MAX_BUF_SIZE 0xFFFF
@@ -248,6 +248,7 @@ namespace modus {
     bool            debug       = false;
     bool            debug2      = false;
     QString         comment     = "";
+    QSrting         logger      = "";
 
     static DeviceConfig fromJsonString(const QString& json_string) //throw (SvException)
     {
@@ -312,6 +313,14 @@ namespace modus {
       P = P_PROTOCOL;
       QString prt = object.contains(P) ? QString(QJsonDocument(object.value(P).toObject()).toJson(QJsonDocument::Compact)) : "{}";
       p.protocol = ProtocolConfig::fromJsonString(prt);
+
+      /* logger */
+      P = P_LOGGER;
+       object.contains(P)) {
+
+        p.params = QString(QJsonDocument(object.value(P).toObject()).toJson(QJsonDocument::Compact));
+
+      }
 
       /* timeout */
       P = P_TIMEOUT;

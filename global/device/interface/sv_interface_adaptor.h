@@ -3,8 +3,8 @@
 
 #include <QObject>
 
-#include "../../misc/sv_abstract_logger.h"
-#include "../../misc/sv_exception.h"
+#include "../../../svlib/SvAbstractLogger/1.1/sv_abstract_logger.h"
+#include "../../../svlib/SvException/1.1/sv_exception.h"
 
 #include "../device_defs.h"
 #include "sv_abstract_interface.h"

@@ -4,7 +4,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-#include "../misc/sv_exception.h"
+#include "../../../svlib/SvException/1.1/sv_exception.h"
 #include "../global_defs.h"
 
 namespace modus {

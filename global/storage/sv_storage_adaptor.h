@@ -5,8 +5,8 @@
 #include <QThread>
 #include <QMap>
 
-#include "../misc/sv_abstract_logger.h"
-#include "../misc/sv_exception.h"
+#include "../../../svlib/SvAbstractLogger/1.1/sv_abstract_logger.h"
+#include "../../../svlib/SvException/1.1/sv_exception.h"
 
 #include "storage_config.h"
 #include "sv_abstract_storage.h"
