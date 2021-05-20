@@ -24,6 +24,7 @@ namespace modus {
     bool    debug       = false;
     bool    debug2      = false;
     QString comment     = "";
+    QString logger      = "";
 
     static InteractConfig fromJsonString(const QString& json) //throw (SvException)
     {
@@ -103,7 +104,11 @@ namespace modus {
 
       /* storage_params */
       P = P_PARAMS;
-      p.params = object.contains(P) ? QString(QJsonDocument(object.value(P).toObject()).toJson(QJsonDocument::Compact)) : "{ }";
+      p.params = object.contains(P) ? QString(QJsonDocument(object.value(P).toObject()).toJson(QJsonDocument::Compact)) : "{}";
+
+      /* logger */
+      P = P_LOGGER;
+      p.logger = object.contains(P) ? QString(QJsonDocument(object.value(P).toObject()).toJson(QJsonDocument::Compact)) : "{}";
 
       /* type */
       P = P_TYPE;

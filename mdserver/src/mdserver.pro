@@ -30,7 +30,7 @@ SOURCES += main.cpp \
     ../../global/signal/sv_signal.cpp \
     ../../global/storage/sv_storage_adaptor.cpp \
     ../../../svlib/SvFNT/1.0/sv_fnt.cpp \
-    ../../../svlib/SvAbstractLogger/1.1/sv_abstract_logger.cpp \
+    ../../../svlib/SvAbstractLogger/1.2/sv_abstract_logger.cpp \
     ../../../svlib/SvDBUS/1.0/sv_dbus.cpp \
     ../../../svlib/SvConfig/1.1/sv_config.cpp
 
@@ -52,7 +52,7 @@ HEADERS += \
     ../../global/configuration.h \
     ../../../svlib/SvFNT/1.0/sv_fnt.h \
     ../../../svlib/SvException/1.1/sv_exception.h \
-    ../../../svlib/SvAbstractLogger/1.1/sv_abstract_logger.h \
+    ../../../svlib/SvAbstractLogger/1.2/sv_abstract_logger.h \
     ../../../svlib/SvConfig/1.1/sv_config.h \
     ../../../svlib/SvDBUS/1.0/sv_dbus.h \
     entities.h

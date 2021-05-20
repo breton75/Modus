@@ -547,6 +547,7 @@ bool readDevices(const AppConfig& appcfg)
       if(ENTITIES.Devices()->contains(config.id))
         throw SvException(QString("Устройство %1. Повторяющийся идентификатор %2!").arg(config.name).arg(config.id));
 
+      if(JSON.json()->contains("logger"))
 
       if(appcfg.log_options.logging)
         LOGGERS.insert(config.id, new sv::SvDBus(appcfg.log_options));

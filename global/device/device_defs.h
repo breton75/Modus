@@ -316,11 +316,7 @@ namespace modus {
 
       /* logger */
       P = P_LOGGER;
-       object.contains(P)) {
-
-        p.params = QString(QJsonDocument(object.value(P).toObject()).toJson(QJsonDocument::Compact));
-
-      }
+      p.logger = object.contains(P) ? QString(QJsonDocument(object.value(P).toObject()).toJson(QJsonDocument::Compact)) : "{}";
 
       /* timeout */
       P = P_TIMEOUT;
