@@ -14,6 +14,7 @@
 #include "../global_defs.h"
 
 #include "../../../svlib/SvException/1.1/sv_exception.h"
+#include "../../../svlib/SvAbstractLogger/1.2/sv_abstract_logger.h"
 
 namespace modus {
 
@@ -183,10 +184,10 @@ struct modus::SignalConfig
 
     if(gp->params.isValid())
       params = gp->params.toString();
-qDebug() << "usecase";
+
     if(gp->usecase.isValid()){
       usecase = UseCase(gp->usecase.toInt());
-      qDebug() << usecase;
+
     }
 
     if(gp->storages.isValid()) {
@@ -463,7 +464,7 @@ class modus::SvSignal: public QObject
   Q_OBJECT
   
 public:
-  explicit SvSignal(SignalConfig& config);
+  explicit SvSignal(SignalConfig& config, sv::SvAbstractLogger* logger = nullptr);
   ~SvSignal();
   
   int id() const { return m_config.id; }
@@ -490,17 +491,24 @@ public:
     return m_config.id == other->config()->id;
   }
 
+  void setLogger(sv::SvAbstractLogger* logger)
+  {
+    m_logger = logger;
+  }
+
 private:
-  modus::SignalConfig  m_config;
+  modus::SignalConfig   m_config;
   
-  QDateTime            m_last_update;
-  quint64              m_alive_age = 0;
-  quint64              m_device_alive_age = 0;
+  QDateTime             m_last_update;
+  quint64               m_alive_age = 0;
+  quint64               m_device_alive_age = 0;
 
-  QVariant             m_value = QVariant();
-  QVariant             m_previous_value = QVariant();
+  QVariant              m_value = QVariant();
+  QVariant              m_previous_value = QVariant();
 
-  QMutex               m_mutex;
+  QMutex                m_mutex;
+
+  sv::SvAbstractLogger* m_logger;
   
 public slots:
   void setValue(const QVariant &value);

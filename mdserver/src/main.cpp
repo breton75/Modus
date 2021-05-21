@@ -349,7 +349,7 @@ int main(int argc, char *argv[])
   // инициализируем dbus ПОСЛЕ запуска потомка
 //  modus_dbus_ifc = new org::ame::modus(org::ame::modus::staticInterfaceName(), "/", QDBusConnection::sessionBus(), 0);
 
-  dbus.init();
+  dbus.init("/main");
   dbus.setDebugMode(cfg.debug);
 
   QDir::setCurrent(qApp->applicationDirPath());
@@ -547,15 +547,15 @@ bool readDevices(const AppConfig& appcfg)
       if(ENTITIES.Devices()->contains(config.id))
         throw SvException(QString("Устройство %1. Повторяющийся идентификатор %2!").arg(config.name).arg(config.id));
 
-      if(JSON.json()->contains("logger"))
-
-      if(appcfg.log_options.logging)
-        LOGGERS.insert(config.id, new sv::SvDBus(appcfg.log_options));
+//      if(JSON.json()->contains("logger"))
+//      if(appcfg.log_options.logging)
+//        LOGGERS.insert(config.id, new sv::SvDBus(appcfg.log_options));
 
       /** создаем объект устройство **/
-      modus::SvDeviceAdaptor* newdev = new modus::SvDeviceAdaptor(LOGGERS.value(config.id)); //create_device(devcfg);
+      modus::SvDeviceAdaptor* newdev = new modus::SvDeviceAdaptor(&dbus);
+      // LOGGERS.value(config.id)); //create_device(devcfg);
 
-      config.libpaths = JSON.json()->contains(P_LIBPATH) ? QString(QJsonDocument(JSON.json()->value(P_LIBPATH).toObject()).toJson(QJsonDocument::Compact)) : DEFAULT_LIBPATHS;
+//      config.libpaths = JSON.json()->contains(P_LIBPATH) ? QString(QJsonDocument(JSON.json()->value(P_LIBPATH).toObject()).toJson(QJsonDocument::Compact)) : DEFAULT_LIBPATHS;
 
       if(newdev->init(config)) {
 
@@ -636,11 +636,11 @@ bool readStorages(const AppConfig& appcfg)
           throw SvException(QString("Хранилище %1. Повторяющийся идентификатор %2!")
                           .arg(config.name).arg(config.id));
 
-        if(appcfg.log_options.logging)
-          LOGGERS.insert(config.id, new sv::SvDBus(appcfg.log_options));
+//        if(appcfg.log_options.logging)
+//          LOGGERS.insert(config.id, new sv::SvDBus(appcfg.log_options));
 
         /** создаем объект хранилища **/
-        modus::SvStorageAdaptor* newstorage = new modus::SvStorageAdaptor(LOGGERS.value(config.id));
+        modus::SvStorageAdaptor* newstorage = new modus::SvStorageAdaptor(&dbus); // LOGGERS.value(config.id));
 
         config.libpaths = JSON.json()->contains(P_LIBPATH) ? QString(QJsonDocument(JSON.json()->value(P_LIBPATH).toObject()).toJson(QJsonDocument::Compact)) : DEFAULT_LIBPATHS;
 
@@ -719,11 +719,11 @@ bool readInteracts(const AppConfig& appcfg)
           throw SvException(QString("Сервер приложения %1. Повторяющийся идентификатор %2!")
                           .arg(config.name).arg(config.id));
 
-        if(appcfg.log_options.logging)
-          LOGGERS.insert(config.id, new sv::SvDBus(appcfg.log_options));
+//        if(appcfg.log_options.logging)
+//          LOGGERS.insert(config.id, new sv::SvDBus(appcfg.log_options));
 
         /** создаем объект **/
-        modus::SvInteractAdaptor* newinteract = new modus::SvInteractAdaptor(LOGGERS.value(config.id)); // c reate_server(interact_cfg);
+        modus::SvInteractAdaptor* newinteract = new modus::SvInteractAdaptor(&dbus); // LOGGERS.value(config.id)); // c reate_server(interact_cfg);
 
         config.libpaths = JSON.json()->contains(P_LIBPATH) ? QString(QJsonDocument(JSON.json()->value(P_LIBPATH).toObject()).toJson(QJsonDocument::Compact)) : DEFAULT_LIBPATHS;
 

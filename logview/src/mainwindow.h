@@ -7,11 +7,10 @@
 #include <QFileDialog>
 #include <QDBusConnection>
 
-#include "../../../svlib/sv_widget_log.h"
 #include "../../global/global_defs.h"
-#include "../../global/misc/sv_dbus.h"
-
-#include "../../../svlib/sv_settings.h"
+#include "../../../svlib/SvWidgetLogger/1.1/sv_widget_logger.h"
+#include "../../../svlib/SvDBUS/1.0/sv_dbus.h"
+#include "../../../svlib/SvSettings/1.0/sv_settings.h"
 
 namespace Ui {
 class MainWindow;
@@ -52,7 +51,7 @@ private:
   SvException p_exception;
   bool _enable;
 
-  sv::log::sender _sender;
+//  sv::log::sender _sender();
 
   bool save();
 

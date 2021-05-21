@@ -1,6 +1,7 @@
 ﻿#include "sv_signal.h"
 
-modus::SvSignal::SvSignal(SignalConfig &config)
+modus::SvSignal::SvSignal(SignalConfig &config, sv::SvAbstractLogger *logger):
+  m_logger(logger)
 {
   configure(config);
   setValue(QVariant()); // обязательно инициализируем значением
@@ -21,6 +22,15 @@ void modus::SvSignal::setValue(const QVariant& value)
 
   if(m_config.timeout > 0)
     m_alive_age = m_last_update.toMSecsSinceEpoch() + m_config.timeout;
+
+  if(m_logger && m_logger->options().enable && m_logger->options().level >= sv::log::llDebug)
+    *m_logger << sv::log::sender(P_SIGNALS, m_config.id)
+              << sv::log::Level(sv::log::llDebug)
+              << sv::log::MessageTypes(sv::log::mtChange)
+              << sv::log::TimeZZZ
+              << QString("{\"id\":%1,\"name\":\"%2\",\"value\":\"%3\"").arg(m_config.id).arg(m_config.name).arg(m_value.toString())
+              << sv::log::endl;
+
 
   emit changed(this);
 

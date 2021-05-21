@@ -9,7 +9,7 @@
 #include <QJsonObject>
 
 #include "../device_defs.h"
-
+#include "../../../../svlib/SvAbstractLogger/1.2/sv_abstract_logger.h"
 
 namespace modus {
 

@@ -19,7 +19,7 @@ MainWindow::MainWindow(const AppConfig &cfg, QWidget *parent) :
   this->setWindowTitle(title);
   ui->labelSenderName->setText(title);
 
-  bool b = QDBusConnection::sessionBus().connect(QString(), QString(), DBUS_SERVER_NAME, "message", this, SLOT(messageSlot(const QString&,const QString&,const QString&)));
+  bool b = QDBusConnection::sessionBus().connect(QString(), QString("/%1").arg(P_SIGNALS), DBUS_SERVER_NAME, "message", this, SLOT(messageSlot(const QString&,const QString&,const QString&)));
 
   _enable = false;
   ui->bnSave->setEnabled(_enable);

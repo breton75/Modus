@@ -1,7 +1,8 @@
 ﻿#ifndef GLOBAL_DEFS_H
 #define GLOBAL_DEFS_H
 
-#include "../../svlib/SvAbstractLogger/1.1/sv_abstract_logger.h"
+#include <QDateTime>
+//#include "../../svlib/SvAbstractLogger/1.2/sv_abstract_logger.h"
 
 #define IMPERMISSIBLE_VALUE "Недопустимое значение параметра %1: %2.\n%3"
 #define MISSING_PARAM "Раздел \"%1\". Не задан обязательный параметр %2"

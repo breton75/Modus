@@ -248,7 +248,7 @@ namespace modus {
     bool            debug       = false;
     bool            debug2      = false;
     QString         comment     = "";
-    QSrting         logger      = "";
+    QString         logger      = "";
 
     static DeviceConfig fromJsonString(const QString& json_string) //throw (SvException)
     {
