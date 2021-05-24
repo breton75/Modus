@@ -5,7 +5,7 @@
 #include <QObject>
 #include <QThread>
 
-#include "../../../svlib/SvAbstractLogger/1.1/sv_abstract_logger.h"
+#include "../../../svlib/SvAbstractLogger/svabstractlogger.h"
 #include "../signal/sv_signal.h"
 
 #include "storage_config.h"

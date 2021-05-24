@@ -443,51 +443,25 @@ bool initConfig(AppConfig& appcfg)
 {
   // задаем параметры логирования по-умолчанию, чтобы видеть ошибки
   sv::log::Options log_options;
-  log_options.logging = true;
-  log_options.log_level = sv::log::llInfo;
+  log_options.enable = true;
+  log_options.level = sv::log::llInfo;
 
   dbus.setOptions(log_options);
 
   try {
 
-//    dbus << llinf << mtinf << me << QString("Читаем файл конфигурации %1: ").arg(appcfg.config_file_name) << sv::log::endl;
-
     if(!JSON.load(appcfg.config_file_name))
       throw SvException(JSON.lastError());
 
-//    QFile json_file(appcfg.config_file_name);
-//    if(!json_file.open(QIODevice::ReadWrite))
-//      throw SvException(json_file.errorString());
-
-//    /* загружаем json конфигурацию в QJSonDocument */
-//    QJsonParseError parse_error;
-
-//    QJsonDocument jdoc = QJsonDocument::fromJson(json_file.readAll(), &parse_error);
-
-//    if(parse_error.error != QJsonParseError::NoError)
-//      throw SvException(parse_error.errorString());
-
-//    JSON = jdoc.object();
-
     // читаем параметры логирования
-    if(JSON.json()->contains("logger")) {
+    if(JSON.json()->contains("logger") && JSON.json()->value("logger").isObject()) {
 
-      QJsonObject jl = JSON.json()->value("logger").toObject();
+      log_options = sv::log::Options::fromJsonObject(JSON.json()->value("logger").toObject());
 
-      log_options.logging = jl.contains(P_ENABLE) ? jl.value(P_ENABLE).toBool(true) : true;
-
-      if(log_options.logging) {
-
-        if(jl.contains(P_LOG_LEVEL) && jl.value(P_LOG_LEVEL).isString()) {
-
-          log_options.log_level = sv::log::stringToLevel(jl.value(P_LOG_LEVEL).toString());
-
-          if(log_options.log_level == sv::log::llUndefined)
-            throw SvException(QString(IMPERMISSIBLE_VALUE)
-                              .arg(P_LOG_LEVEL).arg(jl.value(P_LOG_LEVEL).toString())
-                              .arg("Допустимые значения: none, error, warning, info, debug, debug2, all"));
-        }
-      }
+      if(log_options.level == sv::log::llUndefined)
+        throw SvException(QString(IMPERMISSIBLE_VALUE)
+                          .arg(P_LOG_LEVEL).arg(JSON.json()->value("logger").toObject().value(P_LOG_LEVEL).toString())
+                          .arg("Допустимые значения: none, error, warning, info, debug, debug2, all"));
     }
 
     // задаем прочитанные параметры логирования
@@ -503,8 +477,6 @@ bool initConfig(AppConfig& appcfg)
 
     if(JSON.json()->contains("version"))
       dbus << llinf << mtdat << me << QString("Версия конфигурации %1\n").arg(JSON.json()->value("version").toString()) << sv::log::endl;
-
-//    dbus << llinf << mtscc << me << "OK\n" << sv::log::endl;
 
     return true;
 
@@ -583,10 +555,11 @@ bool readDevices(const AppConfig& appcfg)
     }
 
     if(counter == 0)
-      throw SvException("Устройства в конфигурации не найдены");
+      dbus << llinf << me << mterr << QString("Устройства в конфигурации не найдены") << sv::log::endl;
 
-    dbus << llinf << me << mtscc
-         << QString("OK [прочитано %1]\n").arg(counter) << sv::log::endl;
+    else
+      dbus << llinf << me << mtscc
+           << QString("OK [прочитано %1]\n").arg(counter) << sv::log::endl;
 
     return true;
 
@@ -862,7 +835,7 @@ bool readSignals(const AppConfig& appcfg)
     }
 
     /* выводим на экран для отладки */
-    if(dbus.options().log_level >= sv::log::llDebug2)
+    if(dbus.options().level >= sv::log::llDebug2)
     {
       foreach(modus::SvSignal* s, *(ENTITIES.Signals()->list()))
       {

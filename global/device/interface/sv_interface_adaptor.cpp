@@ -54,7 +54,7 @@ modus::SvAbstractInterface* modus::SvInterfaceAdaptor::create_interface()
 
     QJsonObject j = jdoc.object();
 
-    QString dir = j.contains(P_INTERFACES) ? j.value(P_INTERFACES).toString(DEFAULT_LIBPATH_INTERFACES)
+    QString dir = j.contains(P_PATH_INTERFACES) ? j.value(P_PATH_INTERFACES).toString(DEFAULT_LIBPATH_INTERFACES)
                                            : DEFAULT_LIBPATH_INTERFACES;
 
     QLibrary lib(QDir(dir).absoluteFilePath(m_config.interface.lib));

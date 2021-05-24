@@ -5,7 +5,7 @@
 #include <QDebug>
 
 #include "../../../svlib/SvException/1.1/sv_exception.h"
-#include "../../../svlib/SvAbstractLogger/1.1/sv_abstract_logger.h"
+#include "../../../svlib/SvAbstractLogger/svabstractlogger.h"
 
 #include "../signal/sv_signal.h"
 #include "interface/sv_interface_adaptor.h"
@@ -157,10 +157,8 @@ signals:
 private slots:
   void log(const QString msg, int level = sv::log::llDebug, int type  = sv::log::mtDebug)
   {
-//    qDebug() << msg;
-
-    if(m_logger)
-      *m_logger << sv::log::sender(m_config.name)
+    if(m_logger && level <= m_logger->options().level)
+      *m_logger << sv::log::sender(P_DEVICES, m_config.id)
                 << sv::log::TimeZZZ
                 << sv::log::Level(level)
                 << sv::log::MessageTypes(type)

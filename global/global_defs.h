@@ -2,12 +2,20 @@
 #define GLOBAL_DEFS_H
 
 #include <QDateTime>
-//#include "../../svlib/SvAbstractLogger/1.2/sv_abstract_logger.h"
 
 #define IMPERMISSIBLE_VALUE "Недопустимое значение параметра %1: %2.\n%3"
 #define MISSING_PARAM "Раздел \"%1\". Не задан обязательный параметр %2"
 
 #define DEFAULT_BUFFER_SIZE 4096
+
+// сущности
+#define P_DEVICES     "devices"
+#define P_INTERFACES  "interface"
+#define P_PROTOCOLS   "protocol"
+#define P_STORAGES    "storages"
+#define P_INTERACTS   "interacts"
+#define P_LOGICS      "logics"
+#define P_SIGNALS     "signals"
 
 // имена полей общие
 #define P_ID          "id"
@@ -21,7 +29,6 @@
 #define P_COMMENT     "comment"
 #define P_TYPE        "type"
 #define P_PARAMS      "params"
-#define P_SIGNALS     "signals"
 #define P_INTERVAL    "interval"
 #define P_INTERFACE   "interface"
 #define P_PROTOCOL    "protocol"
@@ -34,7 +41,6 @@
 #define P_GROUP       "group"
 #define P_USECASE     "usecase"
 #define P_DEVICE      "device"
-#define P_STORAGES    "storages"
 #define P_FILE        "file"
 #define P_TAG         "tag"
 #define P_PACKID      "packid"
@@ -85,12 +91,12 @@
 #define P_LOG_LEVEL   "level"
 
 // paths
-#define P_LIBPATH     "libpath"
-#define P_INTERFACES  "interfaces"
-#define P_PROTOCOLS   "protocols"
-#define P_INTERACTS   "interacts"
-#define P_STORAGES    "storages"
-#define P_CALCULATORS "calculators"
+#define P_LIBPATH        "libpath"
+#define P_PATH_INTERFACES  "interfaces"
+#define P_PATH_PROTOCOLS   "protocols"
+#define P_PATH_INTERACTS   "interacts"
+#define P_PATH_STORAGES    "storages"
+#define P_PATH_CALCULATORS "calculators"
 
 #define DEFAULT_LIBPATH_PROTOCOLS   "lib/protocols"
 #define DEFAULT_LIBPATH_INTERFACES  "lib/interfaces"
@@ -98,11 +104,11 @@
 #define DEFAULT_LIBPATH_INTERACTS   "lib/interacts"
 #define DEFAULT_LIBPATH_CALCULATORS "lib/calculators"
 #define DEFAULT_LIBPATHS "{ "\
-  "\"protocols\": \""   DEFAULT_LIBPATH_PROTOCOLS   "\", "\
-  "\"interfaces\": \""  DEFAULT_LIBPATH_INTERFACES  "\", "\
-  "\"storages\": \""    DEFAULT_LIBPATH_STORAGES    "\", "\
-  "\"interacts\": \""   DEFAULT_LIBPATH_INTERACTS   "\", "\
-  "\"calculators\": \"" DEFAULT_LIBPATH_CALCULATORS "\" }"
+  "\"" P_PATH_PROTOCOLS "\": \""   DEFAULT_LIBPATH_PROTOCOLS   "\", "\
+  "\"" P_PATH_INTERFACES "\": \""  DEFAULT_LIBPATH_INTERFACES  "\", "\
+  "\"" P_PATH_STORAGES "\": \""    DEFAULT_LIBPATH_STORAGES    "\", "\
+  "\"" P_PATH_INTERACTS "\": \""   DEFAULT_LIBPATH_INTERACTS   "\", "\
+  "\"" P_PATH_CALCULATORS "\": \"" DEFAULT_LIBPATH_CALCULATORS "\" }"
 
 #define llerr sv::log::llError
 

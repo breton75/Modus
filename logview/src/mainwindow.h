@@ -7,6 +7,11 @@
 #include <QFileDialog>
 #include <QDBusConnection>
 
+#include <QJsonArray>
+#include <QJsonObject>
+#include <QJsonDocument>
+#include <QJsonParseError>
+
 #include "../../global/global_defs.h"
 #include "../../../svlib/SvWidgetLogger/1.1/sv_widget_logger.h"
 #include "../../../svlib/SvDBUS/1.0/sv_dbus.h"
@@ -43,6 +48,8 @@ private slots:
 
 
   void on_textLog_textChanged();
+
+  void on_bnApplyFilter_clicked();
 
 private:
   Ui::MainWindow *ui;

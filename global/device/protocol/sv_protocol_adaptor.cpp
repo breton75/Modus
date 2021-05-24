@@ -59,7 +59,7 @@ modus::SvAbstractProtocol* modus::SvProtocolAdaptor::create_protocol()
 
     QJsonObject j = jdoc.object();
 
-    QString dir = j.contains(P_PROTOCOLS) ? j.value(P_PROTOCOLS).toString(DEFAULT_LIBPATH_PROTOCOLS)
+    QString dir = j.contains(P_PATH_PROTOCOLS) ? j.value(P_PATH_PROTOCOLS).toString(DEFAULT_LIBPATH_PROTOCOLS)
                                           : DEFAULT_LIBPATH_PROTOCOLS;
 
     QLibrary lib(QDir(dir).absoluteFilePath(m_config.protocol.lib));

@@ -19,13 +19,13 @@ MainWindow::MainWindow(const AppConfig &cfg, QWidget *parent) :
   this->setWindowTitle(title);
   ui->labelSenderName->setText(title);
 
-  bool b = QDBusConnection::sessionBus().connect(QString(), QString("/%1").arg(P_SIGNALS), DBUS_SERVER_NAME, "message", this, SLOT(messageSlot(const QString&,const QString&,const QString&)));
+  bool b = QDBusConnection::sessionBus().connect(QString(), QString("/%1").arg(""), DBUS_SERVER_NAME, "message", this, SLOT(messageSlot(const QString&,const QString&,const QString&)));
 
   _enable = false;
   ui->bnSave->setEnabled(_enable);
 
   // читаем файл конфигурации
-  frame->setupUi(ui->frameSettings);
+//  frame->setupUi(ui->frameSettings);
 
   AppParams::loadLayout(this);
 
@@ -139,3 +139,32 @@ void MainWindow::on_textLog_textChanged()
 {
   ui->bnSave->setEnabled(!_enable && ui->textLog->document()->isModified());
 }
+
+void MainWindow::on_bnApplyFilter_clicked()
+{
+  QJsonParseError je;
+  QJsonDocument jd = QJsonDocument::fromJson(ui->textEdit->toPlainText().toUtf8(), &je);
+
+  if(je.error != QJsonParseError::NoError) {
+
+    QMessageBox::critical(this, "Error", je.errorString());
+    return;
+
+  }
+
+  QJsonObject jo = jd.object();
+
+  QString entity = jo.contains("entity") ? jo.value("entity").toString("undef") : "undef";
+  int id = jo.contains("id") ? jo.value("id").toInt(0) : 0;
+  sv::log::MessageTypes type = jo.contains("type") ? sv::log::stringToType(jo.value("type").toString()) : sv::log::mtAny;
+  QString pattern = jo.contains("pattern") ? jo.value("pattern").toString("") : "";
+
+
+
+
+}
+
+
+
+
+

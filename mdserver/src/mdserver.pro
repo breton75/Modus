@@ -55,7 +55,9 @@ HEADERS += \
     ../../../svlib/SvAbstractLogger/1.2/sv_abstract_logger.h \
     ../../../svlib/SvConfig/1.1/sv_config.h \
     ../../../svlib/SvDBUS/1.0/sv_dbus.h \
-    entities.h
+    entities.h \
+    ../../../svlib/SvAbstractLogger/svabstractlogger.h \
+    ../../../svlib/SvException/svexception.h
 #    sv_dbus.h
 
 DISTFILES +=

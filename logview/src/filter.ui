@@ -32,7 +32,7 @@
       <item>
        <widget class="QLabel" name="label">
         <property name="text">
-         <string>Тип</string>
+         <string>Ветка</string>
         </property>
        </widget>
       </item>
@@ -50,6 +50,11 @@
         <item>
          <property name="text">
           <string>Устройство</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Сигнал</string>
          </property>
         </item>
         <item>
@@ -72,12 +77,29 @@
       <item>
        <widget class="QLabel" name="label_2">
         <property name="text">
-         <string>Id</string>
+         <string>Идентификатор</string>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QComboBox" name="cbId">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>Тип сообщений</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QComboBox" name="cbId_2">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
           <horstretch>0</horstretch>
