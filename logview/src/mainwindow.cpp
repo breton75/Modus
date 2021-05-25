@@ -19,13 +19,17 @@ MainWindow::MainWindow(const AppConfig &cfg, QWidget *parent) :
   this->setWindowTitle(title);
   ui->labelSenderName->setText(title);
 
-  bool b = QDBusConnection::sessionBus().connect(QString(), QString("/%1").arg(""), DBUS_SERVER_NAME, "message", this, SLOT(messageSlot(const QString&,const QString&,const QString&)));
+  bool b = QDBusConnection::sessionBus().connect(QString(), QString("/%1").arg("main"), DBUS_SERVER_NAME, "message", this, SLOT(messageSlot(const QString&,const QString&,const QString&)));
 
   _enable = false;
-  ui->bnSave->setEnabled(_enable);
+  on_bnStartStop_clicked();
+//  ui->bnSave->setEnabled(!_enable);
 
   // читаем файл конфигурации
 //  frame->setupUi(ui->frameSettings);
+
+  connect(&m_status_timer, &QTimer::timeout, this, &MainWindow::checkStatus);
+  m_status_timer.start(500);
 
   AppParams::loadLayout(this);
 
@@ -39,12 +43,11 @@ MainWindow::~MainWindow()
   delete ui;
 }
 
-void MainWindow::messageSlot(const QString& sender, const QString& message, const QString& type)
+void MainWindow::messageSlot(const QString& id, const QString& type, const QString& message)
 {
 //  qDebug() << sender << _config.log_options.log_sender_name_format;
-//  if(_config.device_index == -1 || (_config.device_index > 0 && sender == _sender.name))
+
     log << sv::log::stringToType(type) << QString("%1").arg(message) << sv::log::endl;
-//  if(sender == _sender.name)
 
 }
 
@@ -142,29 +145,104 @@ void MainWindow::on_textLog_textChanged()
 
 void MainWindow::on_bnApplyFilter_clicked()
 {
-  QJsonParseError je;
-  QJsonDocument jd = QJsonDocument::fromJson(ui->textEdit->toPlainText().toUtf8(), &je);
+  try {
 
-  if(je.error != QJsonParseError::NoError) {
+    QJsonParseError je;
+    QJsonDocument jd = QJsonDocument::fromJson(ui->textEdit->toPlainText().toUtf8(), &je);
 
-    QMessageBox::critical(this, "Error", je.errorString());
-    return;
+    if(je.error != QJsonParseError::NoError)
+      throw SvException(je.errorString());
+
+    QJsonObject jo = jd.object();
+
+    if(!jo.contains("filters"))
+      throw SvException("Неверный формат фильтра. Отсутствует ключ 'filters'");
+
+    if(!jo.value("filters").isArray())
+      throw SvException("Неверный формат фильтра. 'filters' не массив.");
+
+    foreach (Filter* filter, m_filters) {
+      disconnect(filter, &Filter::message, this, &MainWindow::messageSlot);
+      delete filter;
+    }
+
+    m_filters.clear();
+
+    QJsonArray ja = jo.value("filters").toArray();
+
+    for(QJsonValue jv: ja) {
+
+      QJsonObject o = jv.toObject();
+
+      QString entity = o.contains("entity") ? o.value("entity").toString("undef") : "undef";
+      int id = o.contains("id") ? o.value("id").toInt(0) : 0;
+      sv::log::MessageTypes type = o.contains("type") ? sv::log::stringToType(o.value("type").toString()) : sv::log::mtAny;
+      QString pattern = o.contains("pattern") ? o.value("pattern").toString("") : "";
+
+      Filter *filter = new Filter(entity, id, type, pattern);
+      m_filters.append(filter);
+
+      QDBusConnection::sessionBus().connect(QString(), QString("/%1").arg(entity), DBUS_SERVER_NAME, "message", filter, SLOT(messageSlot(const QString&,const QString&,const QString&)));
+      connect(filter, &Filter::message, this, &MainWindow::messageSlot);
+
+    }
+  }
+
+  catch(SvException& e) {
+
+    QMessageBox::critical(this, "Error", e.error);
+
+  }
+}
+
+void MainWindow::on_actionStartStopServer_triggered()
+{
+  ui->actionStartStopServer->setEnabled(false);
+  qApp->processEvents();
+
+  if(!serverStatus())
+    QProcess::startDetached(QString("sudo ./mdserver start -config=%1").arg(ui->lineConfigPath->text()));
+
+  else
+    QProcess::startDetached(QString("sudo ./mdserver stop"));
+
+//  sleep(1); // ждем,чтобы сервер запустился
+
+
+  ui->actionStartStopServer->setEnabled(true);
+
+  if(!ui->textLog->document()->toPlainText().trimmed().isEmpty()) {
+
+    ui->bnSave->setEnabled(!_enable);
+    ui->textLog->append("\n");
+  }
+}
+
+bool MainWindow::serverStatus()
+{
+  bool status = false;
+  QProcess p;
+//  connect(&p, &QProcess::readyRead, this, &MainWindow::readyRead);
+  p.start("sudo ./mdserver status");
+
+  if(p.waitForReadyRead()) {
+
+    QByteArray b = p.readAll();
+//    qDebug() << QString(b) << b.split('\n').count();
+    status = b.split('\n').count() > 2 && b.split('\n').at(1).contains("PID");
 
   }
 
-  QJsonObject jo = jd.object();
+  p.close();
 
-  QString entity = jo.contains("entity") ? jo.value("entity").toString("undef") : "undef";
-  int id = jo.contains("id") ? jo.value("id").toInt(0) : 0;
-  sv::log::MessageTypes type = jo.contains("type") ? sv::log::stringToType(jo.value("type").toString()) : sv::log::mtAny;
-  QString pattern = jo.contains("pattern") ? jo.value("pattern").toString("") : "";
-
-
-
-
+  return status;
 }
 
+void MainWindow::checkStatus()
+{
+  if(serverStatus())
+    ui->actionStartStopServer->setIcon(QIcon(":/iconixar/icons/iconixar/stop.png"));
 
-
-
-
+  else
+    ui->actionStartStopServer->setIcon(QIcon(":/iconixar/icons/iconixar/play.png"));
+}

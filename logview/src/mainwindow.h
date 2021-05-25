@@ -17,6 +17,8 @@
 #include "../../../svlib/SvDBUS/1.0/sv_dbus.h"
 #include "../../../svlib/SvSettings/1.0/sv_settings.h"
 
+#include "filter.h"
+
 namespace Ui {
 class MainWindow;
 class Frame;
@@ -44,12 +46,13 @@ private slots:
 
   void on_bnClear_clicked();
 
-  void messageSlot(const QString& sender, const QString& message, const QString &type);
 
 
   void on_textLog_textChanged();
 
   void on_bnApplyFilter_clicked();
+
+  void on_actionStartStopServer_triggered();
 
 private:
   Ui::MainWindow *ui;
@@ -58,9 +61,26 @@ private:
   SvException p_exception;
   bool _enable;
 
-//  sv::log::sender _sender();
+  bool m_server_started;
+
+//  QMap<QString, Filter*> m_filters;
+  QList<Filter*> m_filters;
+
+  QTimer m_status_timer;
 
   bool save();
+  bool serverStatus();
+
+public slots:
+  void messageSlot(const QString& id, const QString &type, const QString& message);
+//  void messageDevice(const QString& id, const QString &type, const QString& message);
+//  void messageStorage(const QString& id, const QString &type, const QString& message);
+//  void messageInteract(const QString& id, const QString &type, const QString& message);
+//  void messageSignal(const QString& id, const QString &type, const QString& message);
+//  void messageLogic(const QString& id, const QString &type, const QString& message);
+
+  void checkStatus();
+
 
 };
 

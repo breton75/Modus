@@ -349,7 +349,7 @@ int main(int argc, char *argv[])
   // инициализируем dbus ПОСЛЕ запуска потомка
 //  modus_dbus_ifc = new org::ame::modus(org::ame::modus::staticInterfaceName(), "/", QDBusConnection::sessionBus(), 0);
 
-  dbus.init("/main");
+  dbus.init("/");
   dbus.setDebugMode(cfg.debug);
 
   QDir::setCurrent(qApp->applicationDirPath());
@@ -444,10 +444,11 @@ bool initConfig(AppConfig& appcfg)
   // задаем параметры логирования по-умолчанию, чтобы видеть ошибки
   sv::log::Options log_options;
   log_options.enable = true;
-  log_options.level = sv::log::llInfo;
+  log_options.level = sv::log::llDebug;
 
   dbus.setOptions(log_options);
-
+  qDebug() << "dsdsdsdsdsdsd";
+dbus << llinf << mtscc << me << QString("dsdsdsdsdsdsd") << sv::log::endl;
   try {
 
     if(!JSON.load(appcfg.config_file_name))
