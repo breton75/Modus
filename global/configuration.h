@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QFile>
+#include<QFileInfo>
 
 #include "../../../svlib/SvException/1.1/sv_exception.h"
 
@@ -20,6 +21,8 @@ namespace modus {
 
         if(!load(filename))
           throw SvException(m_last_error);
+
+        m_file_path = QFileInfo(filename).absoluteFilePath();
 
       } catch (SvException& e) {
 
@@ -78,9 +81,13 @@ namespace modus {
       return &m_lines;
     }
 
+    const QString path() const { m_file_path; }
+
   private:
     QJsonObject                                m_json;
     QList<QByteArray>                          m_lines;
+
+    QString                                    m_file_path;
 
     QString                                    m_last_error = "";
 

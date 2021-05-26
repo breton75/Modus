@@ -18,6 +18,8 @@
 #include "../../../svlib/SvSettings/1.0/sv_settings.h"
 
 #include "filter.h"
+#include "treeitem.h"
+#include "treemodel.h"
 
 namespace Ui {
 class MainWindow;
@@ -68,8 +70,24 @@ private:
 
   QTimer m_status_timer;
 
+  TreeModel* m_model = nullptr;
+
+  TreeItem* _standRoot;
+  TreeItem* _devicesRoot;
+  TreeItem* _storagesRoot;
+  TreeItem* _servicesRoot;
+  TreeItem* _general_info;
+  TreeItem* _autostart;
+  TreeItem* _ksuts_config;
+  TreeItem* _ksuts_logger;
+
+  QMap<QString, Configuration> m_configurations;
+
   bool save();
   bool serverStatus();
+
+  bool initConfig();
+  bool makeTree(QString config_file);
 
 public slots:
   void messageSlot(const QString& id, const QString &type, const QString& message);

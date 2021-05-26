@@ -242,7 +242,7 @@ int server_operate(const QStringList& args, AppConfig& cfg)
 
         for(pid_t pid: pids)
         {
-          SvResult rs = execute(QString("ps -p %1 -o pid,start=\"Started\",etime=\"RunningTime\",sz=\"Memory\"").arg(pid));
+          SvResult rs = execute(QString("ps -p %1 -o pid,start=\"Started\",etime=\"RunningTime\",sz=\"Memory\",cmd=\"Cmd\"").arg(pid));
 
           if(rs.type == SvResult::OK)
             std::cout << QString("Сервер запущен\n%1\n").arg(rs.text).toStdString();
@@ -447,8 +447,7 @@ bool initConfig(AppConfig& appcfg)
   log_options.level = sv::log::llDebug;
 
   dbus.setOptions(log_options);
-  qDebug() << "dsdsdsdsdsdsd";
-dbus << llinf << mtscc << me << QString("dsdsdsdsdsdsd") << sv::log::endl;
+
   try {
 
     if(!JSON.load(appcfg.config_file_name))

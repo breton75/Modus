@@ -12,6 +12,8 @@ MainWindow::MainWindow(const AppConfig &cfg, QWidget *parent) :
   ui->textLog->document()->setMaximumBlockCount(10000);
   log.setTextEdit(ui->textLog);
 
+
+
   _config =  cfg;
 
   QString title = "";
@@ -31,7 +33,176 @@ MainWindow::MainWindow(const AppConfig &cfg, QWidget *parent) :
   connect(&m_status_timer, &QTimer::timeout, this, &MainWindow::checkStatus);
   m_status_timer.start(500);
 
+
+  m_model = new TreeModel(QStringList() << "<Имя", ui->treeView);
+  ui->treeView->setModel(m_model);
+
+  initConfig();
+
   AppParams::loadLayout(this);
+
+}
+
+
+bool MainWindow::initConfig()
+{
+  QFile json_file("modus.json");
+
+  try {
+
+    if(!json_file.open(QIODevice::ReadOnly))
+      throw SvException(json_file.errorString());
+
+    /* загружаем json конфигурацию в QJSonDocument */
+    QJsonParseError parse_error;
+    QByteArray json = json_file.readAll();
+    QJsonDocument jdoc = QJsonDocument::fromJson(json, &parse_error);
+
+    if(parse_error.error != QJsonParseError::NoError)
+      throw SvException(parse_error.errorString());
+
+    QJsonObject jo = jdoc.object();
+
+    // читаем параметры логирования
+    if(jo.contains("configurations") && jo.value("configurations").isArray()) {
+
+      for(QJsonValue jv: jo.value("configurations").toArray()) {
+
+        QJsonObject o = jv.toObject();
+
+        QString config_file = o.contains("file") ? o.value("file").toString() : "";
+
+        TreeItem* newcfg = m_model->rootItem()->insertChildren(m_model->rootItem()->childCount(), 1, m_model->rootItem()->columnCount());
+        newcfg->parent_index = m_model->rootItem()->index;
+        newcfg->is_main_row = true;
+        newcfg->item_type = itStandRoot;
+        newcfg->setData(0, config_file);
+
+        for(int i = 0; i < m_model->rootItem()->columnCount(); i++)
+          newcfg->setInfo(i, ItemInfo());
+
+        newcfg->setInfo(0, ItemInfo(itConfig, ""));
+
+      }
+
+    }
+
+
+//    // выводим информация о конфигурации
+//    dbus << llinf << mtscc << me << QString(50, '-') << sv::log::endl;
+//    dbus << llinf << mtscc << me << QString("Сервер сбора и обработки данных Modus v.%1").arg(APP_VERSION)
+//           << sv::log::endl;
+
+//    if(JSON.json()->contains("info"))
+//      dbus << llinf << mtdat << me << JSON.json()->value("info").toString() << sv::log::endl;
+
+//    if(JSON.json()->contains("version"))
+//      dbus << llinf << mtdat << me << QString("Версия конфигурации %1\n").arg(JSON.json()->value("version").toString()) << sv::log::endl;
+
+    return true;
+
+  }
+
+  catch(SvException& e) {
+
+    log << llerr << sv::log::mtError << QString("Ошибка: %1\n").arg(e.error) << sv::log::endl;
+    return false;
+  }
+}
+
+
+bool MainWindow::makeTree(QString config_file)
+{
+  int column_count = m_model->rootItem()->columnCount();
+
+  try {
+
+    m_model->clear();
+
+    _standRoot = m_model->rootItem()->insertChildren(m_model->rootItem()->childCount(), 1, column_count);
+    _standRoot->parent_index = m_model->rootItem()->index;
+    _standRoot->is_main_row = true;
+    _standRoot->item_type = itStandRoot;
+    _standRoot->setData(1, "Конфигурация пульта");
+//    _standRoot->setData(0, QString(" "));
+    for(int i = 0; i < column_count; i++) _standRoot->setInfo(i, ItemInfo());
+    _standRoot->setInfo(0, ItemInfo(itStandRootIcon, ""));
+
+
+    /** разделитель 1 **/
+    TreeItem* div1 = m_model->rootItem()->insertChildren(m_model->rootItem()->childCount(), 1, column_count);
+    div1->parent_index = m_model->rootItem()->index;
+    div1->item_type = itUndefined;
+    div1->setData(1, QString(100, ' '));
+
+
+    /**      группа "Устройства"      */
+    _devicesRoot = m_model->rootItem()->insertChildren(m_model->rootItem()->childCount(), 1, column_count);
+    _devicesRoot->parent_index = m_model->rootItem()->index;
+    _devicesRoot->is_main_row = true;
+    _devicesRoot->item_type = itDevicesRoot;
+    for(int i = 0; i < column_count; i++) _devicesRoot->setInfo(i, ItemInfo());
+    _devicesRoot->setInfo(0, ItemInfo(itDevicesRootIcon, ""));
+//    _devicesRoot->setData(0, QString(" "));
+    // определяем общее кол-во и кол-во привязанных устройств для этой стойки
+//    serr = PGDB->execSQL(QString(SQL_SELECT_DEVICES_COUNT_STR), q);
+//    if(serr.type() != QSqlError::NoError) _exception.raise(serr.text());
+//    q->first();
+
+    _devicesRoot->setData(1, QString("Устройства %1").arg(0));
+
+//    q->finish();
+
+//    // заполняем список устройств
+//    pourDevicesToRoot(_devicesRoot);
+
+//    // заполняем список сигналов
+//    pourSignalsToDevices(_devicesRoot);
+
+    /** разделитель 2 **/
+    TreeItem* div2 = m_model->rootItem()->insertChildren(m_model->rootItem()->childCount(), 1, column_count);
+    div2->parent_index = m_model->rootItem()->index;
+    div2->item_type = itUndefined;
+    div2->setData(1, QString(100, ' '));
+
+
+    /**    группа "Хранилища"       **/
+//    _storagesRoot = m_model->rootItem()->insertChildren(m_model->rootItem()->childCount(), 1, column_count);
+//    _storagesRoot->parent_index = m_model->rootItem()->index;
+//    _storagesRoot->is_main_row = true;
+//    _storagesRoot->item_type = itStoragesRoot;
+//    _storagesRoot->setData(1, QString("Хранилища"));
+////    _storagesRoot->setData(0, QString(" "));
+//    for(int i = 0; i < column_count; i++) _storagesRoot->setInfo(i, ItemInfo());
+//    _storagesRoot->setInfo(0, ItemInfo(itStoragesRootIcon, ""));
+
+
+//    // читаем все! хранилища
+//    pourStoragesToRoot(_storagesRoot);
+
+//    // заполняем список устройств
+//    pourDevicesToStorages(_storagesRoot);
+
+//    // сигналы
+//    pourSignalsToStorages(_storagesRoot);
+
+
+    ui->treeView->expandToDepth(0);
+
+    return true;
+
+  }
+
+  catch(SvException& e) {
+
+//    q->finish();
+//    delete q;
+
+    log << sv::log::Time << sv::log::mtCritical << e.error << sv::log::endl;
+
+    return false;
+
+  }
 
 }
 
@@ -45,7 +216,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::messageSlot(const QString& id, const QString& type, const QString& message)
 {
-//  qDebug() << sender << _config.log_options.log_sender_name_format;
+  qDebug() << sender(); // << _config.log_options.log_sender_name_format;
 
     log << sv::log::stringToType(type) << QString("%1").arg(message) << sv::log::endl;
 

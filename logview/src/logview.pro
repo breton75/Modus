@@ -25,7 +25,9 @@ SOURCES += main.cpp\
     ../../../svlib/SvDBUS/1.0/sv_dbus.cpp \
     ../../../svlib/SvWidgetLogger/1.1/sv_widget_logger.cpp \
     ../../../svlib/SvSettings/1.0/sv_settings.cpp \
-    filter.cpp
+    filter.cpp \
+    treemodel.cpp \
+    treeitem.cpp
 
 HEADERS  += mainwindow.h \
     ../../global/global_defs.h \
@@ -33,7 +35,9 @@ HEADERS  += mainwindow.h \
     ../../../svlib/SvAbstractLogger/1.2/sv_abstract_logger.h \
     ../../../svlib/SvWidgetLogger/1.1/sv_widget_logger.h \
     ../../../svlib/SvSettings/1.0/sv_settings.h \
-    filter.h
+    filter.h \
+    treeitem.h \
+    treemodel.h
 
 FORMS    += mainwindow.ui \
     filter.ui
