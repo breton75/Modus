@@ -371,14 +371,12 @@ void MainWindow::on_actionStartStopServer_triggered()
   ui->actionStartStopServer->setEnabled(false);
   qApp->processEvents();
 
-  if(!serverStatus())
+  if(!serverStatus().running)
     QProcess::startDetached(QString("sudo ./mdserver start -config=%1").arg(ui->lineConfigPath->text()));
 
-  else
+  else {
     QProcess::startDetached(QString("sudo ./mdserver stop"));
-
-//  sleep(1); // ждем,чтобы сервер запустился
-
+  }
 
   ui->actionStartStopServer->setEnabled(true);
 
@@ -389,19 +387,77 @@ void MainWindow::on_actionStartStopServer_triggered()
   }
 }
 
-bool MainWindow::serverStatus()
+ServerStatus MainWindow::serverStatus()
 {
-  bool status = false;
+  // если сервер запущен, то возвращает описание состояния. иначе пустую структуру
+  ServerStatus status = ServerStatus();
+
   QProcess p;
 //  connect(&p, &QProcess::readyRead, this, &MainWindow::readyRead);
-  p.start("sudo ./mdserver status");
+//  p.execute("sudo ps -A -o cmd | grep -e mdserver[[:blank:]+][[:alpha:]-]");
+  p.start("ps -C mdserver --no-headers -o pid,pcpu,size,cmd");
 
-  if(p.waitForReadyRead()) {
+  if(p.waitForFinished()) {
 
-    QByteArray b = p.readAll();
-//    qDebug() << QString(b) << b.split('\n').count();
-    status = b.split('\n').count() > 2 && b.split('\n').at(1).contains("PID");
+    QString expr = QString(p.readAllStandardOutput());
 
+    p.close();
+
+    QRegularExpressionMatch match = m_re_with_config.match(expr);
+qDebug() << expr<<match.hasMatch();
+    if(match.hasMatch()) {
+
+      qDebug() << "match 1";
+
+      status.running  = true;
+      status.pid      = match.captured("pid");
+      status.cpu      = match.captured("cpu");
+      status.mem      = match.captured("mem");
+      status.path     = match.captured("path");
+      status.config   = match.captured("config");
+
+      return status;
+
+    }
+
+    match = m_re_no_config.match(expr);
+
+    if(match.hasMatch()) {
+
+      status.running  = true;
+      status.pid      = match.captured("pid");
+      status.cpu      = match.captured("cpu");
+      status.mem      = match.captured("mem");
+      status.path     = match.captured("path");
+      status.config   = "config.json";
+
+      return status;
+
+    }
+
+
+
+//    if(match.hasMatch()) {
+
+//      json = QString(match.captured("json").toStdString().c_str());
+//      return json;
+//    }
+
+//    match = m_re2.match(expr);
+
+//    if(match.hasMatch()) {
+
+//      json = QString(match.captured("json").toStdString().c_str());
+//      return json;
+//    }
+
+//    match = m_re3.match(expr);
+
+//    if(match.hasMatch()) {
+
+//      json = "config.json";
+//      return json;
+//    }
   }
 
   p.close();
@@ -411,9 +467,28 @@ bool MainWindow::serverStatus()
 
 void MainWindow::checkStatus()
 {
-  if(serverStatus())
+  ServerStatus status = serverStatus();
+
+  if(!status.running) {
+
+    ui->actionStartStopServer->setIcon(QIcon(":/iconixar/icons/iconixar/play.png"));
+
+    for(int i = 0; i < m_model->rootItem()->childCount(); i++)
+      m_model->rootItem()->child(i)->setInfo(0, ItemInfo(ItemTypes::itConfig, ""));
+
+  }
+
+  else {
     ui->actionStartStopServer->setIcon(QIcon(":/iconixar/icons/iconixar/stop.png"));
 
-  else
-    ui->actionStartStopServer->setIcon(QIcon(":/iconixar/icons/iconixar/play.png"));
+    for(int i = 0; i < m_model->rootItem()->childCount(); i++) {
+
+      qDebug() << m_model->rootItem()->child(i)->data(0).toString() << status.config;
+      if(m_model->rootItem()->child(i)->data(0).toString() == status.config) {
+
+        m_model->rootItem()->child(i)->setInfo(0, ItemInfo(ItemTypes::itStandInfo, ""));
+      }
+
+    }
+  }
 }

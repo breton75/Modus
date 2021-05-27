@@ -26,6 +26,21 @@ class MainWindow;
 class Frame;
 }
 
+struct ServerStatus {
+
+  ServerStatus() :
+    running(false),pid(""),cpu(""),mem(""),path(""),config("")
+  {  }
+
+  bool    running;
+  QString pid;
+  QString cpu;
+  QString mem;
+  QString path;
+  QString config;
+
+};
+
 class MainWindow : public QMainWindow
 {
   Q_OBJECT
@@ -81,10 +96,23 @@ private:
   TreeItem* _ksuts_config;
   TreeItem* _ksuts_logger;
 
-  QMap<QString, Configuration> m_configurations;
+//  QMap<QString, Configuration> m_configurations;
+
+//  QRegularExpression m_re1 = QRegularExpression("[.]{0,}mdserver[ ]+[\\w |-]{0,}-config[ ]{0,}=[ ]{0,}(?<json>[\\w\\s\\W]+.json)");
+//  QRegularExpression m_re2 = QRegularExpression("[.]{0,}mdserver[ ]+[\\w |-]{0,}-config[ ]{1,}(?<json>[\\w\\s\\W]+.json)");
+//  QRegularExpression m_re3 = QRegularExpression("[.]{0,}mdserver[ ]+[\\w |-]{0,}start[\\w |-]{0,}");
+
+  QRegularExpression m_re_with_config = QRegularExpression("[\\s]{0,}(?<pid>[\\d]+)[\\s]+(?<cpu>[\\d]+.[\\d]+)"
+                                               "[\\s]+(?<mem>[\\d]+)[\\s]+(?<path>[\\w\\W\\s]+)mdserver"
+                                               "[\s]+[\w |-]{0,}-config[ |=]{1,}(?<config>[\w\s\W]+.json)");
+
+  QRegularExpression m_re_no_config = QRegularExpression("[\\s]{0,}(?<pid>[\\d]+)[\\s]+(?<cpu>[\\d]+.[\\d]+)"
+                                               "[\\s]+(?<mem>[\\d]+)[\\s]+(?<path>[\\w\\W\\s]+)mdserver"
+                                               "[\\s]+[\\w |-]{0,}start[\\w |-]{0,}");
+
 
   bool save();
-  bool serverStatus();
+  ServerStatus serverStatus();
 
   bool initConfig();
   bool makeTree(QString config_file);
