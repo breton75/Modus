@@ -57,19 +57,18 @@ protected:
     virtual void closeEvent(QCloseEvent *e) Q_DECL_OVERRIDE;
 
 private slots:
-  void on_bnSave_clicked();
-
-  void on_bnStartStop_clicked();
-
-  void on_bnClear_clicked();
-
-
 
   void on_textLog_textChanged();
 
-  void on_bnApplyFilter_clicked();
-
   void on_actionStartStopServer_triggered();
+
+  void on_actionSaveLog_triggered();
+
+  void on_actionApplyFilter_triggered();
+
+  void on_actionAuth_triggered();
+
+  void on_treeView_doubleClicked(const QModelIndex &index);
 
 private:
   Ui::MainWindow *ui;
@@ -102,20 +101,24 @@ private:
 //  QRegularExpression m_re2 = QRegularExpression("[.]{0,}mdserver[ ]+[\\w |-]{0,}-config[ ]{1,}(?<json>[\\w\\s\\W]+.json)");
 //  QRegularExpression m_re3 = QRegularExpression("[.]{0,}mdserver[ ]+[\\w |-]{0,}start[\\w |-]{0,}");
 
-  QRegularExpression m_re_with_config = QRegularExpression("[\\s]{0,}(?<pid>[\\d]+)[\\s]+(?<cpu>[\\d]+.[\\d]+)"
-                                               "[\\s]+(?<mem>[\\d]+)[\\s]+(?<path>[\\w\\W\\s]+)mdserver"
-                                               "[\s]+[\w |-]{0,}-config[ |=]{1,}(?<config>[\w\s\W]+.json)");
+  QRegularExpression m_re_with_config = QRegularExpression("[\\s]{0,}(?<pid>[\\d]+)[\\s]+(?<cpu>[\\d]+.[\\d]+)"\
+                                               "[\\s]+(?<mem>[\\d]+)[\\s]+(?<path>[\\w\\W\\s]+)mdserver"\
+                                               "[\\s]+[\\w |-]{0,}-config[ |=]{1,}(?<config>[\\w\\s\\W]+.json)");
 
-  QRegularExpression m_re_no_config = QRegularExpression("[\\s]{0,}(?<pid>[\\d]+)[\\s]+(?<cpu>[\\d]+.[\\d]+)"
-                                               "[\\s]+(?<mem>[\\d]+)[\\s]+(?<path>[\\w\\W\\s]+)mdserver"
+  QRegularExpression m_re_no_config = QRegularExpression("[\\s]{0,}(?<pid>[\\d]+)[\\s]+(?<cpu>[\\d]+.[\\d]+)"\
+                                               "[\\s]+(?<mem>[\\d]+)[\\s]+(?<path>[\\w\\W\\s]+)mdserver"\
                                                "[\\s]+[\\w |-]{0,}start[\\w |-]{0,}");
 
+
+  bool p_authorized = false;
 
   bool save();
   ServerStatus serverStatus();
 
   bool initConfig();
   bool makeTree(QString config_file);
+
+  void setAuth();
 
 public slots:
   void messageSlot(const QString& id, const QString &type, const QString& message);

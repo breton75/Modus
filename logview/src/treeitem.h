@@ -91,7 +91,8 @@ enum ItemTypes
   itAutostart,
   itConfig,
   itStandInfo,
-  itLogger
+  itLogger,
+  itCurrent
 };
 
 struct ItemInfo

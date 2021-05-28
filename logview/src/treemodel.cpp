@@ -263,9 +263,12 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const
               break;
 
           case itConfig:
-            return QImage(":/my_icons/icons/020-feedback.png");//.scaled(24, 24);
+            return QImage(":/mdcc/icons/for_mdcc/applicationscriptblank_103618.png");//.scaled(24, 24);
             break;
 
+          case itCurrent:
+            return QImage(":/mdcc/icons/for_mdcc/applicationjson_92733.png");//.scaled(24, 24);
+            break;
 
 //            default:
 //              break;

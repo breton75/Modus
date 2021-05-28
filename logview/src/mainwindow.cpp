@@ -5,26 +5,28 @@
 MainWindow::MainWindow(const AppConfig &cfg, QWidget *parent) :
   QMainWindow(parent),
   ui(new Ui::MainWindow),
-  frame(new Ui::Frame)
+  frame(new Ui::Frame),
+  p_authorized(false)
 {
   ui->setupUi(this);
 
   ui->textLog->document()->setMaximumBlockCount(10000);
+  sv::log::Options lo;
+  lo.enable = true;
+  lo.level = sv::log::llAll;
+  log.setOptions(lo);
   log.setTextEdit(ui->textLog);
-
-
 
   _config =  cfg;
 
   QString title = "";
 
   this->setWindowTitle(title);
-  ui->labelSenderName->setText(title);
 
   bool b = QDBusConnection::sessionBus().connect(QString(), QString("/%1").arg("main"), DBUS_SERVER_NAME, "message", this, SLOT(messageSlot(const QString&,const QString&,const QString&)));
 
-  _enable = false;
-  on_bnStartStop_clicked();
+  _enable = true;
+//  on_actionStartStopServer_triggered();
 //  ui->bnSave->setEnabled(!_enable);
 
   // читаем файл конфигурации
@@ -36,8 +38,11 @@ MainWindow::MainWindow(const AppConfig &cfg, QWidget *parent) :
 
   m_model = new TreeModel(QStringList() << "<Имя", ui->treeView);
   ui->treeView->setModel(m_model);
+  ui->treeView->setUpdatesEnabled(true);
 
   initConfig();
+
+  setAuth();
 
   AppParams::loadLayout(this);
 
@@ -75,7 +80,7 @@ bool MainWindow::initConfig()
         TreeItem* newcfg = m_model->rootItem()->insertChildren(m_model->rootItem()->childCount(), 1, m_model->rootItem()->columnCount());
         newcfg->parent_index = m_model->rootItem()->index;
         newcfg->is_main_row = true;
-        newcfg->item_type = itStandRoot;
+        newcfg->item_type = itConfig;
         newcfg->setData(0, config_file);
 
         for(int i = 0; i < m_model->rootItem()->columnCount(); i++)
@@ -109,7 +114,6 @@ bool MainWindow::initConfig()
     return false;
   }
 }
-
 
 bool MainWindow::makeTree(QString config_file)
 {
@@ -216,8 +220,8 @@ MainWindow::~MainWindow()
 
 void MainWindow::messageSlot(const QString& id, const QString& type, const QString& message)
 {
-  qDebug() << sender(); // << _config.log_options.log_sender_name_format;
-
+//  qDebug() << sender(); // << _config.log_options.log_sender_name_format;
+//qDebug() << type << message <<log.options().enable;
     log << sv::log::stringToType(type) << QString("%1").arg(message) << sv::log::endl;
 
 }
@@ -240,35 +244,6 @@ void MainWindow::closeEvent(QCloseEvent *e)
   else
     e->accept();
 
-}
-
-void MainWindow::on_bnSave_clicked()
-{
-  save();
-}
-
-void MainWindow::on_bnStartStop_clicked()
-{
-  _enable = !_enable;
-  log.setEnable(_enable);
-
-  if(_enable)
-    ui->bnStartStop->setIcon(QIcon(":/iconixar/icons/iconixar/stop.png"));
-
-  else
-    ui->bnStartStop->setIcon(QIcon(":/iconixar/icons/iconixar/play.png"));
-
-
-  if(!ui->textLog->document()->toPlainText().trimmed().isEmpty()) {
-
-    ui->bnSave->setEnabled(!_enable);
-    ui->textLog->append("\n");
-  }
-}
-
-void MainWindow::on_bnClear_clicked()
-{
-  ui->textLog->clear();
 }
 
 bool MainWindow::save()
@@ -311,10 +286,126 @@ bool MainWindow::save()
 
 void MainWindow::on_textLog_textChanged()
 {
-  ui->bnSave->setEnabled(!_enable && ui->textLog->document()->isModified());
+//  ui->actionStartStopServer->setEnabled(!_enable && ui->textLog->document()->isModified());
 }
 
-void MainWindow::on_bnApplyFilter_clicked()
+void MainWindow::on_actionStartStopServer_triggered()
+{
+  ui->actionStartStopServer->setEnabled(false);
+  qApp->processEvents();
+
+  if(!serverStatus().running) {
+
+    QString config = "config.json";
+
+    if(ui->treeView->currentIndex().isValid())
+      config = m_model->itemFromIndex(ui->treeView->currentIndex())->data(0).toString();
+
+    QProcess::startDetached(QString("sudo ./mdserver start -config=%1").arg(config));
+
+  }
+  else {
+    QProcess::startDetached(QString("sudo ./mdserver stop"));
+  }
+
+  ui->actionStartStopServer->setEnabled(true);
+
+//  if(!ui->textLog->document()->toPlainText().trimmed().isEmpty()) {
+
+//    ui->actionStartStopServer->setEnabled(!_enable);
+//    ui->textLog->append("\n");
+//  }
+}
+
+ServerStatus MainWindow::serverStatus()
+{
+  // если сервер запущен, то возвращает описание состояния. иначе пустую структуру
+  ServerStatus status = ServerStatus();
+
+  QProcess p;
+//  connect(&p, &QProcess::readyRead, this, &MainWindow::readyRead);
+//  p.execute("sudo ps -A -o cmd | grep -e mdserver[[:blank:]+][[:alpha:]-]");
+  p.start("ps -C mdserver --no-headers -o pid,pcpu,size,cmd");
+
+  if(p.waitForFinished()) {
+
+    QString expr = QString(p.readAllStandardOutput());
+
+    p.close();
+
+    QRegularExpressionMatch match = m_re_with_config.match(expr);
+
+    if(match.hasMatch()) {
+
+      status.running  = true;
+      status.pid      = match.captured("pid");
+      status.cpu      = match.captured("cpu");
+      status.mem      = match.captured("mem");
+      status.path     = match.captured("path");
+      status.config   = match.captured("config");
+
+      return status;
+
+    }
+
+    match = m_re_no_config.match(expr);
+
+    if(match.hasMatch()) {
+
+      status.running  = true;
+      status.pid      = match.captured("pid");
+      status.cpu      = match.captured("cpu");
+      status.mem      = match.captured("mem");
+      status.path     = match.captured("path");
+      status.config   = "config.json";
+
+      return status;
+
+    }
+  }
+
+  p.close();
+
+  return status;
+}
+
+void MainWindow::checkStatus()
+{
+  ServerStatus status = serverStatus();
+
+  if(!status.running) {
+
+    ui->actionStartStopServer->setIcon(QIcon(":/iconixar/icons/iconixar/play.png"));
+
+    for(int i = 0; i < m_model->rootItem()->childCount(); i++) {
+      m_model->rootItem()->child(i)->setInfo(0, ItemInfo(ItemTypes::itConfig, ""));
+      ui->treeView->update(m_model->index(i, 0));
+    }
+  }
+
+  else {
+    ui->actionStartStopServer->setIcon(QIcon(":/iconixar/icons/iconixar/stop.png"));
+
+    for(int i = 0; i < m_model->rootItem()->childCount(); i++) {
+
+      if(m_model->rootItem()->child(i)->data(0).toString() == status.config) {
+
+        m_model->rootItem()->child(i)->setInfo(0, ItemInfo(ItemTypes::itCurrent, ""));
+        ui->treeView->update(m_model->index(i, 0));
+      }
+
+    }
+  }
+
+  ui->treeView->repaint();
+}
+
+void MainWindow::on_actionSaveLog_triggered()
+{
+  save();
+}
+
+void MainWindow::on_actionApplyFilter_triggered()
 {
   try {
 
@@ -364,131 +455,63 @@ void MainWindow::on_bnApplyFilter_clicked()
     QMessageBox::critical(this, "Error", e.error);
 
   }
-}
 
-void MainWindow::on_actionStartStopServer_triggered()
-{
-  ui->actionStartStopServer->setEnabled(false);
-  qApp->processEvents();
+  _enable = !_enable;
+  log.setEnable(_enable);
 
-  if(!serverStatus().running)
-    QProcess::startDetached(QString("sudo ./mdserver start -config=%1").arg(ui->lineConfigPath->text()));
+  ui->actionApplyFilter->setChecked(_enable);
 
-  else {
-    QProcess::startDetached(QString("sudo ./mdserver stop"));
-  }
+//  if(_enable)
+//    ui->bnStartStop->setIcon(QIcon(":/iconixar/icons/iconixar/stop.png"));
 
-  ui->actionStartStopServer->setEnabled(true);
+//  else
+//    ui->bnStartStop->setIcon(QIcon(":/iconixar/icons/iconixar/play.png"));
+
 
   if(!ui->textLog->document()->toPlainText().trimmed().isEmpty()) {
 
-    ui->bnSave->setEnabled(!_enable);
-    ui->textLog->append("\n");
+    ui->actionSaveLog->setEnabled(!_enable);
+//    ui->textLog->append("\n");
   }
 }
 
-ServerStatus MainWindow::serverStatus()
+void MainWindow::on_treeView_doubleClicked(const QModelIndex &index)
 {
-  // если сервер запущен, то возвращает описание состояния. иначе пустую структуру
-  ServerStatus status = ServerStatus();
+  TreeItem* item = m_model->itemFromIndex(index);
+  qDebug() << item->item_type;
 
-  QProcess p;
-//  connect(&p, &QProcess::readyRead, this, &MainWindow::readyRead);
-//  p.execute("sudo ps -A -o cmd | grep -e mdserver[[:blank:]+][[:alpha:]-]");
-  p.start("ps -C mdserver --no-headers -o pid,pcpu,size,cmd");
+  switch (item->item_type) {
 
-  if(p.waitForFinished()) {
+  case itConfig:
+  case itCurrent:
 
-    QString expr = QString(p.readAllStandardOutput());
+    if(!p_authorized) break;
 
-    p.close();
+    on_actionStartStopServer_triggered();
 
-    QRegularExpressionMatch match = m_re_with_config.match(expr);
-qDebug() << expr<<match.hasMatch();
-    if(match.hasMatch()) {
+    break;
 
-      qDebug() << "match 1";
-
-      status.running  = true;
-      status.pid      = match.captured("pid");
-      status.cpu      = match.captured("cpu");
-      status.mem      = match.captured("mem");
-      status.path     = match.captured("path");
-      status.config   = match.captured("config");
-
-      return status;
-
-    }
-
-    match = m_re_no_config.match(expr);
-
-    if(match.hasMatch()) {
-
-      status.running  = true;
-      status.pid      = match.captured("pid");
-      status.cpu      = match.captured("cpu");
-      status.mem      = match.captured("mem");
-      status.path     = match.captured("path");
-      status.config   = "config.json";
-
-      return status;
-
-    }
-
-
-
-//    if(match.hasMatch()) {
-
-//      json = QString(match.captured("json").toStdString().c_str());
-//      return json;
-//    }
-
-//    match = m_re2.match(expr);
-
-//    if(match.hasMatch()) {
-
-//      json = QString(match.captured("json").toStdString().c_str());
-//      return json;
-//    }
-
-//    match = m_re3.match(expr);
-
-//    if(match.hasMatch()) {
-
-//      json = "config.json";
-//      return json;
-//    }
+  default:
+      break;
   }
-
-  p.close();
-
-  return status;
 }
 
-void MainWindow::checkStatus()
+void MainWindow::setAuth()
 {
-  ServerStatus status = serverStatus();
+  ui->actionAuth->setIcon(p_authorized ? QIcon(":/my_icons/icons/005-lock-1.png") : QIcon(":/my_icons/icons/004-lock.png"));
+  ui->actionAddServer->setEnabled(p_authorized);
+  ui->actionApplyFilter->setEnabled(p_authorized);
+  ui->actionClearLog->setEnabled(p_authorized);
+  ui->actionEditFilter->setEnabled(p_authorized);
+  ui->actionSaveLog->setEnabled(p_authorized);
+  ui->actionStartStopServer->setEnabled(p_authorized);
 
-  if(!status.running) {
-
-    ui->actionStartStopServer->setIcon(QIcon(":/iconixar/icons/iconixar/play.png"));
-
-    for(int i = 0; i < m_model->rootItem()->childCount(); i++)
-      m_model->rootItem()->child(i)->setInfo(0, ItemInfo(ItemTypes::itConfig, ""));
-
-  }
-
-  else {
-    ui->actionStartStopServer->setIcon(QIcon(":/iconixar/icons/iconixar/stop.png"));
-
-    for(int i = 0; i < m_model->rootItem()->childCount(); i++) {
-
-      qDebug() << m_model->rootItem()->child(i)->data(0).toString() << status.config;
-      if(m_model->rootItem()->child(i)->data(0).toString() == status.config) {
-
-        m_model->rootItem()->child(i)->setInfo(0, ItemInfo(ItemTypes::itStandInfo, ""));
-      }
-
-    }
-  }
+//  ui->widgetControls->setVisible(p_authorized);
 }
+
+void MainWindow::on_actionAuth_triggered()
+{
+  p_authorized = !p_authorized;
+  setAuth();
+}
+
