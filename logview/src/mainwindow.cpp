@@ -23,7 +23,7 @@ MainWindow::MainWindow(const AppConfig &cfg, QWidget *parent) :
 
   this->setWindowTitle(title);
 
-  bool b = QDBusConnection::sessionBus().connect(QString(), QString("/%1").arg("main"), DBUS_SERVER_NAME, "message", this, SLOT(messageSlot(const QString&,const QString&,const QString&)));
+  bool b = QDBusConnection::sessionBus().connect(QString(), QString("/%1").arg("main"), DBUS_SERVER_NAME, "message", this, SLOT(messageSlot(const QString&,int,const QString&,const QString&)));
 
   _enable = true;
 //  on_actionStartStopServer_triggered();
@@ -43,6 +43,9 @@ MainWindow::MainWindow(const AppConfig &cfg, QWidget *parent) :
   initConfig();
 
   setAuth();
+
+  ui->textEventFilter->document()->setModified(false);
+  ui->textLog->document()->setModified(false);
 
   AppParams::loadLayout(this);
 
@@ -218,11 +221,11 @@ MainWindow::~MainWindow()
   delete ui;
 }
 
-void MainWindow::messageSlot(const QString& id, const QString& type, const QString& message)
+void MainWindow::messageSlot(const QString& branch, int id, const QString& type, const QString& message)
 {
 //  qDebug() << sender(); // << _config.log_options.log_sender_name_format;
 //qDebug() << type << message <<log.options().enable;
-    log << sv::log::stringToType(type) << QString("%1").arg(message) << sv::log::endl;
+    log << sv::log::stringToType(type) << QString("%1:%2 %3").arg(branch).arg(id).arg(message) << sv::log::endl;
 
 }
 
@@ -234,7 +237,7 @@ void MainWindow::closeEvent(QCloseEvent *e)
                             "Документ изменен. Сохранить изменения перед закрытием?",
                             QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
 
-     if((ask == QMessageBox::Yes && save()) || ask == QMessageBox::No)
+     if((ask == QMessageBox::Yes && save(ui->textLog, "log file|*.log", "log")) || ask == QMessageBox::No)
         e->accept();
 
     else
@@ -246,29 +249,32 @@ void MainWindow::closeEvent(QCloseEvent *e)
 
 }
 
-bool MainWindow::save()
+bool MainWindow::save(QTextEdit* textEdit, const QString& filter, const QString& ext)
 {
   try {
 
-    if(ui->textLog->document()->isEmpty() &&
+    if(textEdit->document()->isEmpty() &&
        QMessageBox::question(this, "Документ пуст",
                              "Документ пуст. Вы уверены, что хотите сохранить его?",
                              QMessageBox::Yes | QMessageBox::Cancel) == QMessageBox::No)
       return true;
 
-    QString filename = QFileDialog::getOpenFileName(this, "Укажите имя файла", "log", "log (*.log)");
+    QString filename = QFileDialog::getSaveFileName(this, "Укажите имя файла", "", filter);
 
     if (filename.isEmpty())
         return false;
+
+    if(!filename.endsWith(QString(".%1").arg(ext)))
+      filename.append('.').append(ext);
 
     QFile f(filename);
     if(!f.open(QFile::WriteOnly))
       p_exception.raise(f.errorString());
 
-    if(f.write(ui->textLog->toPlainText().toUtf8()) <= 0)
+    if(f.write(textEdit->toPlainText().toUtf8()) <= 0)
       p_exception.raise(f.errorString());
 
-    ui->textLog->document()->setModified(false);
+    textEdit->document()->setModified(false);
 
     return true;
 
@@ -286,7 +292,7 @@ bool MainWindow::save()
 
 void MainWindow::on_textLog_textChanged()
 {
-//  ui->actionStartStopServer->setEnabled(!_enable && ui->textLog->document()->isModified());
+  ui->actionSaveLog->setEnabled(p_authorized && ui->textLog->document()->isModified());
 }
 
 void MainWindow::on_actionStartStopServer_triggered()
@@ -402,7 +408,7 @@ void MainWindow::checkStatus()
 
 void MainWindow::on_actionSaveLog_triggered()
 {
-  save();
+  save(ui->textLog, "Log files|*.log", "log");
 }
 
 void MainWindow::on_actionApplyFilter_triggered()
@@ -410,7 +416,7 @@ void MainWindow::on_actionApplyFilter_triggered()
   try {
 
     QJsonParseError je;
-    QJsonDocument jd = QJsonDocument::fromJson(ui->textEdit->toPlainText().toUtf8(), &je);
+    QJsonDocument jd = QJsonDocument::fromJson(ui->textEventFilter->toPlainText().toUtf8(), &je);
 
     if(je.error != QJsonParseError::NoError)
       throw SvException(je.errorString());
@@ -436,15 +442,14 @@ void MainWindow::on_actionApplyFilter_triggered()
 
       QJsonObject o = jv.toObject();
 
-      QString entity = o.contains("entity") ? o.value("entity").toString("undef") : "undef";
+      QString branch = o.contains("branch") ? o.value("branch").toString("undef") : "undef";
       int id = o.contains("id") ? o.value("id").toInt(0) : 0;
       sv::log::MessageTypes type = o.contains("type") ? sv::log::stringToType(o.value("type").toString()) : sv::log::mtAny;
       QString pattern = o.contains("pattern") ? o.value("pattern").toString("") : "";
 
-      Filter *filter = new Filter(entity, id, type, pattern);
+      Filter *filter = new Filter(branch, id, type, pattern);
       m_filters.append(filter);
 
-      QDBusConnection::sessionBus().connect(QString(), QString("/%1").arg(entity), DBUS_SERVER_NAME, "message", filter, SLOT(messageSlot(const QString&,const QString&,const QString&)));
       connect(filter, &Filter::message, this, &MainWindow::messageSlot);
 
     }
@@ -456,10 +461,10 @@ void MainWindow::on_actionApplyFilter_triggered()
 
   }
 
-  _enable = !_enable;
-  log.setEnable(_enable);
+//  _enable = !_enable;
+//  log.setEnable(_enable);
 
-  ui->actionApplyFilter->setChecked(_enable);
+//  ui->actionApplyFilter->setChecked(_enable);
 
 //  if(_enable)
 //    ui->bnStartStop->setIcon(QIcon(":/iconixar/icons/iconixar/stop.png"));
@@ -468,11 +473,11 @@ void MainWindow::on_actionApplyFilter_triggered()
 //    ui->bnStartStop->setIcon(QIcon(":/iconixar/icons/iconixar/play.png"));
 
 
-  if(!ui->textLog->document()->toPlainText().trimmed().isEmpty()) {
+//  if(!ui->textLog->document()->toPlainText().trimmed().isEmpty()) {
 
-    ui->actionSaveLog->setEnabled(!_enable);
-//    ui->textLog->append("\n");
-  }
+//    ui->actionSaveLog->setEnabled(!_enable);
+////    ui->textLog->append("\n");
+//  }
 }
 
 void MainWindow::on_treeView_doubleClicked(const QModelIndex &index)
@@ -502,9 +507,13 @@ void MainWindow::setAuth()
   ui->actionAddServer->setEnabled(p_authorized);
   ui->actionApplyFilter->setEnabled(p_authorized);
   ui->actionClearLog->setEnabled(p_authorized);
-  ui->actionEditFilter->setEnabled(p_authorized);
-  ui->actionSaveLog->setEnabled(p_authorized);
+  ui->actionLoadFilter->setEnabled(p_authorized);
+  ui->actionSaveFilter->setEnabled(p_authorized && ui->textEventFilter->document()->isModified());
+  ui->actionSaveLog->setEnabled(p_authorized && ui->textLog->document()->isModified());
   ui->actionStartStopServer->setEnabled(p_authorized);
+  ui->bnApplyFilter->setEnabled(p_authorized);
+  ui->bnOpenFilter ->setEnabled(p_authorized);
+  ui->bnSaveFilter ->setEnabled(ui->actionSaveFilter->isEnabled());
 
 //  ui->widgetControls->setVisible(p_authorized);
 }
@@ -515,3 +524,33 @@ void MainWindow::on_actionAuth_triggered()
   setAuth();
 }
 
+void MainWindow::on_actionLoadFilter_triggered()
+{
+    QString filter_file = QFileDialog::getOpenFileName(this, "Open event filter file", QString(), "Modus event filter (*.mef)");
+    if(filter_file.isEmpty())
+      return;
+
+    QFile f(filter_file);
+    if(!f.open(QIODevice::ReadOnly)) {
+
+      QMessageBox::critical(this, "Error", f.errorString());
+      return;
+    }
+
+    ui->textEventFilter->clear();
+    ui->textEventFilter->setText(QString(f.readAll()));
+
+    f.close();
+
+}
+
+void MainWindow::on_textEventFilter_textChanged()
+{
+  ui->actionSaveFilter->setEnabled(p_authorized && ui->textEventFilter->document()->isModified());
+  ui->bnSaveFilter->setEnabled(ui->actionSaveFilter->isEnabled());
+}
+
+void MainWindow::on_actionSaveFilter_triggered()
+{
+  save(ui->textEventFilter, "Modus event filter (*.mef);;All files (*.*)", "mef");
+}

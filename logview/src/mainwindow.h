@@ -70,6 +70,12 @@ private slots:
 
   void on_treeView_doubleClicked(const QModelIndex &index);
 
+  void on_actionLoadFilter_triggered();
+
+  void on_textEventFilter_textChanged();
+
+  void on_actionSaveFilter_triggered();
+
 private:
   Ui::MainWindow *ui;
   Ui::Frame *frame;
@@ -112,7 +118,7 @@ private:
 
   bool p_authorized = false;
 
-  bool save();
+  bool save(QTextEdit *textEdit, const QString &filter, const QString &ext);
   ServerStatus serverStatus();
 
   bool initConfig();
@@ -121,7 +127,7 @@ private:
   void setAuth();
 
 public slots:
-  void messageSlot(const QString& id, const QString &type, const QString& message);
+  void messageSlot(const QString &entity, int id, const QString &type, const QString& message);
 //  void messageDevice(const QString& id, const QString &type, const QString& message);
 //  void messageStorage(const QString& id, const QString &type, const QString& message);
 //  void messageInteract(const QString& id, const QString &type, const QString& message);

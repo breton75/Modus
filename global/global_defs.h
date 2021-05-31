@@ -9,13 +9,13 @@
 #define DEFAULT_BUFFER_SIZE 4096
 
 // сущности
-#define P_DEVICES     "devices"
-#define P_INTERFACES  "interface"
-#define P_PROTOCOLS   "protocol"
-#define P_STORAGES    "storages"
-#define P_INTERACTS   "interacts"
-#define P_LOGICS      "logics"
-#define P_SIGNALS     "signals"
+#define P_DEVICE     "device"
+#define P_INTERFACE  "interface"
+#define P_PROTOCOL   "protocol"
+#define P_STORAGE    "storages"
+#define P_INTERACT   "interacts"
+#define P_LOGIC      "logics"
+#define P_SIGNAL     "signals"
 
 // имена полей общие
 #define P_ID          "id"
@@ -30,9 +30,11 @@
 #define P_TYPE        "type"
 #define P_PARAMS      "params"
 #define P_INTERVAL    "interval"
-#define P_INTERFACE   "interface"
-#define P_PROTOCOL    "protocol"
 #define P_LOGGER      "logger"
+#define P_DEVICES     "devices"
+#define P_STORAGES    "storages"
+#define P_SIGNALS     "signals"
+#define P_INTERACTS   "interacts"
 
 // имена полей для всех устройств
 #define P_BUFFER_SIZE "buffer_size"
@@ -40,7 +42,6 @@
 // имена полей для сигналов
 #define P_GROUP       "group"
 #define P_USECASE     "usecase"
-#define P_DEVICE      "device"
 #define P_FILE        "file"
 #define P_TAG         "tag"
 #define P_PACKID      "packid"

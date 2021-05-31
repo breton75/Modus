@@ -39,14 +39,45 @@
            <property name="frameShape">
             <enum>QFrame::StyledPanel</enum>
            </property>
-           <property name="frameShadow">
-            <enum>QFrame::Raised</enum>
-           </property>
            <layout class="QHBoxLayout" name="horizontalLayout">
+            <property name="spacing">
+             <number>1</number>
+            </property>
+            <property name="leftMargin">
+             <number>2</number>
+            </property>
+            <property name="topMargin">
+             <number>2</number>
+            </property>
+            <property name="rightMargin">
+             <number>2</number>
+            </property>
+            <property name="bottomMargin">
+             <number>2</number>
+            </property>
             <item>
-             <widget class="QPushButton" name="pushButton">
+             <widget class="QPushButton" name="bnOpenFilter">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="text">
-               <string>PushButton</string>
+               <string/>
+              </property>
+              <property name="icon">
+               <iconset resource="../../global/resourses/res.qrc">
+                <normaloff>:/my_icons/icons/011-folder.png</normaloff>:/my_icons/icons/011-folder.png</iconset>
+              </property>
+              <property name="iconSize">
+               <size>
+                <width>24</width>
+                <height>24</height>
+               </size>
+              </property>
+              <property name="checked">
+               <bool>false</bool>
               </property>
               <property name="flat">
                <bool>true</bool>
@@ -54,9 +85,76 @@
              </widget>
             </item>
             <item>
-             <widget class="QToolButton" name="toolButton">
+             <widget class="QPushButton" name="bnSaveFilter">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="text">
-               <string>...</string>
+               <string/>
+              </property>
+              <property name="icon">
+               <iconset resource="../../global/resourses/res.qrc">
+                <normaloff>:/my_icons/icons/036-diskette-3.png</normaloff>:/my_icons/icons/036-diskette-3.png</iconset>
+              </property>
+              <property name="iconSize">
+               <size>
+                <width>24</width>
+                <height>24</height>
+               </size>
+              </property>
+              <property name="flat">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QPushButton" name="bnApplyFilter">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">background-color: rgb(255, 67, 38);</string>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+              <property name="icon">
+               <iconset resource="../../global/resourses/res.qrc">
+                <normaloff>:/my_icons/icons/019-fire.png</normaloff>:/my_icons/icons/019-fire.png</iconset>
+              </property>
+              <property name="iconSize">
+               <size>
+                <width>24</width>
+                <height>24</height>
+               </size>
+              </property>
+              <property name="checkable">
+               <bool>true</bool>
+              </property>
+              <property name="checked">
+               <bool>false</bool>
+              </property>
+              <property name="flat">
+               <bool>true</bool>
               </property>
              </widget>
             </item>
@@ -64,7 +162,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QTextEdit" name="textEdit">
+          <widget class="QTextEdit" name="textEventFilter">
            <property name="html">
             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
@@ -73,7 +171,7 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;{&lt;/p&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;	&amp;quot;filters&amp;quot;:&lt;/p&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;	[	&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;		{ &amp;quot;path&amp;quot;: &amp;quot;/device/1&amp;quot;, &amp;quot;type&amp;quot;: &amp;quot;otput&amp;quot;, &amp;quot;pattern&amp;quot;: &amp;quot;&amp;quot; }&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;		{ &amp;quot;branch&amp;quot;: &amp;quot;device&amp;quot;, &amp;quot;id&amp;quot;:1, &amp;quot;type&amp;quot;: &amp;quot;otput&amp;quot;, &amp;quot;pattern&amp;quot;: &amp;quot;&amp;quot; }&lt;/p&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;	]&lt;/p&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;}&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
@@ -116,43 +214,34 @@ p, li { white-space: pre-wrap; }
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
-    <enum>LeftToolBarArea</enum>
-   </attribute>
-   <attribute name="toolBarBreak">
-    <bool>false</bool>
-   </attribute>
-   <addaction name="actionAuth"/>
-   <addaction name="actionApplyFilter"/>
-   <addaction name="actionEditFilter"/>
-  </widget>
-  <widget class="QStatusBar" name="statusBar"/>
-  <widget class="QToolBar" name="toolBar">
-   <property name="windowTitle">
-    <string>toolBar</string>
-   </property>
-   <property name="allowedAreas">
-    <set>Qt::NoToolBarArea</set>
-   </property>
-   <property name="iconSize">
-    <size>
-     <width>32</width>
-     <height>32</height>
-    </size>
-   </property>
-   <property name="toolButtonStyle">
-    <enum>Qt::ToolButtonIconOnly</enum>
-   </property>
-   <attribute name="toolBarArea">
-    <enum>LeftToolBarArea</enum>
+    <enum>TopToolBarArea</enum>
    </attribute>
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
    <addaction name="actionAddServer"/>
    <addaction name="actionStartStopServer"/>
-   <addaction name="separator"/>
   </widget>
-  <widget class="QToolBar" name="toolBar_2">
+  <widget class="QStatusBar" name="statusBar"/>
+  <widget class="QToolBar" name="toolBarAuth">
+   <property name="windowTitle">
+    <string>Authorization</string>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>24</width>
+     <height>24</height>
+    </size>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>RightToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionAuth"/>
+  </widget>
+  <widget class="QToolBar" name="toolBarLog">
    <property name="windowTitle">
     <string>toolBar_2</string>
    </property>
@@ -164,6 +253,7 @@ p, li { white-space: pre-wrap; }
    </attribute>
    <addaction name="actionSaveLog"/>
    <addaction name="actionClearLog"/>
+   <addaction name="separator"/>
   </widget>
   <action name="actionSaveLog">
    <property name="icon">
@@ -204,22 +294,32 @@ p, li { white-space: pre-wrap; }
     <string>Добавить сервер</string>
    </property>
   </action>
-  <action name="actionEditFilter">
+  <action name="actionLoadFilter">
    <property name="icon">
     <iconset resource="../../global/resourses/res.qrc">
-     <normaloff>:/my_icons/icons/008-content.png</normaloff>:/my_icons/icons/008-content.png</iconset>
+     <normaloff>:/my_icons/icons/011-folder.png</normaloff>:/my_icons/icons/011-folder.png</iconset>
    </property>
    <property name="text">
-    <string>Редактор фильтра</string>
+    <string>Открыть фильтра</string>
+   </property>
+   <property name="toolTip">
+    <string>Открыть файл с текстом фильтра</string>
    </property>
   </action>
   <action name="actionClearLog">
+   <property name="checked">
+    <bool>false</bool>
+   </property>
    <property name="icon">
-    <iconset resource="../../global/resourses/res.qrc">
-     <normaloff>:/iconixar/icons/iconixar/remove.png</normaloff>:/iconixar/icons/iconixar/remove.png</iconset>
+    <iconset>
+     <normalon>:/iconixar/icons/iconixar/remove.png</normalon>
+    </iconset>
    </property>
    <property name="text">
     <string>Очистить</string>
+   </property>
+   <property name="autoRepeat">
+    <bool>false</bool>
    </property>
   </action>
   <action name="actionAuth">
@@ -231,6 +331,15 @@ p, li { white-space: pre-wrap; }
     <string>Авторизация</string>
    </property>
   </action>
+  <action name="actionSaveFilter">
+   <property name="icon">
+    <iconset resource="../../global/resourses/res.qrc">
+     <normaloff>:/my_icons/icons/035-diskette-2.png</normaloff>:/my_icons/icons/035-diskette-2.png</iconset>
+   </property>
+   <property name="text">
+    <string>saveFilter</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
@@ -238,14 +347,14 @@ p, li { white-space: pre-wrap; }
  </resources>
  <connections>
   <connection>
-   <sender>pushButton</sender>
+   <sender>bnSaveFilter</sender>
    <signal>clicked()</signal>
-   <receiver>actionSaveLog</receiver>
-   <slot>toggle()</slot>
+   <receiver>actionSaveFilter</receiver>
+   <slot>trigger()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>192</x>
-     <y>325</y>
+     <x>67</x>
+     <y>354</y>
     </hint>
     <hint type="destinationlabel">
      <x>-1</x>
@@ -254,18 +363,34 @@ p, li { white-space: pre-wrap; }
    </hints>
   </connection>
   <connection>
-   <sender>actionApplyFilter</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>pushButton</receiver>
-   <slot>setChecked(bool)</slot>
+   <sender>bnApplyFilter</sender>
+   <signal>clicked()</signal>
+   <receiver>actionApplyFilter</receiver>
+   <slot>trigger()</slot>
    <hints>
     <hint type="sourcelabel">
+     <x>446</x>
+     <y>354</y>
+    </hint>
+    <hint type="destinationlabel">
      <x>-1</x>
      <y>-1</y>
     </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>bnOpenFilter</sender>
+   <signal>clicked()</signal>
+   <receiver>actionLoadFilter</receiver>
+   <slot>trigger()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>30</x>
+     <y>354</y>
+    </hint>
     <hint type="destinationlabel">
-     <x>192</x>
-     <y>325</y>
+     <x>-1</x>
+     <y>-1</y>
     </hint>
    </hints>
   </connection>

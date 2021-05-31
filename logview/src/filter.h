@@ -12,22 +12,22 @@ class Filter: public QObject
 
 public:
   explicit Filter();
-  explicit Filter(const QString& entity, int id, sv::log::MessageTypes type, const QString& pattern = "");
+  explicit Filter(const QString& branch, int id, sv::log::MessageTypes type, const QString& pattern = "");
 
   ~Filter();
 
 private:
-  QString               m_entity;
+  QString               m_branch;
   int                   m_id;
   sv::log::MessageTypes m_type;
   QString               m_pattern;
 
 public slots:
-  void messageSlot(const QString& sender, const QString &type, const QString& message);
+  void messageSlot(const QString& branch, int id, const QString &type, const QString& msg);
 
 
 signals:
-  void message(const QString& sender, const QString &type, const QString& message);
+  void message(const QString& entity, int id, const QString &type, const QString& msg);
 
 
 };

@@ -68,7 +68,7 @@ namespace modus {
     void log(const QString msg, int level = sv::log::llDebug, int type  = sv::log::mtDebug)
     {
       if(m_logger &&  level <= m_logger->options().level)
-        *m_logger << sv::log::sender(P_INTERACTS, m_config.id)
+        *m_logger << sv::log::sender(P_INTERACT, m_config.id)
                   << sv::log::Level(level)
                   << sv::log::MessageTypes(type)
                   << msg

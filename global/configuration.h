@@ -81,7 +81,7 @@ namespace modus {
       return &m_lines;
     }
 
-    const QString path() const { m_file_path; }
+    const QString path() const { return m_file_path; }
 
   private:
     QJsonObject                                m_json;

@@ -5,26 +5,31 @@ Filter::Filter()
 
 }
 
-Filter::Filter(const QString& entity, int id, sv::log::MessageTypes type, const QString& pattern):
-  m_entity(entity),
+Filter::Filter(const QString& branch, int id, sv::log::MessageTypes type, const QString& pattern):
+  m_branch(branch),
   m_id(id),
   m_type(type),
   m_pattern(pattern)
 {
-  QDBusConnection::sessionBus().connect(QString(), QString("/%1").arg(m_entity), DBUS_SERVER_NAME, "message", this, SLOT(messageSlot(const QString&,const QString&,const QString&)));
 
+  bool b = QDBusConnection::sessionBus().connect(QString(), QString("/%1").arg(m_branch), DBUS_SERVER_NAME, "message", this, SLOT(messageSlot(const QString&,int,const QString&,const QString&)));
+  qDebug() << b << m_branch << m_id << m_type ;
 }
 
 Filter::~Filter()
 {
-  QDBusConnection::sessionBus().disconnect(QString(), QString("/%1").arg(m_entity), DBUS_SERVER_NAME, "message", this, SLOT(messageSlot(const QString&,const QString&,const QString&)));
+  QDBusConnection::sessionBus().disconnect(QString(), QString("/%1").arg(m_branch), DBUS_SERVER_NAME, "message", this, SLOT(messageSlot(const QString&,int,const QString&,const QString&)));
 }
 
-void Filter::messageSlot(const QString& sender, const QString& type, const QString& message)
+void Filter::messageSlot(const QString& branch, int id, const QString& type, const QString& msg)
 {
+  qDebug() << branch << id << type << msg;
+  if(branch != m_branch || id != m_id || type != type)
+    return;
+
 //  qDebug() << sender << _config.log_options.log_sender_name_format;
 //  if(_config.device_index == -1 || (_config.device_index > 0 && sender == _sender.name))
-//    emit message(sender, type, message);
+    emit message(branch, id, type, msg);
 //  if(sender == _sender.name)
 
 }
