@@ -71,6 +71,7 @@ namespace modus {
         *m_logger << sv::log::sender(P_INTERACT, m_config.id)
                   << sv::log::Level(level)
                   << sv::log::MessageTypes(type)
+                  << sv::log::TimeZZZ
                   << msg
                   << sv::log::endl;
     }

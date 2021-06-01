@@ -13,8 +13,8 @@
 
 #include "../global_defs.h"
 
-#include "../../../svlib/SvException/1.1/sv_exception.h"
-#include "../../../svlib/SvAbstractLogger/1.2/sv_abstract_logger.h"
+#include "../../../svlib/SvException/svexception.h"
+#include "../../../svlib/SvAbstractLogger/svabstractlogger.h"
 
 namespace modus {
 

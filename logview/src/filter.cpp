@@ -11,9 +11,7 @@ Filter::Filter(const QString& branch, int id, sv::log::MessageTypes type, const 
   m_type(type),
   m_pattern(pattern)
 {
-
-  bool b = QDBusConnection::sessionBus().connect(QString(), QString("/%1").arg(m_branch), DBUS_SERVER_NAME, "message", this, SLOT(messageSlot(const QString&,int,const QString&,const QString&)));
-  qDebug() << b << m_branch << m_id << m_type ;
+  QDBusConnection::sessionBus().connect(QString(), QString("/%1").arg(m_branch), DBUS_SERVER_NAME, "message", this, SLOT(messageSlot(const QString&,int,const QString&,const QString&)));
 }
 
 Filter::~Filter()
@@ -23,8 +21,11 @@ Filter::~Filter()
 
 void Filter::messageSlot(const QString& branch, int id, const QString& type, const QString& msg)
 {
-  qDebug() << branch << id << type << msg;
-  if(branch != m_branch || id != m_id || type != type)
+//  qDebug() << branch << id << type << msg;
+  if(branch != m_branch || id != m_id)
+    return;
+
+  if(!(sv::log::stringToType(type) & m_type))
     return;
 
 //  qDebug() << sender << _config.log_options.log_sender_name_format;

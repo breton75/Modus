@@ -3,9 +3,9 @@
 
 #include <QObject>
 #include <QFile>
-#include<QFileInfo>
+#include <QFileInfo>
 
-#include "../../../svlib/SvException/1.1/sv_exception.h"
+#include "/home/user/c++/svlib/SvException/svexception.h"
 
 namespace modus {
 

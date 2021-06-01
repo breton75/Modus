@@ -9,6 +9,7 @@
 
 #include "interact_config.h"
 #include "../../../Modus/global/configuration.h"
+#include "../../../svlib/SvException/svexception.h"
 #include "../signal/sv_signal.h"
 
 namespace modus {

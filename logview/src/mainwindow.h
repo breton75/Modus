@@ -12,6 +12,8 @@
 #include <QJsonDocument>
 #include <QJsonParseError>
 
+#include <QTableWidgetItem>
+
 #include "../../global/global_defs.h"
 #include "../../../svlib/SvWidgetLogger/1.1/sv_widget_logger.h"
 #include "../../../svlib/SvDBUS/1.0/sv_dbus.h"
@@ -20,6 +22,8 @@
 #include "filter.h"
 #include "treeitem.h"
 #include "treemodel.h"
+
+#define F_HASH_FILTER "%1%2%3"
 
 namespace Ui {
 class MainWindow;
@@ -76,16 +80,19 @@ private slots:
 
   void on_actionSaveFilter_triggered();
 
+  void on_actionSwitchView_triggered(bool checked);
+
 private:
   Ui::MainWindow *ui;
   Ui::Frame *frame;
 
   SvException p_exception;
-  bool _enable;
+  bool m_table_view;
 
   bool m_server_started;
 
-//  QMap<QString, Filter*> m_filters;
+  QMap<uint, int> m_filters_by_rows;
+
   QList<Filter*> m_filters;
 
   QTimer m_status_timer;
@@ -117,6 +124,8 @@ private:
 
 
   bool p_authorized = false;
+
+  QList<QTableWidgetItem*> m_table_items;
 
   bool save(QTextEdit *textEdit, const QString &filter, const QString &ext);
   ServerStatus serverStatus();

@@ -6,7 +6,8 @@ MainWindow::MainWindow(const AppConfig &cfg, QWidget *parent) :
   QMainWindow(parent),
   ui(new Ui::MainWindow),
   frame(new Ui::Frame),
-  p_authorized(false)
+  p_authorized(true),
+  m_table_view(false)
 {
   ui->setupUi(this);
 
@@ -25,10 +26,6 @@ MainWindow::MainWindow(const AppConfig &cfg, QWidget *parent) :
 
   bool b = QDBusConnection::sessionBus().connect(QString(), QString("/%1").arg("main"), DBUS_SERVER_NAME, "message", this, SLOT(messageSlot(const QString&,int,const QString&,const QString&)));
 
-  _enable = true;
-//  on_actionStartStopServer_triggered();
-//  ui->bnSave->setEnabled(!_enable);
-
   // читаем файл конфигурации
 //  frame->setupUi(ui->frameSettings);
 
@@ -46,6 +43,9 @@ MainWindow::MainWindow(const AppConfig &cfg, QWidget *parent) :
 
   ui->textEventFilter->document()->setModified(false);
   ui->textLog->document()->setModified(false);
+
+  ui->tableLog->setVisible(m_table_view);
+  ui->textLog->setVisible(!m_table_view);
 
   AppParams::loadLayout(this);
 
@@ -215,6 +215,11 @@ bool MainWindow::makeTree(QString config_file)
 
 MainWindow::~MainWindow()
 {
+  foreach (Filter* filter, m_filters) {
+    disconnect(filter, &Filter::message, this, &MainWindow::messageSlot);
+    delete filter;
+  }
+
   AppParams::saveLayout(this);
 
   delete frame;
@@ -225,7 +230,20 @@ void MainWindow::messageSlot(const QString& branch, int id, const QString& type,
 {
 //  qDebug() << sender(); // << _config.log_options.log_sender_name_format;
 //qDebug() << type << message <<log.options().enable;
+
+  if(!m_table_view)
     log << sv::log::stringToType(type) << QString("%1:%2 %3").arg(branch).arg(id).arg(message) << sv::log::endl;
+
+  else {
+
+    uint key = qHash(QString(F_HASH_FILTER).arg(branch).arg(id).arg(type));
+
+    if(!m_filters_by_rows.contains(key))
+      return;
+
+    ui->tableLog->item(m_filters_by_rows.value(key), 3)->setData(0, message);
+
+  }
 
 }
 
@@ -413,6 +431,25 @@ void MainWindow::on_actionSaveLog_triggered()
 
 void MainWindow::on_actionApplyFilter_triggered()
 {
+  ui->actionApplyFilter->setChecked(ui->bnApplyFilter->isChecked());
+
+  if(!ui->actionApplyFilter->isChecked()) {
+
+    foreach (Filter* filter, m_filters) {
+      disconnect(filter, &Filter::message, this, &MainWindow::messageSlot);
+      delete filter;
+    }
+
+    m_filters.clear();
+
+    while(ui->tableLog->rowCount())
+      ui->tableLog->removeRow(0);
+
+    return;
+
+  }
+
+
   try {
 
     QJsonParseError je;
@@ -429,12 +466,12 @@ void MainWindow::on_actionApplyFilter_triggered()
     if(!jo.value("filters").isArray())
       throw SvException("Неверный формат фильтра. 'filters' не массив.");
 
-    foreach (Filter* filter, m_filters) {
-      disconnect(filter, &Filter::message, this, &MainWindow::messageSlot);
-      delete filter;
-    }
+//    foreach (Filter* filter, m_filters) {
+//      disconnect(filter, &Filter::message, this, &MainWindow::messageSlot);
+//      delete filter;
+//    }
 
-    m_filters.clear();
+//    m_filters.clear();
 
     QJsonArray ja = jo.value("filters").toArray();
 
@@ -444,13 +481,32 @@ void MainWindow::on_actionApplyFilter_triggered()
 
       QString branch = o.contains("branch") ? o.value("branch").toString("undef") : "undef";
       int id = o.contains("id") ? o.value("id").toInt(0) : 0;
-      sv::log::MessageTypes type = o.contains("type") ? sv::log::stringToType(o.value("type").toString()) : sv::log::mtAny;
+      QString t = o.contains("type") ? o.value("type").toString("any") : "any";
+      sv::log::MessageTypes type = t.isEmpty() ? sv::log::mtAny : sv::log::stringToType(t);
       QString pattern = o.contains("pattern") ? o.value("pattern").toString("") : "";
 
       Filter *filter = new Filter(branch, id, type, pattern);
       m_filters.append(filter);
 
       connect(filter, &Filter::message, this, &MainWindow::messageSlot);
+
+      ui->tableLog->insertRow(ui->tableLog->rowCount());
+      int row = ui->tableLog->rowCount() - 1;
+      ui->tableLog->setItem(row, 0, new QTableWidgetItem(branch));
+      ui->tableLog->setItem(row, 1, new QTableWidgetItem(id));
+      ui->tableLog->setItem(row, 2, new QTableWidgetItem(t));
+      ui->tableLog->setItem(row, 3, new QTableWidgetItem());
+
+      m_filters_by_rows.insert(qHash(QString(F_HASH_FILTER).arg(branch).arg(id).arg(t)), ui->tableLog->rowCount() - 1);
+
+//      qDebug() << 1;
+//      qDebug() << ui->tableLog->item(ui->tableLog->rowCount() - 1, 0);
+//      ui->tableLog->item(ui->tableLog->rowCount(), 0)->setData(0, );
+//      qDebug() << 2;
+//      ui->tableLog->item(ui->tableLog->rowCount() - 1, 1)->setData(0, id);
+//      qDebug() << 3;
+//      ui->tableLog->item(ui->tableLog->rowCount() - 1, 2)->setData(0, t);
+//      qDebug() << 4;
 
     }
   }
@@ -553,4 +609,16 @@ void MainWindow::on_textEventFilter_textChanged()
 void MainWindow::on_actionSaveFilter_triggered()
 {
   save(ui->textEventFilter, "Modus event filter (*.mef);;All files (*.*)", "mef");
+}
+
+void MainWindow::on_actionSwitchView_triggered(bool checked)
+{
+  m_table_view = checked;
+
+  int w = ui->textLog->width();
+  ui->tableLog->setVisible(m_table_view);
+  ui->textLog->setVisible(!m_table_view);
+
+  ui->tableLog->resize(w, ui->tableLog->height());
+
 }

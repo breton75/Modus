@@ -12,10 +12,10 @@
 #define P_DEVICE     "device"
 #define P_INTERFACE  "interface"
 #define P_PROTOCOL   "protocol"
-#define P_STORAGE    "storages"
-#define P_INTERACT   "interacts"
-#define P_LOGIC      "logics"
-#define P_SIGNAL     "signals"
+#define P_STORAGE    "storage"
+#define P_INTERACT   "interact"
+#define P_LOGIC      "logic"
+#define P_SIGNAL     "signal"
 
 // имена полей общие
 #define P_ID          "id"
@@ -35,6 +35,7 @@
 #define P_STORAGES    "storages"
 #define P_SIGNALS     "signals"
 #define P_INTERACTS   "interacts"
+#define P_VALUE       "value"
 
 // имена полей для всех устройств
 #define P_BUFFER_SIZE "buffer_size"

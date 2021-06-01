@@ -390,12 +390,12 @@ int main(int argc, char *argv[])
 
       setsid(); // отцепляемся от родителя
 
-      if(!cfg.debug)
-      {
-        close(STDIN_FILENO);
-        close(STDOUT_FILENO);
-        close(STDERR_FILENO);
-      }
+//      if(!cfg.debug)
+//      {
+//        close(STDIN_FILENO);
+//        close(STDOUT_FILENO);
+//        close(STDERR_FILENO);
+//      }
 
       cfg.start_date_time = QDateTime::currentDateTime();
 
@@ -782,7 +782,7 @@ bool readSignals(const AppConfig& appcfg)
         throw SvException(QString("Сигнал %1. Повторяющийся идентификатор %2!").arg(config.name).arg(config.id));
 
       /* создаем объект */
-      modus::SvSignal* newsig = new modus::SvSignal(config);
+      modus::SvSignal* newsig = new modus::SvSignal(config, &dbus);
 
       if(newsig) {
 
