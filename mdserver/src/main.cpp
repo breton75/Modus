@@ -120,18 +120,7 @@ QList<pid_t> get_pids_by_name(const QString& name, pid_t exclude = 0)
   return result;
 }
 
-sv::log::sender me = sv::log::sender("main");
-
-sv::log::Level llinf  = sv::log::llInfo;
-sv::log::Level lldbg  = sv::log::llDebug;
-sv::log::Level lldbg2 = sv::log::llDebug2;
-sv::log::Level llall  = sv::log::llAll;
-sv::log::MessageTypes mtdbg = sv::log::mtDebug;
-sv::log::MessageTypes mterr = sv::log::mtError;
-sv::log::MessageTypes mtinf = sv::log::mtInfo;
-sv::log::MessageTypes mtdat = sv::log::mtData;
-sv::log::MessageTypes mtscc = sv::log::mtSuccess;
-sv::log::MessageTypes mtfal = sv::log::mtFail;
+sv::log::sender me = lsndr("main",0);
 
 
 int server_operate(const QStringList& args, AppConfig& cfg)

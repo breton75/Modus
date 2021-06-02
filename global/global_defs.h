@@ -112,7 +112,19 @@
   "\"" P_PATH_INTERACTS "\": \""   DEFAULT_LIBPATH_INTERACTS   "\", "\
   "\"" P_PATH_CALCULATORS "\": \"" DEFAULT_LIBPATH_CALCULATORS "\" }"
 
-#define llerr sv::log::llError
+#define llinf  sv::log::llInfo
+#define llerr  sv::log::llError
+#define lldbg  sv::log::llDebug
+#define lldbg2 sv::log::llDebug2
+#define llall  sv::log::llAll
+#define mtdbg  sv::log::mtDebug
+#define mterr  sv::log::mtError
+#define mtinf  sv::log::mtInfo
+#define mtdat  sv::log::mtData
+#define mtscc  sv::log::mtSuccess
+#define mtfal  sv::log::mtFail
+
+#define lsndr(MODULE,ID)  sv::log::sender(MODULE, ID)
 
 struct AppConfig {
 

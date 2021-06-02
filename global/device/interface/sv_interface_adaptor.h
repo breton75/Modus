@@ -55,7 +55,6 @@ private slots:
       *m_logger << sv::log::sender(P_DEVICE, m_config.id)
                 << sv::log::Level(level)
                 << sv::log::MessageTypes(type)
-                << sv::log::TimeZZZ
                 << msg
                 << sv::log::endl;
   }

@@ -27,8 +27,7 @@ void modus::SvSignal::setValue(const QVariant& value)
     *m_logger << sv::log::sender(P_SIGNAL, m_config.id)
               << sv::log::Level(sv::log::llDebug)
               << sv::log::MessageTypes(sv::log::mtChange)
-              << sv::log::TimeZZZ
-              << QString("{\"id\":%1,\"name\":\"%2\",\"value\":\"%3\" }").arg(m_config.id).arg(m_config.name).arg(m_value.toString())
+              << m_value.toString()
               << sv::log::endl;
 
   emit changed(this);

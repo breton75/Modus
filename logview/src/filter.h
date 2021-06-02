@@ -23,11 +23,11 @@ private:
   QString               m_pattern;
 
 public slots:
-  void messageSlot(const QString& branch, int id, const QString &type, const QString& msg);
+  void messageSlot(const QString& branch, int id, const QString &type, const QString& time, const QString& msg);
 
 
 signals:
-  void message(const QString& entity, int id, const QString &type, const QString& msg);
+  void message(const QString& entity, int id, const QString &type, const QString& time, const QString& msg);
 
 
 };

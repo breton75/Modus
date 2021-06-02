@@ -159,7 +159,6 @@ private slots:
   {
     if(m_logger && level <= m_logger->options().level)
       *m_logger << sv::log::sender(P_DEVICE, m_config.id)
-                << sv::log::TimeZZZ
                 << sv::log::Level(level)
                 << sv::log::MessageTypes(type)
                 << msg

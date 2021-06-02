@@ -24,7 +24,7 @@ MainWindow::MainWindow(const AppConfig &cfg, QWidget *parent) :
 
   this->setWindowTitle(title);
 
-  bool b = QDBusConnection::sessionBus().connect(QString(), QString("/%1").arg("main"), DBUS_SERVER_NAME, "message", this, SLOT(messageSlot(const QString&,int,const QString&,const QString&)));
+  bool b = QDBusConnection::sessionBus().connect(QString(), QString("/%1").arg("main"), DBUS_SERVER_NAME, "message", this, SLOT(messageSlot(const QString&,int,const QString&,const QString&,const QString&)));
 
   // читаем файл конфигурации
 //  frame->setupUi(ui->frameSettings);
@@ -54,7 +54,7 @@ MainWindow::MainWindow(const AppConfig &cfg, QWidget *parent) :
 
 bool MainWindow::initConfig()
 {
-  QFile json_file("modus.json");
+  QFile json_file(QString("%1.json").arg(qApp->applicationName()));
 
   try {
 
@@ -69,12 +69,12 @@ bool MainWindow::initConfig()
     if(parse_error.error != QJsonParseError::NoError)
       throw SvException(parse_error.errorString());
 
-    QJsonObject jo = jdoc.object();
+    JSON = jdoc.object();
 
     // читаем параметры логирования
-    if(jo.contains("configurations") && jo.value("configurations").isArray()) {
+    if(JSON.contains("configurations") && JSON.value("configurations").isArray()) {
 
-      for(QJsonValue jv: jo.value("configurations").toArray()) {
+      for(QJsonValue jv: JSON.value("configurations").toArray()) {
 
         QJsonObject o = jv.toObject();
 
@@ -95,17 +95,11 @@ bool MainWindow::initConfig()
 
     }
 
+    if(JSON.contains("last_filter")) {
 
-//    // выводим информация о конфигурации
-//    dbus << llinf << mtscc << me << QString(50, '-') << sv::log::endl;
-//    dbus << llinf << mtscc << me << QString("Сервер сбора и обработки данных Modus v.%1").arg(APP_VERSION)
-//           << sv::log::endl;
+      ui->textEventFilter->setPlainText(JSON.value("last_filter").toString());
 
-//    if(JSON.json()->contains("info"))
-//      dbus << llinf << mtdat << me << JSON.json()->value("info").toString() << sv::log::endl;
-
-//    if(JSON.json()->contains("version"))
-//      dbus << llinf << mtdat << me << QString("Версия конфигурации %1\n").arg(JSON.json()->value("version").toString()) << sv::log::endl;
+    }
 
     return true;
 
@@ -220,23 +214,46 @@ MainWindow::~MainWindow()
     delete filter;
   }
 
+  JSON["last_filter"] = ui->textEventFilter->toPlainText();
+
+  QJsonDocument jd;
+  jd.setObject(JSON);
+
+  QFile f(QString("%1.json").arg(qApp->applicationName()));
+  if(f.open(QIODevice::WriteOnly)) {
+
+    f.write(jd.toJson(QJsonDocument::Indented));
+    f.close();
+  }
+
+
   AppParams::saveLayout(this);
 
   delete frame;
   delete ui;
 }
 
-void MainWindow::messageSlot(const QString& branch, int id, const QString& type, const QString& message)
+void MainWindow::messageSlot(const QString& module, int id, const QString& type, const QString& time, const QString& message)
 {
 //  qDebug() << sender(); // << _config.log_options.log_sender_name_format;
 //qDebug() << type << message <<log.options().enable;
 
-  if(!m_table_view)
-    log << sv::log::stringToType(type) << QString("%1:%2 %3").arg(branch).arg(id).arg(message) << sv::log::endl;
+  if(!m_table_view) {
+
+    QString prn = m_print_format;
+    prn = prn.replace("{module}", module)
+                                .replace("{id}", QString::number(id))
+                                .replace("{time}", time)
+                                .replace("{type}", type)
+                                .replace("{message}", message);
+
+    log << sv::log::stringToType(type) << prn << sv::log::endl;
+
+  }
 
   else {
 
-    uint key = qHash(QString(F_HASH_FILTER).arg(branch).arg(id).arg(type));
+    uint key = qHash(QString(F_HASH_FILTER).arg(module).arg(id).arg(type));
 
     if(!m_filters_by_rows.contains(key))
       return;
@@ -479,7 +496,7 @@ void MainWindow::on_actionApplyFilter_triggered()
 
       QJsonObject o = jv.toObject();
 
-      QString branch = o.contains("branch") ? o.value("branch").toString("undef") : "undef";
+      QString branch = o.contains("module") ? o.value("module").toString("undef") : "undef";
       int id = o.contains("id") ? o.value("id").toInt(0) : 0;
       QString t = o.contains("type") ? o.value("type").toString("any") : "any";
       sv::log::MessageTypes type = t.isEmpty() ? sv::log::mtAny : sv::log::stringToType(t);
@@ -499,16 +516,10 @@ void MainWindow::on_actionApplyFilter_triggered()
 
       m_filters_by_rows.insert(qHash(QString(F_HASH_FILTER).arg(branch).arg(id).arg(t)), ui->tableLog->rowCount() - 1);
 
-//      qDebug() << 1;
-//      qDebug() << ui->tableLog->item(ui->tableLog->rowCount() - 1, 0);
-//      ui->tableLog->item(ui->tableLog->rowCount(), 0)->setData(0, );
-//      qDebug() << 2;
-//      ui->tableLog->item(ui->tableLog->rowCount() - 1, 1)->setData(0, id);
-//      qDebug() << 3;
-//      ui->tableLog->item(ui->tableLog->rowCount() - 1, 2)->setData(0, t);
-//      qDebug() << 4;
-
     }
+
+    m_print_format = jo.contains("printf") ? jo.value("printf").toString("{module}:{id}:{time}:{type}\t{message}") : "{module}:{id}:{time}:{type}\t{message}";
+
   }
 
   catch(SvException& e) {
@@ -516,24 +527,6 @@ void MainWindow::on_actionApplyFilter_triggered()
     QMessageBox::critical(this, "Error", e.error);
 
   }
-
-//  _enable = !_enable;
-//  log.setEnable(_enable);
-
-//  ui->actionApplyFilter->setChecked(_enable);
-
-//  if(_enable)
-//    ui->bnStartStop->setIcon(QIcon(":/iconixar/icons/iconixar/stop.png"));
-
-//  else
-//    ui->bnStartStop->setIcon(QIcon(":/iconixar/icons/iconixar/play.png"));
-
-
-//  if(!ui->textLog->document()->toPlainText().trimmed().isEmpty()) {
-
-//    ui->actionSaveLog->setEnabled(!_enable);
-////    ui->textLog->append("\n");
-//  }
 }
 
 void MainWindow::on_treeView_doubleClicked(const QModelIndex &index)

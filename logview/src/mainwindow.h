@@ -127,6 +127,10 @@ private:
 
   QList<QTableWidgetItem*> m_table_items;
 
+  QJsonObject JSON;
+
+  QString m_print_format = "{message}";
+
   bool save(QTextEdit *textEdit, const QString &filter, const QString &ext);
   ServerStatus serverStatus();
 
@@ -136,7 +140,7 @@ private:
   void setAuth();
 
 public slots:
-  void messageSlot(const QString &entity, int id, const QString &type, const QString& message);
+  void messageSlot(const QString &entity, int id, const QString &type, const QString& time, const QString& message);
 //  void messageDevice(const QString& id, const QString &type, const QString& message);
 //  void messageStorage(const QString& id, const QString &type, const QString& message);
 //  void messageInteract(const QString& id, const QString &type, const QString& message);
