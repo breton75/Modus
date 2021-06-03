@@ -216,6 +216,11 @@ MainWindow::~MainWindow()
 
   JSON["last_filter"] = ui->textEventFilter->toPlainText();
 
+//  QString colw = "";
+//  for(int i = 0; i < ui->tableLog->columnCount(); i++)
+//    colw.append(QString::number(ui->tableLog->columnWidth(i))).append('')
+//  JSON["col_widths"] =
+
   QJsonDocument jd;
   jd.setObject(JSON);
 
@@ -258,7 +263,14 @@ void MainWindow::messageSlot(const QString& module, int id, const QString& type,
     if(!m_filters_by_rows.contains(key))
       return;
 
-    ui->tableLog->item(m_filters_by_rows.value(key), 3)->setData(0, message);
+
+    if(m_column_order.contains("{time}"))
+      ui->tableLog->item(m_filters_by_rows.value(key), m_column_order.value("{time}"))->setData(0, time);
+
+    if(m_column_order.contains("{message}"))
+      ui->tableLog->item(m_filters_by_rows.value(key), m_column_order.value("{message}"))->setData(0, message);
+
+//    ui->tableLog->item(m_filters_by_rows.value(key), 3)->setData(0, message);
 
   }
 
@@ -462,10 +474,21 @@ void MainWindow::on_actionApplyFilter_triggered()
     while(ui->tableLog->rowCount())
       ui->tableLog->removeRow(0);
 
+    while(ui->tableLog->columnCount())
+      ui->tableLog->removeColumn(0);
+
     return;
 
   }
 
+  auto addcolumn = [=](QString field, int width, QString title) -> void {
+
+    ui->tableLog->insertColumn(ui->tableLog->columnCount());
+    ui->tableLog->setHorizontalHeaderItem(ui->tableLog->columnCount() - 1, new QTableWidgetItem(title));
+    ui->tableLog->setColumnWidth(ui->tableLog->columnCount() - 1, width);
+
+    m_column_order[field] = ui->tableLog->columnCount() - 1;
+  };
 
   try {
 
@@ -476,6 +499,85 @@ void MainWindow::on_actionApplyFilter_triggered()
       throw SvException(je.errorString());
 
     QJsonObject jo = jd.object();
+
+    { // определяем порядок вывода для текстового поля
+      m_print_format = jo.contains("printf") ? jo.value("printf").toString("{module}:{id}:{time}:{type}\t{message}") : "{module}:{id}:{time}:{type}\t{message}";
+    }
+
+    { // определяем порядок и параметры столбцов для таблицы
+
+      // если нет отдельного описания столбцов, то используем m_print_format
+      if(!jo.contains("columns")) {
+
+        bool found = false;
+
+        QRegularExpression re;
+
+        for(int i = 5; i > 0; i--) {
+
+          QString sr = "";
+          for(int j = 0; j < i; j++)
+            sr.append(QString("(?<m%1>%2).{0,}").arg(j).arg("((\{){1}(module|id|type|time|message)(\}){1})"));
+
+          re.setPattern(sr);
+
+          QRegularExpressionMatch match = re.match(m_print_format);
+          if(!match.hasMatch())
+            continue;
+
+//          int col = 0;
+  //        int colwidth = ui->textLog->width();
+
+          for(int j = 0; j < i; j++) {
+
+            QString c = match.captured(QString("m%1").arg(j));
+
+            if(!c.isEmpty()) {
+
+              addcolumn(c, 200, c);
+
+//              ui->tableLog->insertColumn(ui->tableLog->columnCount());
+//              ui->tableLog->setHorizontalHeaderItem(ui->tableLog->columnCount() - 1, new QTableWidgetItem(c));
+//              ui->tableLog->setColumnWidth(ui->tableLog->columnCount() - 1, 150);
+
+//              m_column_order[c] = col++;
+
+            }
+          }
+
+  //        ui->tableLog-> resizeColumnsToContents();
+//          ui->tableLog->setColumnWidth(ui->tableLog->columnCount() - 1, ui->tableLog->width() - 150 * (ui->tableLog->columnCount() - 1));
+
+          found = true;
+          break;
+        }
+
+//        if(!found)
+//          throw SvException("Неверный формат вывода printf. Не найдено ни одно из полей: {module} {id} {time} {type} {message}");
+
+      }
+      else {
+
+        QStringList fields = QStringList() << "{module}" << "{id}" << "{time}" << "{type}" << "{message}";
+        QJsonArray jvals = jo.value("columns").toArray();
+        for(int i = 0; i < jvals.count(); i++) {
+
+          QJsonObject jcol = jvals.at(i).toObject();
+
+          if(jcol.contains("field")) {
+
+             QString c = jcol.value("field").toString();
+
+             if(fields.contains(c)) {
+
+               addcolumn(c, (jcol.contains("width") ? jcol.value("width").toInt(200) : 200),
+                            (jcol.contains("title") ? jcol.value("title").toString(c) : c));
+
+             }
+          }
+        }
+      }
+    }
 
     if(!jo.contains("filters"))
       throw SvException("Неверный формат фильтра. Отсутствует ключ 'filters'");
@@ -496,29 +598,46 @@ void MainWindow::on_actionApplyFilter_triggered()
 
       QJsonObject o = jv.toObject();
 
-      QString branch = o.contains("module") ? o.value("module").toString("undef") : "undef";
+      QString module = o.contains("module") ? o.value("module").toString("undef") : "undef";
       int id = o.contains("id") ? o.value("id").toInt(0) : 0;
       QString t = o.contains("type") ? o.value("type").toString("any") : "any";
       sv::log::MessageTypes type = t.isEmpty() ? sv::log::mtAny : sv::log::stringToType(t);
       QString pattern = o.contains("pattern") ? o.value("pattern").toString("") : "";
 
-      Filter *filter = new Filter(branch, id, type, pattern);
+      Filter *filter = new Filter(module, id, type, pattern);
       m_filters.append(filter);
 
       connect(filter, &Filter::message, this, &MainWindow::messageSlot);
 
       ui->tableLog->insertRow(ui->tableLog->rowCount());
       int row = ui->tableLog->rowCount() - 1;
-      ui->tableLog->setItem(row, 0, new QTableWidgetItem(branch));
-      ui->tableLog->setItem(row, 1, new QTableWidgetItem(id));
-      ui->tableLog->setItem(row, 2, new QTableWidgetItem(t));
-      ui->tableLog->setItem(row, 3, new QTableWidgetItem());
 
-      m_filters_by_rows.insert(qHash(QString(F_HASH_FILTER).arg(branch).arg(id).arg(t)), ui->tableLog->rowCount() - 1);
+//      ui->tableLog->setItem(row, m_column_order.value("{module}"), new QTableWidgetItem(module));
+//      ui->tableLog->setItem(row, m_column_order.value("{id}"), new QTableWidgetItem(id));
+//      ui->tableLog->setItem(row, m_column_order.value("{type}"), new QTableWidgetItem(t));
+//      ui->tableLog->setItem(row, m_column_order.value("{time}"), new QTableWidgetItem());
+//      ui->tableLog->setItem(row, m_column_order.value("{message}"), new QTableWidgetItem());
+
+
+
+      if(m_column_order.contains("{module}"))
+        ui->tableLog->setItem(row, m_column_order.value("{module}"), new QTableWidgetItem(module));
+
+      if(m_column_order.contains("{id}"))
+        ui->tableLog->setItem(row, m_column_order.value("{id}"), new QTableWidgetItem(QString::number(id)));
+
+      if(m_column_order.contains("{type}"))
+        ui->tableLog->setItem(row, m_column_order.value("{type}"), new QTableWidgetItem(t));
+
+      if(m_column_order.contains("{time}"))
+        ui->tableLog->setItem(row, m_column_order.value("{time}"), new QTableWidgetItem());
+
+      if(m_column_order.contains("{message}"))
+        ui->tableLog->setItem(row, m_column_order.value("{message}"), new QTableWidgetItem());
+
+      m_filters_by_rows.insert(qHash(QString(F_HASH_FILTER).arg(module).arg(id).arg(t)), ui->tableLog->rowCount() - 1);
 
     }
-
-    m_print_format = jo.contains("printf") ? jo.value("printf").toString("{module}:{id}:{time}:{type}\t{message}") : "{module}:{id}:{time}:{type}\t{message}";
 
   }
 

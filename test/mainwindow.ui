@@ -30,7 +30,7 @@
       <item>
        <widget class="QLineEdit" name="lineRE">
         <property name="text">
-         <string>select[\s]{0,}[(]{1}[\s]{0,}{users.admin.devices.database2:signals_data_rs}[,\s]+'value'[,\s]+'signal_name'[,\s]+'(?&lt;sn&gt;[A-Z0-9_]+(_T|_f){1})'[)]{1}[\s]{0,}==[\s]{0,}1.0[\s]{0,}[|]{2}</string>
+         <string>(?&lt;m0&gt;(\{){1}(module|id|type|time|message)(\}){1})(.){0,}(?&lt;m1&gt;(\{){1}(module|id|type|time|message)(\}){1})(.){0,}(?&lt;m2&gt;(\{){1}(module|id|type|time|message)(\}){1})</string>
         </property>
        </widget>
       </item>
@@ -51,7 +51,7 @@
       <item>
        <widget class="QLineEdit" name="lineText">
         <property name="text">
-         <string>select({users.admin.devices.database2:signals_data_rs}, 'value','signal_name', 'BI22_2SS1_T_T') ==  1.0 || </string>
+         <string>{time}:{message}_{id} {type}</string>
         </property>
        </widget>
       </item>

@@ -91,7 +91,8 @@ private:
 
   bool m_server_started;
 
-  QMap<uint, int> m_filters_by_rows;
+  QMap<uint, int>     m_filters_by_rows;
+  QHash<QString, int> m_column_order;
 
   QList<Filter*> m_filters;
 
@@ -130,6 +131,8 @@ private:
   QJsonObject JSON;
 
   QString m_print_format = "{message}";
+
+//  QList<int> m_col_widths = {150,150,150,150};
 
   bool save(QTextEdit *textEdit, const QString &filter, const QString &ext);
   ServerStatus serverStatus();

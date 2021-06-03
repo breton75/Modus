@@ -20,6 +20,23 @@ void MainWindow::on_bnMatch_clicked()
 
     QRegularExpressionMatch match = re.match(text);
 
+    ui->textEdit->append(QString("hasMatch: %1 %2\ncaptured:").arg(match.hasMatch()).arg(match.lastCapturedIndex()));
+
+    if(match.hasMatch()) {
+
+      for(int i = 0; i < match.lastCapturedIndex(); i++) {
+        ui->textEdit->append(QString("\t%1").arg(match.captured(i)));
+      }
+
+
+    }
+
+    ui->textEdit->append(match.captured("m0"));
+    ui->textEdit->append(match.captured("m1"));
+    ui->textEdit->append(match.captured("m2"));
+    ui->textEdit->append(match.captured("m3"));
+    ui->textEdit->append(match.captured("m4"));
+
     qDebug() << match.hasMatch();
 
 }
