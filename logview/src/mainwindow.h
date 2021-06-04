@@ -80,7 +80,9 @@ private slots:
 
   void on_actionSaveFilter_triggered();
 
-  void on_actionSwitchView_triggered(bool checked);
+  void on_tabLog_currentChanged(int index);
+
+  void on_actionClearLog_triggered();
 
 private:
   Ui::MainWindow *ui;

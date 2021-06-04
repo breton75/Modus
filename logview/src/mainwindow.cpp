@@ -44,16 +44,21 @@ MainWindow::MainWindow(const AppConfig &cfg, QWidget *parent) :
   ui->textEventFilter->document()->setModified(false);
   ui->textLog->document()->setModified(false);
 
-  ui->tableLog->setVisible(m_table_view);
-  ui->textLog->setVisible(!m_table_view);
+//  ui->tableLog->setVisible(m_table_view);
+//  ui->textLog->setVisible(!m_table_view);
 
   AppParams::loadLayout(this);
+
+  m_table_view = ui->tabLog->currentIndex() == 1;
 
 }
 
 
 bool MainWindow::initConfig()
 {
+  if(!QDir::setCurrent(qApp->applicationDirPath()))
+    throw SvException(QString("Не удалось задать текущий каталог %1").arg(qApp->applicationDirPath()));
+
   QFile json_file(QString("%1.json").arg(qApp->applicationName()));
 
   try {
@@ -63,6 +68,7 @@ bool MainWindow::initConfig()
 
     /* загружаем json конфигурацию в QJSonDocument */
     QJsonParseError parse_error;
+
     QByteArray json = json_file.readAll();
     QJsonDocument jdoc = QJsonDocument::fromJson(json, &parse_error);
 
@@ -108,6 +114,7 @@ bool MainWindow::initConfig()
   catch(SvException& e) {
 
     log << llerr << sv::log::mtError << QString("Ошибка: %1\n").arg(e.error) << sv::log::endl;
+    QMessageBox::critical(this, "", e.error);
     return false;
   }
 }
@@ -243,20 +250,16 @@ void MainWindow::messageSlot(const QString& module, int id, const QString& type,
 //  qDebug() << sender(); // << _config.log_options.log_sender_name_format;
 //qDebug() << type << message <<log.options().enable;
 
-  if(!m_table_view) {
+  QString prn = m_print_format;
+  prn = prn.replace("{module}", module)
+                              .replace("{id}", QString::number(id))
+                              .replace("{time}", time)
+                              .replace("{type}", type)
+                              .replace("{message}", message);
 
-    QString prn = m_print_format;
-    prn = prn.replace("{module}", module)
-                                .replace("{id}", QString::number(id))
-                                .replace("{time}", time)
-                                .replace("{type}", type)
-                                .replace("{message}", message);
+  log << sv::log::stringToType(type) << prn << sv::log::endl;
 
-    log << sv::log::stringToType(type) << prn << sv::log::endl;
-
-  }
-
-  else {
+  if(m_table_view) {
 
     uint key = qHash(QString(F_HASH_FILTER).arg(module).arg(id).arg(type));
 
@@ -723,14 +726,12 @@ void MainWindow::on_actionSaveFilter_triggered()
   save(ui->textEventFilter, "Modus event filter (*.mef);;All files (*.*)", "mef");
 }
 
-void MainWindow::on_actionSwitchView_triggered(bool checked)
+void MainWindow::on_tabLog_currentChanged(int index)
 {
-  m_table_view = checked;
+  m_table_view = index == 1;
+}
 
-  int w = ui->textLog->width();
-  ui->tableLog->setVisible(m_table_view);
-  ui->textLog->setVisible(!m_table_view);
-
-  ui->tableLog->resize(w, ui->tableLog->height());
-
+void MainWindow::on_actionClearLog_triggered()
+{
+  ui->textLog->document()->clear();
 }
