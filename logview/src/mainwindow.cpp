@@ -350,18 +350,23 @@ void MainWindow::on_actionStartStopServer_triggered()
   ui->actionStartStopServer->setEnabled(false);
   qApp->processEvents();
 
+  QString server_path = "./mdserver";
+
+  if(JSON.contains("server_path"))
+    server_path = JSON.value("server_path").toString();
+
   if(!serverStatus().running) {
 
-    QString config = "config.json";
+    QString config_path = "config.json";
 
     if(ui->treeView->currentIndex().isValid())
-      config = m_model->itemFromIndex(ui->treeView->currentIndex())->data(0).toString();
+      config_path = m_model->itemFromIndex(ui->treeView->currentIndex())->data(0).toString();
 
-    QProcess::startDetached(QString("sudo ./mdserver start -config=%1").arg(config));
+    QProcess::startDetached(QString("sudo %1 start -config %2").arg(server_path).arg(config_path));
 
   }
   else {
-    QProcess::startDetached(QString("sudo ./mdserver stop"));
+    QProcess::startDetached(QString("sudo %1 stop").arg(server_path));
   }
 
   ui->actionStartStopServer->setEnabled(true);

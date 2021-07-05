@@ -516,7 +516,7 @@ bool readDevices(const AppConfig& appcfg)
       modus::SvDeviceAdaptor* newdev = new modus::SvDeviceAdaptor(&dbus);
       // LOGGERS.value(config.id)); //create_device(devcfg);
 
-//      config.libpaths = JSON.json()->contains(P_LIBPATH) ? QString(QJsonDocument(JSON.json()->value(P_LIBPATH).toObject()).toJson(QJsonDocument::Compact)) : DEFAULT_LIBPATHS;
+      config.libpaths = JSON.json()->contains(P_LIBPATH) ? QString(QJsonDocument(JSON.json()->value(P_LIBPATH).toObject()).toJson(QJsonDocument::Compact)) : DEFAULT_LIBPATHS;
 
       if(newdev->init(config)) {
 
