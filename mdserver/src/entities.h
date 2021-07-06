@@ -33,20 +33,11 @@ public:
     }
   }
 
-  int clear()
+  void clear()
   {
-    int counter = 0;
-
-    while(m_list.count()) {
-
-      delete m_list.takeLast();
-      counter++;
-    }
-
+    m_list.clear();
     m_map_by_id.clear();
     m_map_by_name.clear();
-
-    return counter;
   }
 
   const QString& lastError() const

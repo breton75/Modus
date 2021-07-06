@@ -404,20 +404,13 @@ void signal_handler(int sig)
 
   qDebug() << "closing";
 
-//  webserver.stop();
-//  delete web_logger;
-
-//  qDebug() << "close_db()";
-//  close_db();
-
-  qDebug() << "closeDevices()";
   closeDevices();
-
-  qDebug() << "deinitStorages()";
   deinitStorages();
-
-  qDebug() << "deleteSignals()";
   deleteSignals();
+
+  ENTITIES.Devices()->clear();
+  ENTITIES.Storages()->clear();
+  ENTITIES.Signals()->clear();
 
   /* логеры в последнюю очередь */
   foreach (sv::SvAbstractLogger* logger, LOGGERS)
@@ -443,13 +436,13 @@ bool initConfig(AppConfig& appcfg)
       throw SvException(JSON.lastError());
 
     // читаем параметры логирования
-    if(JSON.json()->contains("logger") && JSON.json()->value("logger").isObject()) {
+    if(JSON.json()->contains(P_LOGGER) && JSON.json()->value(P_LOGGER).isObject()) {
 
-      log_options = sv::log::Options::fromJsonObject(JSON.json()->value("logger").toObject());
+      log_options = sv::log::Options::fromJsonObject(JSON.json()->value(P_LOGGER).toObject());
 
       if(log_options.level == sv::log::llUndefined)
         throw SvException(QString(IMPERMISSIBLE_VALUE)
-                          .arg(P_LOG_LEVEL).arg(JSON.json()->value("logger").toObject().value(P_LOG_LEVEL).toString())
+                          .arg(P_LOG_LEVEL).arg(JSON.json()->value(P_LOGGER).toObject().value(P_LOG_LEVEL).toString())
                           .arg("Допустимые значения: none, error, warning, info, debug, debug2, all"));
     }
 
@@ -508,13 +501,11 @@ bool readDevices(const AppConfig& appcfg)
       if(ENTITIES.Devices()->contains(config.id))
         throw SvException(QString("Устройство %1. Повторяющийся идентификатор %2!").arg(config.name).arg(config.id));
 
-//      if(JSON.json()->contains("logger"))
-//      if(appcfg.log_options.logging)
-//        LOGGERS.insert(config.id, new sv::SvDBus(appcfg.log_options));
+//      if(dbus.options().enable)
+//        LOGGERS.insert(config.id, new sv::SvDBus(dbus.options()));
 
       /** создаем объект устройство **/
-      modus::SvDeviceAdaptor* newdev = new modus::SvDeviceAdaptor(&dbus);
-      // LOGGERS.value(config.id)); //create_device(devcfg);
+      modus::SvDeviceAdaptor* newdev = new modus::SvDeviceAdaptor(&dbus); //LOGGERS.value(config.id, nullptr));
 
       config.libpaths = JSON.json()->contains(P_LIBPATH) ? QString(QJsonDocument(JSON.json()->value(P_LIBPATH).toObject()).toJson(QJsonDocument::Compact)) : DEFAULT_LIBPATHS;
 
@@ -598,11 +589,11 @@ bool readStorages(const AppConfig& appcfg)
           throw SvException(QString("Хранилище %1. Повторяющийся идентификатор %2!")
                           .arg(config.name).arg(config.id));
 
-//        if(appcfg.log_options.logging)
-//          LOGGERS.insert(config.id, new sv::SvDBus(appcfg.log_options));
+//        if(dbus.options().enable)
+//          LOGGERS.insert(config.id, new sv::SvDBus(dbus.options()));
 
         /** создаем объект хранилища **/
-        modus::SvStorageAdaptor* newstorage = new modus::SvStorageAdaptor(&dbus); // LOGGERS.value(config.id));
+        modus::SvStorageAdaptor* newstorage = new modus::SvStorageAdaptor(&dbus); //LOGGERS.value(config.id, nullptr));
 
         config.libpaths = JSON.json()->contains(P_LIBPATH) ? QString(QJsonDocument(JSON.json()->value(P_LIBPATH).toObject()).toJson(QJsonDocument::Compact)) : DEFAULT_LIBPATHS;
 
@@ -655,7 +646,7 @@ bool readInteracts(const AppConfig& appcfg)
 
     int counter = 0;
 
-    if(!JSON.json()->contains("interacts"))
+    if(!JSON.json()->contains(P_INTERACTS))
     {
 
       dbus << llinf << me << mtinf << QString("Раздел 'interacts' отсутствует.");
@@ -681,19 +672,13 @@ bool readInteracts(const AppConfig& appcfg)
           throw SvException(QString("Сервер приложения %1. Повторяющийся идентификатор %2!")
                           .arg(config.name).arg(config.id));
 
-//        if(appcfg.log_options.logging)
-//          LOGGERS.insert(config.id, new sv::SvDBus(appcfg.log_options));
+//        if(dbus.options().enable)
+//          LOGGERS.insert(config.id, new sv::SvDBus(dbus.options()));
 
         /** создаем объект **/
-        modus::SvInteractAdaptor* newinteract = new modus::SvInteractAdaptor(&dbus); // LOGGERS.value(config.id)); // c reate_server(interact_cfg);
+        modus::SvInteractAdaptor* newinteract = new modus::SvInteractAdaptor(&dbus); //LOGGERS.value(config.id, nullptr));
 
         config.libpaths = JSON.json()->contains(P_LIBPATH) ? QString(QJsonDocument(JSON.json()->value(P_LIBPATH).toObject()).toJson(QJsonDocument::Compact)) : DEFAULT_LIBPATHS;
-
-//        if(appcfg.log_options.logging) {
-
-//          LOGGERS.insert(newinteract->config()->id, new sv::SvDBus(appcfg.log_options));
-//          newinteract->setLogger(LOGGERS.value(newinteract->config()->id));
-//        }
 
         if(newinteract->init(config, JSON)) {
 
@@ -769,6 +754,9 @@ bool readSignals(const AppConfig& appcfg)
 
       if(ENTITIES.Signals()->contains(config.id))
         throw SvException(QString("Сигнал %1. Повторяющийся идентификатор %2!").arg(config.name).arg(config.id));
+
+//      if(dbus.options().enable)
+//        LOGGERS.insert(config.id, new sv::SvDBus(dbus.options()));
 
       /* создаем объект */
       modus::SvSignal* newsig = new modus::SvSignal(config, &dbus);
@@ -1082,22 +1070,17 @@ void closeDevices()
 
   try {
 
-    int count = ENTITIES.Devices()->clear();
+    for (int i = 0; i < ENTITIES.Devices()->list()->count(); i++) {
 
-//    foreach (modus::SvDeviceAdaptor* device, JSON.Devices())
-//    {
-////      modus::SvDeviceAdaptor* device = DEVICES.value(key);
+      modus::SvDeviceAdaptor* device = ENTITIES.Devices()->list()->at(i);
 
-//      dbus << llinf << me << mtinf << QString("  %1").arg(device->config()->name) << sv::log::endl;
+      dbus << lldbg2 << me << mtdbg << device->config()->name << sv::log::endl;
 
-////      device->stop();
-//      delete device; //DEVICES.take(key);
+      delete device;
 
-//      counter++;
+    }
 
-//    }
-
-    dbus << llinf << me << mtinf << QString("OK [Закрыто %1]\n").arg(count)  << sv::log::endl;
+    dbus << llinf << me << mtinf << QString("OK [Закрыто %1]\n").arg(ENTITIES.Devices()->list()->count())  << sv::log::endl;
 
   }
 
@@ -1111,29 +1094,19 @@ void closeDevices()
 
 void deinitStorages()
 {
-
   dbus << llinf << me << mtinf << "Закрываем хранилища:" << sv::log::endl;
 
-  int count = ENTITIES.Storages()->clear();
+  for (int i = 0; i < ENTITIES.Storages()->list()->count(); i++) {
 
-//  foreach (modus::SvStorageAdaptor* storage, JSON.Storages()) {
+    modus::SvStorageAdaptor* storage = ENTITIES.Storages()->list()->at(i);
 
-////    modus::SvStorageAdaptor* storage = STORAGES.value(key);
+    dbus << lldbg2 << me << mtdbg << storage->config()->name << sv::log::endl;
 
-////    if(detiled)
-////      lout << QString("  %1\t%2:%3:").arg(storage->params()->name).arg(storage->params()->host).arg(storage->params()->port) << sv::log::endi;
+    delete storage; // STORAGES.take(key);
 
-////    storage->stop();
-//    delete storage; // STORAGES.take(key);
+  }
 
-////    lout << llinf << "\tOK" << sv::log::endl;
-
-//    counter++;
-
-//  }
-
-//  lout << llinf << QString("OK\n") << sv::log::endl;
-  dbus << llinf << me << mtinf << QString("OK [Закрыто %1]\n").arg(count)  << sv::log::endl;
+  dbus << llinf << me << mtinf << QString("OK [Закрыто %1]\n").arg(ENTITIES.Storages()->list()->count())  << sv::log::endl;
 
 }
 
@@ -1141,23 +1114,17 @@ void deleteSignals()
 {
   dbus << llinf << me << mtinf << "Удаляем сигналы:" << sv::log::endl;
 
-  int count = ENTITIES.Signals()->clear();
+  for (int i = 0; i < ENTITIES.Signals()->list()->count(); i++) {
 
-//  foreach (modus::SvSignal* signal, JSON.Signals()) {
+    modus::SvSignal* signal = ENTITIES.Signals()->list()->at(i);
 
-////    SvSignal* signal = SIGNALS.value(key);
+    dbus << lldbg2 << me << mtdbg << signal->config()->name << sv::log::endl;
 
-////    if(detiled)
-////      lout << QString("  %1 [index %2]:").arg(signal->params()->name).arg(signal->params()->index) << sv::log::endi;
+    delete signal;
 
-//    delete signal; //SIGNALS.take(key);
+  }
 
-//    counter++;
-////    lout << llinf << "\tOK" << sv::log::endl;
-
-//  }
-
-  dbus << llinf << me << mtinf << QString("OK [Удалено %1]\n").arg(count)  << sv::log::endl;
+  dbus << llinf << me << mtinf << QString("OK [Удалено %1]\n").arg(ENTITIES.Signals()->list()->count())  << sv::log::endl;
 
 }
 
