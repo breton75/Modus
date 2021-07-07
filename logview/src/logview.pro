@@ -15,7 +15,7 @@ CONFIG += c++11
 #DBUS_INTERFACES += ../../global/modus_dbus.xml # для отправки сообщений
 #DBUS_ADAPTORS   += ../../global/modus_dbus.xml  # для приема сообщений
 
-VERSION = 1.0.0    # major.minor.patch
+VERSION = 1.0.1    # major.minor.patch
 DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 
 

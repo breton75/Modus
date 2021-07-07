@@ -251,11 +251,11 @@ void MainWindow::messageSlot(const QString& module, int id, const QString& type,
 //qDebug() << type << message <<log.options().enable;
 
   QString prn = m_print_format;
-  prn = prn.replace("{module}", module)
-                              .replace("{id}", QString::number(id))
-                              .replace("{time}", time)
-                              .replace("{type}", type)
-                              .replace("{message}", message);
+  prn = prn.replace("{module}",   module)
+           .replace("{id}",       QString::number(id))
+           .replace("{time}",     time)
+           .replace("{type}",     type)
+           .replace("{message}",  message);
 
   log << sv::log::stringToType(type) << prn << sv::log::endl;
 
