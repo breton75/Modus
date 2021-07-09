@@ -28,14 +28,13 @@ namespace modus {
     }
 
     char *data = nullptr;
-//    char  buf[MAX_BUF_SIZE];
 
     quint64 offset = 0;
 
     quint16 size;
     QMutex mutex;
 
-    void reset() { offset = 0; }
+    void reset() { offset = 0;        }
     bool ready() { return offset > 0; }
 
   };
@@ -144,10 +143,9 @@ namespace modus {
 
   struct InterfaceConfig
   {
-    QString lib                   = "";
-    QString params                = "";
-    QString comment               = "";
-    quint32 buffer_reset_interval = DEFAULT_BUFFER_RESET_INTERVAL;
+    QString lib       = "";
+    QString params    = "{}";
+    QString comment   = "";
 
     static InterfaceConfig fromJsonString(const QString& json_string) //throw (SvException)
     {
@@ -194,20 +192,6 @@ namespace modus {
       P = P_COMMENT;
       p.comment = object.contains(P) ? object.value(P).toString("") : "";
 
-      /* buffer_reset_interval */
-      P = P_BUFFER_RESET_INTERVAL;
-      if(object.contains(P))
-      {
-        if(object.value(P).toInt(-1) < 1)
-          throw SvException(QString(IMPERMISSIBLE_VALUE)
-                                 .arg(P)
-                                 .arg(object.value(P).toVariant().toString())
-                                 .arg("Интервал сброса буфера устройства не может быть меньше 1 мсек."));
-
-        p.buffer_reset_interval = object.value(P).toInt(DEFAULT_BUFFER_RESET_INTERVAL);
-
-      }
-
       return p;
 
     }
@@ -224,10 +208,9 @@ namespace modus {
     {
       QJsonObject j;
 
-      j.insert(P_PARAMS, QJsonValue(params).toString());
-      j.insert(P_LIB, QJsonValue(lib).toString());
-      j.insert(P_COMMENT, QJsonValue(comment).toString());
-      j.insert(P_BUFFER_RESET_INTERVAL, QJsonValue(int(buffer_reset_interval)).toInt());
+      j.insert(P_PARAMS,    QJsonValue(params).toString());
+      j.insert(P_LIB,       QJsonValue(lib).toString());
+      j.insert(P_COMMENT,   QJsonValue(comment).toString());
 
       return j;
 

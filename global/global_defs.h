@@ -48,9 +48,12 @@
 #define P_PACKID      "packid"
 
 // interfaces
-#define DEFAULT_TIMEOUT 3000
+#define DEFAULT_TIMEOUT               3000
 #define DEFAULT_BUFFER_RESET_INTERVAL 20
-#define P_BUFFER_RESET_INTERVAL "buffer_reset_interval"
+#define DEFAULT_GRAIN_GAP             10
+#define P_BUFFER_RESET_INTERVAL       "buffer_reset_interval"
+#define P_GRAIN_GAP                   "grain_gap"
+#define P_PARSE_INTERVAL              "parse_interval"
 
 // storages
 #define DEFAULT_STORE_INTERVAL 1000
